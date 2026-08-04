@@ -1,0 +1,1 @@
+[{"tag":"noshaft","js":"(()=>{const E=window.__ENGINE__;let n=0;E.scene.traverse(o=>{if(o.material&&o.material.defines&&o.material.defines.SHAFT_STEPS){o.visible=false;n++}});E.time=9.2;return 'shafts off '+n})()"}]

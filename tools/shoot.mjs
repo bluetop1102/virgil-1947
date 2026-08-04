@@ -55,10 +55,25 @@ const GPU_ARGS = [
 
 function serve () {
   // SHOT=1 → vite.config.js가 HMR/워처를 끈다. 샷 도중 남의 파일 저장이 full reload를 유발하면 안 된다.
-  const p = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], {
-    stdio: 'ignore', detached: false, env: { ...process.env, SHOT: '1' }
+  // vite 바이너리를 직접 띄운다. `npx vite` 로 띄우면 kill 이 npx 만 죽이고 vite 자식은 고아로
+  // 남아 포트를 계속 쥔다 — 실측으로 서버 22개가 살아 있었고, --strictPort 라 새 vite 가 죽고
+  // 하네스는 **워처가 꺼진 옛 서버**에 붙어 옛 소스를 받는다. 그래서 방금 고친 셰이더가
+  // "아무 변화 없음"으로 측정됐다(uniform 이 uniforms 객체에 없다고 나옴).
+  const bin = new URL('../node_modules/.bin/vite', import.meta.url).pathname
+  // detached 로 자기 프로세스 그룹을 갖게 하고 종료 때 그룹째 죽인다. 단일 PID 로 kill 하면
+  // 간헐적으로 살아남는 것이 실측됐다(5943 잔존). 하나라도 남으면 다음 실행이 --strictPort 로
+  // 죽고 하네스가 옛 서버에 붙는다.
+  const p = spawn(bin, ['--port', String(PORT), '--strictPort'], {
+    stdio: 'ignore', detached: true, env: { ...process.env, SHOT: '1' }
   })
+  p.unref()
   return p
+}
+
+function killServer (p) {
+  if (!p?.pid) return
+  try { process.kill(-p.pid, 'SIGKILL') } catch {}
+  try { p.kill('SIGKILL') } catch {}
 }
 
 async function waitPort (ms = 30000) {
@@ -72,7 +87,7 @@ async function waitPort (ms = 30000) {
 
 await acquireLock()
 const server = serve()
-process.on('exit', () => { releaseLock(); try { server.kill('SIGKILL') } catch {} })
+process.on('exit', () => { releaseLock(); killServer(server) })
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { releaseLock(); process.exit(1) })
 
 try {
@@ -221,6 +236,6 @@ try {
   await browser.close()
 } finally {
   releaseLock()
-  try { server.kill('SIGKILL') } catch {}
+  killServer(server)
 }
 process.exit(0)

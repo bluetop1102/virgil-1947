@@ -10,12 +10,19 @@
 //
 // 지표는 전부 실격 항목(D1·D3·D6)과 이번 라운드의 결함에 직결되게 골랐다.
 //   speckle  D1  이웃 4방향 모두와 크게 어긋나는 고립 픽셀(반딧불·계단 픽셀) 비율 ×1e4
-//   streak   —   |dI/dx| 대비 |dI/dy| 비대칭. 수직 가닥이 늘면 올라간다
 //   clipLo   D6  순수 흑(<3/255) 비율 %
 //   clipHi   D6  블로우아웃(>250/255, 3채널 모두) 비율 %
 //   flat     G6  32px 타일 표준편차가 1.2/255 미만인 면적 비율 %
 //   detail   G6  국소 대비(3px 라플라시안 절댓값)의 중앙값 ×1e3
 //   lumaMean —   평균 휘도. 노출이 통째로 움직였는지 본다
+//
+// 전역 평균은 "한 곳을 고치며 다른 곳을 망가뜨린" 라운드4형 사고를 숨긴다. 그래서 diff는
+// 160px 타일 단위로 국소 회귀도 같이 잰다 — 이쪽이 실제 게이트다.
+//   tileDetailDrop  디테일이 가장 크게 죽은 타일의 감소율 %  (스미어·뭉갬)
+//   tileSpeckleRise 반딧불이 가장 크게 는 타일의 증가량      (D1 국소 발생)
+// 전역 스미어 지표는 넣었다 뺐다. |dI/dx| 비도, 64px 구조텐서 코히런스도 벽지 격자 같은
+// 정상 방향성 무늬와 스미어를 가르지 못해 개선을 회귀로 오판했다. 스미어는 "국소 디테일 소실"로
+// 잡는 것이 유일하게 방어 가능한 기계 신호다.
 //
 // 판정 규칙은 THRESH 에 있다. 하나라도 REGRESS면 그 라운드는 롤백 대상이다.
 
@@ -23,12 +30,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { chromium } from 'playwright'
 
-const METRICS = ['speckle', 'streak', 'clipLo', 'clipHi', 'flat', 'detail', 'lumaMean']
+const METRICS = ['speckle', 'clipLo', 'clipHi', 'flat', 'detail', 'lumaMean']
 
 // [지표, 나쁜 방향, 허용 오차] — 허용 오차를 넘어 나쁜 방향으로 움직이면 REGRESS
 const THRESH = {
   speckle: ['up', 3.0],
-  streak: ['up', 0.06],
   clipLo: ['up', 1.2],
   clipHi: ['up', 0.35],
   flat: ['up', 1.5],
@@ -65,24 +71,18 @@ const ANALYZE = async ([src]) => {
     if (r < 3 && gg < 3 && b < 3) clipLo++
     if (r > 250 && gg > 250 && b > 250) clipHi++
   }
-  // speckle: 상하좌우 이웃 전부와 같은 부호로 크게 어긋나는 고립 픽셀
+  // speckle: 8이웃 전부와 같은 부호로 크게 어긋나는 고립 픽셀.
+  // 4이웃만 보면 1px 대각선(마루 널 이음매 같은 정상 디테일)이 반딧불로 잡혀 개선을 회귀로 오판한다.
   let speck = 0
-  for (let y = 1; y < H - 1; y++) {
-    for (let x = 1; x < W - 1; x++) {
-      const i = y * W + x, v = L[i]
-      const a = v - L[i - 1], b = v - L[i + 1], u = v - L[i - W], w = v - L[i + W]
-      const T = 14
-      if ((a > T && b > T && u > T && w > T) || (a < -T && b < -T && u < -T && w < -T)) speck++
-    }
+  const SPK = (A, i, W2) => {
+    const v = A[i], T = 14
+    const n = [A[i - 1], A[i + 1], A[i - W2], A[i + W2], A[i - W2 - 1], A[i - W2 + 1], A[i + W2 - 1], A[i + W2 + 1]]
+    let hi = 0, lo = 0
+    for (const q of n) { if (v - q > T) hi++; else if (q - v > T) lo++ }
+    return hi === 8 || lo === 8
   }
-  // streak: 수평 기울기 에너지 대비 수직 기울기 에너지. 수직 가닥이 많으면 gx가 gy보다 커진다
-  let gx = 0, gy = 0
   for (let y = 1; y < H - 1; y++) {
-    for (let x = 1; x < W - 1; x++) {
-      const i = y * W + x
-      gx += Math.abs(L[i + 1] - L[i - 1])
-      gy += Math.abs(L[i + W] - L[i - W])
-    }
+    for (let x = 1; x < W - 1; x++) if (SPK(L, y * W + x, W)) speck++
   }
   // flat / detail: 32px 타일 표준편차 + 라플라시안 중앙값
   const TS = 32
@@ -107,7 +107,6 @@ const ANALYZE = async ([src]) => {
   return {
     W, H,
     speckle: +(speck / (W * H) * 1e4).toFixed(3),
-    streak: +(gx / Math.max(gy, 1e-6)).toFixed(4),
     clipLo: +(clipLo / (W * H) * 100).toFixed(3),
     clipHi: +(clipHi / (W * H) * 100).toFixed(3),
     flat: +(flatTiles / tiles * 100).toFixed(2),
@@ -129,6 +128,16 @@ const DIFF = async ([a, b, TS]) => {
   const A = await load(a), B = await load(b)
   if (A.W !== B.W || A.H !== B.H) return { error: 'size mismatch ' + A.W + 'x' + A.H + ' vs ' + B.W + 'x' + B.H }
   const W = A.W, H = A.H
+  // 국소 회귀 측정용 휘도맵 + 8이웃 반딧불 판정(ANALYZE와 같은 규칙)
+  const lum = src => { const o = new Float32Array(W * H); for (let i = 0, p = 0; i < W * H; i++, p += 4) o[i] = 0.2126 * src[p] + 0.7152 * src[p + 1] + 0.0722 * src[p + 2]; return o }
+  const LA = lum(A.d), LB = lum(B.d)
+  const spk = (A2, i) => {
+    const v = A2[i], T = 14
+    const n = [A2[i - 1], A2[i + 1], A2[i - W], A2[i + W], A2[i - W - 1], A2[i - W + 1], A2[i + W - 1], A2[i + W + 1]]
+    let hi = 0, lo = 0
+    for (const q of n) { if (v - q > T) hi++; else if (q - v > T) lo++ }
+    return hi === 8 || lo === 8
+  }
   const out = document.createElement('canvas'); out.width = W; out.height = H
   const og = out.getContext('2d')
   const oi = og.createImageData(W, H)
@@ -151,6 +160,34 @@ const DIFF = async ([a, b, TS]) => {
     }
   }
   og.putImageData(oi, 0, 0)
+
+  // 타일별 디테일(라플라시안 평균)·반딧불 수. 전역 평균이 상쇄해 숨기는 국소 손상을 잡는다.
+  const local = []
+  for (let ty = 0; ty + TS <= H; ty += TS) {
+    for (let tx = 0; tx + TS <= W; tx += TS) {
+      let da = 0, db = 0, sa = 0, sb = 0, n = 0
+      for (let y = Math.max(ty, 1); y < Math.min(ty + TS, H - 1); y++) {
+        for (let x = Math.max(tx, 1); x < Math.min(tx + TS, W - 1); x++) {
+          const i = y * W + x
+          da += Math.abs(4 * LA[i] - LA[i - 1] - LA[i + 1] - LA[i - W] - LA[i + W])
+          db += Math.abs(4 * LB[i] - LB[i - 1] - LB[i + 1] - LB[i - W] - LB[i + W])
+          if (spk(LA, i)) sa++
+          if (spk(LB, i)) sb++
+          n++
+        }
+      }
+      const ad = da / n, bd = db / n
+      // 원래도 거의 평평했던 타일(어두운 구석)은 비율이 폭주하니 바닥값을 둔다
+      if (ad < 1.2) continue
+      // 디테일 감소는 그 자체로 회귀가 아니다 — 에일리어싱이 걷히면 라플라시안은 정당하게 떨어진다.
+      // "결과가 실제로 뭉갬(절대 바닥값 미만)"일 때만 회귀로 센다. after 값을 함께 남긴다.
+      local.push({ x: tx, y: ty, drop: +((ad - bd) / ad * 100).toFixed(1), after: +bd.toFixed(2), spk: +((sb - sa) / n * 1e4).toFixed(2) })
+    }
+  }
+  const MUSH = 2.5                               // 이 아래면 그 타일은 사실상 평평해진 것
+  const byDrop = [...local].filter(t => t.after < MUSH).sort((p, q) => q.drop - p.drop)
+  const bySpk = [...local].sort((p, q) => q.spk - p.spk)
+
   const list = []
   for (let i = 0; i < tile.length; i++) list.push({ x: (i % cols) * TS, y: (i / cols | 0) * TS, v: +(tile[i] / tileN[i]).toFixed(2) })
   list.sort((p, q) => q.v - p.v)
@@ -158,6 +195,8 @@ const DIFF = async ([a, b, TS]) => {
     meanDiff: +(total / (W * H)).toFixed(3),
     changedPct: +(changed / (W * H) * 100).toFixed(2),
     hotTiles: list.slice(0, 14),
+    tileDetailDrop: byDrop.slice(0, 5),
+    tileSpeckleRise: bySpk.slice(0, 5),
     heat: out.toDataURL('image/png')
   }
 }
@@ -236,7 +275,13 @@ if (cmd === 'crop') {
     verdicts[m] = { base: res.a[m], cand: res.b[m], delta: +dv.toFixed(3), verdict: v }
     if (v === 'REGRESS') worst = 'REGRESS'
   }
-  const out = { gate: worst, meanDiff: res.d.meanDiff, changedPct: res.d.changedPct, metrics: verdicts, hotTiles: res.d.hotTiles }
+  // 국소 게이트. 전역 평균이 상쇄해 놓친 "한 구역만 뭉갬 / 한 구역만 반딧불" 을 여기서 잡는다.
+  const LOCAL = { drop: 35, spk: 12 }
+  const wd = res.d.tileDetailDrop[0], ws = res.d.tileSpeckleRise[0]
+  const localFail = []
+  if (wd && wd.drop > LOCAL.drop) { localFail.push(`디테일 -${wd.drop}%→${wd.after} @(${wd.x},${wd.y})`); worst = 'REGRESS' }
+  if (ws && ws.spk > LOCAL.spk) { localFail.push(`반딧불 +${ws.spk} @(${ws.x},${ws.y})`); worst = 'REGRESS' }
+  const out = { gate: worst, meanDiff: res.d.meanDiff, changedPct: res.d.changedPct, metrics: verdicts, localFail, tileDetailDrop: res.d.tileDetailDrop, tileSpeckleRise: res.d.tileSpeckleRise, hotTiles: res.d.hotTiles }
   if (flag('json')) { console.log(JSON.stringify(out, null, 2)); process.exit(worst === 'REGRESS' ? 1 : 0) }
   console.log(`\n  기준선 ${path.basename(base)}  →  후보 ${path.basename(cand)}`)
   console.log(`  전체 변화 meanDiff ${res.d.meanDiff}/255 · 유의변화 픽셀 ${res.d.changedPct}%\n`)
@@ -246,6 +291,9 @@ if (cmd === 'crop') {
     console.log(`  ${m.padEnd(10)} ${String(v.base).padStart(9)} ${String(v.cand).padStart(10)} ${String(v.delta > 0 ? '+' + v.delta : v.delta).padStart(9)}   ${v.verdict === 'REGRESS' ? '✗ REGRESS' : v.verdict === 'better' ? '✓ better' : '·'}`)
   }
   console.log(`\n  변화 집중 타일(160px): ${res.d.hotTiles.slice(0, 6).map(t => `(${t.x},${t.y})=${t.v}`).join(' ')}`)
+  console.log(`  국소 디테일 최대감소: ${res.d.tileDetailDrop.slice(0, 4).map(t => `(${t.x},${t.y})${t.drop > 0 ? '-' : '+'}${Math.abs(t.drop)}%→${t.after}`).join(' ') || '(뭉갠 타일 없음)'}  [한계 -${LOCAL.drop}% 이면서 잔여 <2.5]`)
+  console.log(`  국소 반딧불 최대증가: ${res.d.tileSpeckleRise.slice(0, 4).map(t => `(${t.x},${t.y})${t.spk > 0 ? '+' : ''}${t.spk}`).join(' ')}  [한계 +${LOCAL.spk}]`)
+  if (localFail.length) console.log(`  ✗ 국소 회귀: ${localFail.join(' · ')}`)
   console.log(`\n  ▶ 게이트: ${worst}\n`)
   process.exit(worst === 'REGRESS' ? 1 : 0)
 } else {

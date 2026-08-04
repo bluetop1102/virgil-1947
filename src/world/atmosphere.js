@@ -31,12 +31,30 @@ const KINDS = {
   sconce: { type: 'spot', kelvin: 2700, lumens: 420, radius: 5.2, angle: 1.15, penumbra: 0.78, flick: 'incandescent', shaft: 0.18, shadow: true, dir: [0, -0.55, 0.4], prio: 1.0, hot: 2.6, fill: 0.014, up: 0.80, upAngle: 1.30, upRadius: 3.6 },
   chandelier: { type: 'point', kelvin: 2550, lumens: 2400, radius: 12.0, flick: 'incandescent', shaft: 0, shadow: false, prio: 1.5, hot: 2.8 },
   desk: { type: 'spot', kelvin: 2700, lumens: 560, radius: 4.2, angle: 0.98, penumbra: 0.55, flick: 'incandescent', shaft: 0.14, shadow: true, dir: [0, -1, 0], prio: 1.1, hot: 2.4 },
-  ceiling: { type: 'spot', kelvin: 4500, lumens: 2200, radius: 8.5, angle: 1.32, penumbra: 0.62, flick: 'fluorescent', shaft: 0.15, shadow: true, dir: [0, -1, 0], prio: 1.2, hot: 3.2, up: 0.17, upAngle: 1.36, upRadius: 4.6, upY: -0.32 },
+  ceiling: { type: 'spot', kelvin: 4500, lumens: 2200, radius: 8.5, angle: 1.32, penumbra: 0.62, flick: 'fluorescent', shaft: 0.15, shadow: true, dir: [0, -1, 0], prio: 1.2, hot: 3.2, up: 0.17, upAngle: 1.36, upRadius: 4.6, upY: -0.32, spd: [0.930, 1.053, 1.012] },
   neon: { type: 'point', kelvin: 6200, lumens: 460, radius: 5.5, flick: 'neon', shaft: 0, shadow: false, prio: 0.85, hot: 5.0 },
   moon: { type: 'dir', kelvin: 8000, lux: 15, shadow: true, flick: 'none', dir: [0.42, -0.60, -0.68], prio: 4.0, hot: 0 },
   street: { type: 'spot', kelvin: 2050, lumens: 12000, radius: 30.0, angle: 0.90, penumbra: 0.42, flick: 'sodium', shaft: 0.50, shadow: true, dir: [0, -1, 0], prio: 1.8, hot: 0 },
   'bare-bulb': { type: 'point', kelvin: 2400, lumens: 280, radius: 4.2, flick: 'voltage', shaft: 0, shadow: false, prio: 0.9, hot: 4.0 },
   elevator: { type: 'spot', kelvin: 3200, lumens: 780, radius: 4.8, angle: 1.24, penumbra: 0.86, flick: 'hum', shaft: 0.22, shadow: true, dir: [0, -1, 0], prio: 1.05, hot: 2.8 }
+}
+
+// 형광등은 흑체가 아니다. 1947년 할로포스페이트 관은 수은 546nm 스파이크 때문에 같은 색온도의
+// 흑체보다 색도가 플랑크 궤적 **위**(녹색 쪽, Duv > 0)에 놓이고 심적색이 빈다. core/util.js 의
+// kelvin() 은 궤적 위의 점만 낼 수 있고 그 파일은 잠겨 있으므로, 궤적을 벗어나는 벡터를 여기서
+// 곱한다. 이게 없으면 2700K 백열과 4500K 형광이 "같은 램프의 온도 차"로만 읽혀 광원 종류가
+// 구분되지 않는다(G1 6점 = 색온도 균일).
+// spd 는 선형 RGB 이득이고, **휘도는 보존한다** — 색만 갈라야 이 변경의 diff 가 밝기가 아니라
+// 색으로 귀속된다. ceiling 의 [0.930, 1.053, 1.012] 는 4500K sRGB (255,217,187) 를
+// (247,223,189) 로 미는 값이다: R-B -8, 그린 +6.
+const LUMA = [0.2126, 0.7152, 0.0722]
+function offLocus (col, spd) {
+  if (!spd) return col
+  const out = [col[0] * spd[0], col[1] * spd[1], col[2] * spd[2]]
+  const y0 = LUMA[0] * col[0] + LUMA[1] * col[1] + LUMA[2] * col[2]
+  const y1 = LUMA[0] * out[0] + LUMA[1] * out[1] + LUMA[2] * out[2]
+  const k = y1 > 1e-6 ? y0 / y1 : 1
+  return [out[0] * k, out[1] * k, out[2] * k]
 }
 
 const h1 = (x) => { const s = Math.sin(x * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s) }
@@ -133,7 +151,7 @@ export function practical (kind, opts = {}) {
   const K = KINDS[kind] || KINDS.sconce
   const pos = opts.pos || [0, 2.4, 0]
   const kel = opts.kelvin ?? K.kelvin
-  const col = kelvin(kel)
+  const col = offLocus(kelvin(kel), opts.spd ?? K.spd)
   const angle = opts.angle ?? K.angle ?? 1.0
   const lm = opts.lumens ?? opts.lux ?? K.lumens ?? K.lux ?? 500
   const radius = opts.radius ?? K.radius ?? 6

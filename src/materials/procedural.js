@@ -226,6 +226,20 @@ const CHUNK_MAP = `
   cecilAo = mix(1.0 - uCB.w, 1.0, o4.r) * mix(1.0 - uCA.z * 0.45, 1.0, cg) * (1.0 - damp * 0.18) * (1.0 - rise * 0.22 - soot * 0.10);
   float crg = clamp(o4.g * mix(1.0 + uCA.z * 0.55, 1.0 - uCA.z * 0.30, cg) + rise * 0.16 + soot * 0.10, 0.015, 1.0);
   cecilRgh = cToksvig(cnv, mix(crg, crg * 0.52, damp), uCC.x);
+  // 스펙큘러 AA(커널 러프니스). Toksvig 는 밉맵이 평균낸 **텍스처** 노멀 분산만 되돌린다 —
+  // 한 픽셀 안에서 노멀을 흔드는 주체가 지오메트리일 때(격자 살·자루 직조·스침각 몰딩)는
+  // 손대지 못해 하이라이트가 1px 반딧불과 순백 막대로 남는다(심사 D1 / G8).
+  // 화면공간 노멀 변화율을 러프니스 하한으로 환산해 그 픽셀에서만 하이라이트를 넓힌다.
+  {
+#ifndef FLAT_SHADED
+    vec3 gnx = dFdx(vNormal), gny = dFdy(vNormal);
+#else
+    vec3 gnx = vec3(0.0), gny = vec3(0.0);
+#endif
+    vec3 tnx = dFdx(cecilNrm), tny = dFdy(cecilNrm);
+    float varN = dot(gnx, gnx) + dot(gny, gny) + dot(tnx, tnx) + dot(tny, tny);
+    cecilRgh = clamp(sqrt(cecilRgh * cecilRgh + min(varN * uCC.z, uCC.w)), 0.015, 1.0);
+  }
   cecilMtl = o4.b;
   diffuseColor.rgb *= cecilAlb;
   diffuseColor.a *= cecilAlp;
@@ -273,7 +287,8 @@ export function applyCecil (material, opts, quality, detailTex) {
     uCTime: { value: 0 },
     uCA: { value: new THREE.Vector4(opts.triplanar || 1, opts.grungeScale ?? 0.35, opts.grunge ?? 0.16, opts.detailTile ?? 4) },
     uCB: { value: new THREE.Vector4(opts.parallax ?? 0, opts.detail ?? 0.5, opts.flow ?? 0, opts.ao ?? 0.6) },
-    uCC: { value: new THREE.Vector4(opts.toks ?? 1.4, opts.damp ?? 0.30, 0, 0) },
+    // z = 스펙큘러 AA 이득, w = 그 상한(커널 러프니스 최대치). 이전엔 둘 다 미사용 0 이었다.
+    uCC: { value: new THREE.Vector4(opts.toks ?? 1.4, opts.damp ?? 0.30, opts.specAA ?? 20.0, opts.specAAMax ?? 0.45) },
     uCD: { value: new THREE.Vector4(...bandParams(opts.band)) }
   }
   material.userData.cecil = u

@@ -115,15 +115,19 @@ export default {
   },
 
   // 씬은 레벨 모듈이 나중에 짓는다. 목록은 주기적으로만 다시 훑는다.
+  // three 의 레이캐스터는 visible 을 보지 않는다(three.core.js intersect()). traverse 로 훑으면
+  // 꺼진 방의 포털과 그 방에 서 있는 NPC 가 그대로 상호작용 대상으로 남아, 로비에서 942호의
+  // 프라이스를 심문할 수 있게 된다. 그래서 여기서 꺼진 가지를 통째로 잘라낸다.
   _scan () {
     const solids = []
     const hot = []
-    this.engine.scene.traverse((o) => {
+    const walk = (o) => {
+      if (o.visible === false) return
       if (o.userData?.interact) hot.push(o)
-      if (!o.isMesh || !o.visible || !o.geometry) return
-      if (o.userData?.noCollide) return
-      solids.push(o)
-    })
+      if (o.isMesh && o.geometry && !o.userData?.noCollide) solids.push(o)
+      for (const c of o.children) walk(c)
+    }
+    walk(this.engine.scene)
     this.solids = solids
     this.hot = hot
   },

@@ -10,7 +10,7 @@
 | 코드 | 69파일 · 18,616줄. 12개 모듈 부팅, 콘솔 에러·경고 0 |
 | 렌더 | 헤드리스 Chromium이 ANGLE Metal(M2 GPU) 실가속. 2560×1440 결정론적 스크린샷 |
 | 시스템 | materials(24종) · pipeline(패스 6) · props(40종) · atmosphere · narrative/interrogation/deduction · gameplay/evidence · ui(hud/notebook/subtitles) · audio · physics |
-| 복도 그래픽 | **평균 4.6/10, 실격 3건**. 3라운드 연속 4.6에서 정체 |
+| 그래픽 | R6-4 까지 진행. **SSR 이 진짜 러프니스 G버퍼를 소비한다** — 카펫·러그·벽지가 더 이상 거울이 아니고, 대리석·타일의 반사는 유지된다(`docs/ROUNDS.md` R6-4). G축은 평균 5.43 이후 재채점하지 않았다 |
 | 수사노트 UI | 목표 달성 — 1947년 종이 소품으로 읽힘, 웹 UI 냄새(D7) 없음 |
 | 미착수 | 레벨 모듈 4종 · 인물과 텔 시스템 · 시네마틱 · 내러티브 게이트(N1~N8) 채점 · 블라인드 비교 |
 
@@ -29,8 +29,25 @@ SHOT_PORT=5901 node tools/shoot.mjs --out shots/x --off volumetric,dof atmo-corr
 
 `?scene=` 값: `corridor-night` `lobby-night` `room-dusk` `bathroom` `rooftop-rain` `interrogation`
 
-**회귀 기준선**: `shots/_baseline/corridor-r4-current.png` — 현재 코드 상태의 복도 컷.
-새 라운드는 이것과 픽셀 비교해 나빠졌는지부터 판정한다.
+**회귀 기준선**: `shots/_baseline/corridor.png` — 라운드마다 갱신한다.
+`corridor-r4-current.png` 는 라운드5 진입 시점의 원본 기록이라 갱신하지 않는다.
+
+**A/B 오염 3종은 `docs/ROUNDS.md` 맨 아래 "하네스·A/B 방법론 결함" 을 먼저 읽어라.**
+요약: (1) `shoot.mjs` 의 vite 고아 프로세스 — 수정됐지만 예전에 남은 서버가 있으면
+`pkill -f node_modules/.bin/vite` 로 먼저 청소할 것. (2) `--ab` 변종마다 engine.time 이 0.8초씩
+밀린다 — 모든 변종 js 끝에 `E.time = 9.2`. (3) 오토노출을 `p.expo.measure` 로 고정. 그리고
+**1번 변종만 상태가 깨끗하다** — 결정적 판정은 1변종 단독 실행으로 재확인한다.
+
+```bash
+node tools/pix.mjs diff shots/_baseline/corridor.png shots/rN/atmo-corridor-night.png --heat /tmp/h.png
+node tools/pix.mjs crop  <img> <out> <x> <y> <w> <h> <zoom>      # 확대 검수
+node tools/pix.mjs sheet <out> <x> <y> <w> <h> <cols> <zoom> <img...>   # 같은 영역 나란히
+SHOT_PORT=59xx node tools/shoot.mjs --out shots/x --ab probes.json atmo-corridor-night   # A/B 배터리
+```
+
+라운드 기록은 `docs/ROUNDS.md`. 게이트는 전역 지표(반딧불·클리핑·평면·디테일·휘도)에
+**160px 타일 국소 회귀**(디테일 뭉갬·반딧불 발생)를 더해 판정한다 — 전역 평균만 보면
+"한 곳을 고치며 다른 곳을 망가뜨린" 라운드4형 사고가 그대로 통과한다.
 
 ## 3. 기각된 가설 — 다시 파지 마라
 
@@ -44,7 +61,33 @@ SHOT_PORT=5901 node tools/shoot.mjs --out shots/x --off volumetric,dof atmo-corr
 | 6 | 조명기구 지오메트리가 램프 막대의 원인 | 포스트 6개 전량 제거 | **틀렸다** — 아래 참조 |
 | 7 | 천장 보에 `castShadow`가 안 걸려 그림자가 없다 | 런타임 씬 계측 | **틀렸다** — 캐스터 337개, 그림자 스포트 12개(far 26·11·9·4.6·3.6m) |
 | 8 | 카펫이 단색인 건 UV 종횡비 때문 | 코드 확인 | **이미 수정됨** — `PC.floorUv(run.geometry, 2.7)`로 등방 재전개 완료 |
-| 9 | 라운드4 수직 스미어가 TAA/모션블러 때문 | `motionblur`·`dof` 제거 | 픽셀차 **0.0%**(이미 무력화). 포스트 전량 제거해도 스미어 잔존 → **재질 오버레이가 원인** |
+| 9 | 라운드4 수직 스미어가 TAA/모션블러 때문 | `motionblur`·`dof` 제거 | 픽셀차 **0.0%**. 포스트 전량 제거해도 잔존 |
+| 10 | 스미어가 물얼룩·그을음 밴드(uCD) 오버레이 | 밴드 off A/B | **틀렸다** — 무변화 |
+| 11 | 스미어가 월드 그런지(uCA.z) / 매크로 damp(uCC.y) / 디테일 노멀(uCB.y) | 각각 off A/B | 전부 무변화 |
+| 12 | 스미어가 이방성 필터링 부재 | 런타임 텍스처 계측 | aniso 16 · minFilter LINEAR_MIPMAP_LINEAR 정상 |
+| 13 | 스미어가 스토캐스틱 타일링 | define 제거 후 재컴파일 | 무변화 |
+| 14 | 원거리 벽 직사각 이음선이 volumetric 패스 | 패스 제거 A/B | **틀렸다** — 계단 유지 |
+| 15 | 같은 이음선이 그림자(pcss/VSM) | 전 광원 castShadow=false | **틀렸다** — 계단 유지 |
+| 16 | 같은 이음선을 `uSoftFade` 확대로 완화 | 0.26 → 1.2 / 2.5 / 3.0 | **역효과** — 계단비 2.32 → 2.81 |
+| 17 | 같은 이음선을 깊이 2차차분 기반 페이드 국소확장으로 완화 | `uEdgeSpread` 신설 후 촬영 | 해당 픽셀 **바이트 동일**. 셸 `uLen` 1.5m 라 15m 지점에 안 닿는다 |
+
+**14~17 의 진짜 원인은 기구 광축 셸(`SHAFT_STEPS`)이다** — 셸 메시를 숨기면 그 자리가
+8.1 → 9.5 로 평평해지고 계단이 통째로 사라진다. 상세는 `docs/ROUNDS.md` R6-1.
+
+### 3.0 재질 오버레이 스미어의 진짜 원인 (해결됨 · 라운드5)
+
+`THREE.Material.copy()` 는 `defines` / `onBeforeCompile` / `customProgramCacheKey` /
+`onBeforeRender` 를 **복사하지 않는다**. `kit-mat.js` 의 `wearMat()`(그리고 `rain.js` 의
+`wetify()`)이 라이브러리 재질을 클론하는데, 그 클론이 `applyCecil` 이 심은
+**CECIL_TRIPLANAR·CECIL_STOCH·CECIL_POM·CECIL_FLOW 와 주입 청크를 통째로 잃고** 기본 PBR +
+메시 UV 로 되돌아갔다. 복도 벽 베니어는 `uv 0..1 이 17.3m × 1.79m` 인 판이라, 트리플래너를
+잃는 순간 벽지 한 장이 복도 전체에 늘어나 화면을 가로지르는 가닥이 된다.
+
+결정적 증거(런타임 계측): 같은 `wallpaper.damask.green` 인데 원본 재질은
+`defines: [STANDARD, PHYSICAL, CECIL_TRIPLANAR]`, wear 클론은 `defines: [STANDARD, PHYSICAL]`.
+
+`wear`/`vcol`/젖은 표면 메시가 전부 이 경로를 타므로 **프로젝트 전역**에 걸려 있던 결함이었다.
+재질 복제는 이제 전부 `kit-mat.cloneMat()` 을 거친다.
 
 ### 3.1 램프 "가로 막대"의 진짜 원인 (해결됨)
 
@@ -54,9 +97,17 @@ SHOT_PORT=5901 node tools/shoot.mjs --out shots/x --off volumetric,dof atmo-corr
 결정적 증거: 불투명 캡슐 메시 **하나만** 남기고 찍었더니 반투명 살구색 막대 5개가 나왔다.
 → 원판 확산 커널로 교체해 **해결됨**.
 
-### 3.2 A/B가 5번 연속 오염된 이유 (반드시 숙지)
+### 3.2 A/B가 오염되는 두 가지 이유 (반드시 숙지)
 
-`composite`은 `pipeline.effects`가 아니라 **PIPELINE-CORE 직속**이라 `--off`가 닿지 않는다.
+**(가) QA 모드 엔진은 RAF 를 돌리지 않는다.** `goto()` 가 settle 까지 끝낸 뒤 상태를 바꾸면
+그 변경은 **그려지지 않는다** — 스크린샷은 goto 시점의 프레임이다. 이전 세션과 이번 세션
+초반의 A/B 가 전부 "무변화"로 나온 진짜 이유가 이것이다. 변종 적용 후 반드시 다시 settle 해야
+한다(`tools/shoot.mjs --ab` 가 자동으로 한다). 오토노출은 settle 횟수에 따라 계속 흐르므로
+변종 간 노출이 다르면 그 비교는 이미 오염된 것이다.
+
+**(나) composite 은 `--off` 가 닿지 않는다.**
+
+`composite`은 `pipeline.effects`가 아니라 **PIPELINE-CORE 직속**이다.
 광원 주변 아티팩트를 A/B 하기 전에 반드시:
 
 ```js
@@ -73,10 +124,10 @@ pipeline.composite.mat.uniforms.uHalation.value = 0
 
 | 우선 | 항목 | 내용 |
 |---|---|---|
-| 1 | **재질 오버레이 스미어 (신규 회귀)** | 화면 전체에 수직 가닥. SURFACES가 D3를 깨려고 넣은 물얼룩·그을음 오버레이가 길게 늘어난 것. **포스트가 아니다**(전량 제거해도 잔존) |
+| ~~1~~ | ~~재질 오버레이 스미어~~ | **해결(R5-1)** — 원인은 오버레이가 아니라 `Material.copy` 가 defines 를 안 옮겨 트리플래너를 잃은 것. §3.0 |
 | 2 | **D1 에일리어싱** | 카트 망사(1500–1750, 1020–1360) 도트 끊김, 격자 살(2140–2270, 450–1120) 흰 반딧불. 스펙큘러 AA + 하이라이트 클램프 필요 |
 | 3 | **D3 타일링** | 좌측 벽지 모티프가 x530–770과 x0–450에서 **같은 무늬가 두 배율로 공존**. UV 스케일 통일부터 |
-| 4 | **D4 플레이스홀더** | 천장 형광등이 하우징·엔드캡 없는 순백 캡슐. 브래킷 조명은 눌린 구+민짜 실린더. 우측 슬래브(2280–2470, 300–1300) 무텍스처 |
+| 4 | **D4 플레이스홀더** | 천장 형광등은 **해결(R5-2)** — 채널 하우징·엔드플레이트·놋쇠 소켓·에나멜 반사판. 브래킷 조명(눌린 구+민짜 실린더)과 우측 슬래브(2280–2470, 300–1300) 무텍스처는 미해결 |
 | 5 | **G2 광축** | 밀도 균일 삼각형이라 반투명 판으로 읽힘. 3D 노이즈 밀도 + 차폐 + 지수 감쇠 경계 |
 | 6 | **G4 그림자 소프트니스** | 설정은 되어 있으나 전 화면 동일 소프트니스라 접촉면이 사라짐. **바이어스·페넘브라·해상도**를 볼 것(플래그 아님) |
 | 7 | **G9 구도** | 소실점이 화면 중앙(1150,680). 우측 전경이 판독 불가 검은 덩어리 |
@@ -86,10 +137,10 @@ pipeline.composite.mat.uniforms.uHalation.value = 0
 **3라운드 연속 평균 4.6.** 매 라운드 무언가 좋아지고 무언가 나빠지는 진동이 일어났고,
 라운드4는 카펫·카트·광축을 개선하는 대신 스미어와 D1 실격을 새로 만들었다. 원인은 둘이다.
 
-1. **회귀 게이트가 없다.** 심사자에게 "매 사이클 백지에서 채점하라"고 지시했는데, 이건 점수
+1. ~~**회귀 게이트가 없다.**~~ → `tools/pix.mjs diff` 로 해결. 심사자에게 "매 사이클 백지에서 채점하라"고 지시했는데, 이건 점수
    인플레는 막지만 **회귀를 보이지 않게** 만든다. 기준선 대비 픽셀 비교로 "좋았던 것이 유지되는가"를
    기계 판정하는 단계가 필요하다.
-2. **4개 에이전트가 같은 픽셀을 동시에 만진다.** 무엇이 무엇을 망쳤는지 귀속이 불가능하다.
+2. ~~**4개 에이전트가 같은 픽셀을 동시에 만진다.**~~ → 라운드당 담당 1명으로 전환. 무엇이 무엇을 망쳤는지 귀속이 불가능하다.
    한 라운드에 한 담당만 투입하고 매번 기준선과 비교해야 원인이 특정된다.
 
 ### 권장 프로세스

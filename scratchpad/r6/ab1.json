@@ -1,0 +1,22 @@
+[
+  {
+    "tag": "A-ref",
+    "js": "(()=>{const E=window.__ENGINE__,p=E.get('pipeline');p.composite.mat.uniforms.uHalation.value=0;window.__S=window.__S||{vol:p.effects.volumetric};p.effects.volumetric=window.__S.vol;const L=[];E.scene.traverse(o=>{if(!o.isLight||!o.visible)return;if(o.isAmbientLight||o.isHemisphereLight)return;if(o.userData.__cs===undefined)o.userData.__cs=o.castShadow;o.castShadow=o.userData.__cs;const pos=o.getWorldPosition(new (o.position.constructor)());L.push({n:o.name||o.type,t:o.isSpotLight?'spot':o.isPointLight?'point':o.isDirectionalLight?'dir':'?',i:+(o.intensity||0).toFixed(1),d:+(o.distance||0).toFixed(1),ang:o.isSpotLight?+(o.angle*57.3).toFixed(0):null,cs:o.castShadow,near:o.shadow?+o.shadow.camera.near.toFixed(2):null,far:o.shadow?+o.shadow.camera.far.toFixed(2):null,fov:o.shadow&&o.shadow.camera.fov?+o.shadow.camera.fov.toFixed(0):null,map:!!(o.shadow&&o.shadow.map),pos:[+pos.x.toFixed(1),+pos.y.toFixed(1),+pos.z.toFixed(1)]})});return L})()"
+  },
+  {
+    "tag": "B-novol",
+    "js": "(()=>{const E=window.__ENGINE__,p=E.get('pipeline');p.composite.mat.uniforms.uHalation.value=0;delete p.effects.volumetric;E.scene.traverse(o=>{if(o.isLight&&o.userData.__cs!==undefined)o.castShadow=o.userData.__cs});return 'volumetric removed'})()"
+  },
+  {
+    "tag": "C-noshadow",
+    "js": "(()=>{const E=window.__ENGINE__,p=E.get('pipeline');p.composite.mat.uniforms.uHalation.value=0;p.effects.volumetric=window.__S.vol;let n=0;E.scene.traverse(o=>{if(o.isLight&&o.castShadow){o.castShadow=false;n++}});return 'shadows off '+n})()"
+  },
+  {
+    "tag": "D-novol-noshadow",
+    "js": "(()=>{const E=window.__ENGINE__,p=E.get('pipeline');p.composite.mat.uniforms.uHalation.value=0;delete p.effects.volumetric;E.scene.traverse(o=>{if(o.isLight)o.castShadow=false});return 'both off'})()"
+  },
+  {
+    "tag": "E-restore",
+    "js": "(()=>{const E=window.__ENGINE__,p=E.get('pipeline');p.composite.mat.uniforms.uHalation.value=0;p.effects.volumetric=window.__S.vol;E.scene.traverse(o=>{if(o.isLight&&o.userData.__cs!==undefined)o.castShadow=o.userData.__cs});return 'restored'})()"
+  }
+]

@@ -10,6 +10,7 @@
 import * as THREE from 'three'
 import { rng, clamp } from '../../core/util.js'
 import { LIGHT_PARS, SOFT_PARS, WRAP, commonUniforms, tune } from './particles.js'
+import { cloneMat } from '../kit-mat.js'
 
 // ── 스트릭 ───────────────────────────────────────────────────────────────
 function streaks (count, box, seed, o = {}) {
@@ -291,7 +292,10 @@ function lensLayer () {
 
 // 젖은 표면. 라이브러리 재질은 공유 캐시라 절대 건드리지 않고 복제본만 적신다.
 export function wetify (m, amt = 1) {
-  const w = m.clone()
+  // m.clone() 을 직접 쓰면 안 된다 — Material.copy 가 userData 를 JSON 왕복시켜
+  // 렌더타깃 텍스처에서 경고를 내고, defines/onBeforeCompile 을 안 옮겨 cecil 주입(트리플래너·
+  // 스토캐스틱·디테일 노멀)을 통째로 잃는다. 옥상 젖은 표면이 전부 그 상태였다.
+  const w = cloneMat(m, { key: 'cecil-wet' })
   w.roughness = clamp((m.roughness ?? 1) - 0.4 * amt, 0.03, 1)
   w.envMapIntensity = (m.envMapIntensity ?? 1) * (1 + 0.6 * amt)
   w.clearcoat = Math.max(m.clearcoat ?? 0, 0.9 * amt)

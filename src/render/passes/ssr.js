@@ -34,10 +34,10 @@ void main () {
 }`
 
 const MARCH = HEAD + `
-uniform sampler2D uNormal, uChain, uNoise;
+uniform sampler2D uNormal, uRough, uChain, uNoise;
 uniform mat4 uProj, uInvView;
 uniform float uFrame, uHasNoise, uMaxDist, uThick, uStrength, uLodScale, uMaxLod, uFar;
-uniform float uCeilRough, uRoughCut, uRoughBand, uRoughLod, uRoughFloor;
+uniform float uRoughCut, uRoughBand, uRoughLod, uRoughFloor;
 
 float blue (float o) {
   vec2 fc = gl_FragCoord.xy + o * 23.0;
@@ -57,19 +57,13 @@ void main () {
   vec3 V = normalize(P);
   vec3 R = reflect(V, N);
 
-  // 러프니스 소스가 G버퍼에 없다 — 월드 노멀의 상향 성분으로 대체한다.
-  // 바닥·수평면(젖은 대리석)은 매끈, 수직면은 거칠게. rough 버퍼가 생기면 uRough 로 교체.
-  // 아래를 보는 면은 이 게임에서 전부 석고 천장이다. 예전엔 벽과 같은 0.58 이라 네온 간판이
-  // 판독 가능한 거울상으로 맺혔다 — 천장만 따로 uCeilRough 로 끌어올린다.
+  // 프리패스가 어태치먼트 2에 실효 러프니스를 굽는다(클리어코트는 코트 롭으로 mix된 값). 그걸 그대로 쓴다.
+  // 노멀 방향 추정을 쓰던 시절엔 카펫이 수평면이라는 이유만으로 rough 0.07 = 거울로 취급됐다.
   vec3 wn = normalize((uInvView * vec4(N, 0.0)).xyz);
   float up = clamp(wn.y, 0.0, 1.0);
-  float dn = clamp(-wn.y, 0.0, 1.0);
-  float rough = mix(mix(0.58, 0.07, pow(up, 3.0)), uCeilRough, pow(dn, 1.6));
+  float rough = clamp(texture2D(uRough, vUv).x, 0.0, 1.0);
 
   // 러프니스 마스크. 컷오프를 넘으면 반사 강도를 uRoughFloor 까지 떨어뜨리고 밉을 강제로 올린다.
-  // 컷오프가 0.62 인 것은 위 rough 가 재질값이 아니라 노멀 방향 추정치이기 때문이다. 수직면 0.58 은
-  // "모르겠다"는 헤지값이라 여기에 0.40 을 걸면 mirror.aged 까지 벽지 수준으로 죽는다.
-  // 러프니스 G버퍼가 들어오면 컷오프를 0.40 으로 내린다.
   float rm = smoothstep(uRoughCut, uRoughCut + uRoughBand, rough);
   float cosV = clamp(dot(-V, N), 0.0, 1.0);
   float f0 = mix(0.04, 0.10, up);
@@ -210,12 +204,13 @@ export default class Ssr {
 
     this.mMarch = shader(MARCH, { STEPS: this.steps })
     this.mMarch.uniforms = {
-      uDepth: { value: null }, uNormal: { value: null }, uChain: { value: null }, uNoise: { value: null },
+      uDepth: { value: null }, uNormal: { value: null }, uRough: { value: null },
+      uChain: { value: null }, uNoise: { value: null },
       uInvProj: { value: new THREE.Matrix4() }, uProj: { value: new THREE.Matrix4() },
       uInvView: { value: new THREE.Matrix4() }, uNoiseScale: { value: new THREE.Vector2(1, 1) },
       uFrame: { value: 0 }, uHasNoise: { value: 0 }, uMaxDist: { value: 16 }, uThick: { value: 0.35 },
       uStrength: { value: 1.0 }, uLodScale: { value: 2.2 }, uMaxLod: { value: 5 }, uFar: { value: 100 },
-      uCeilRough: { value: 0.88 }, uRoughCut: { value: 0.62 }, uRoughBand: { value: 0.20 },
+      uRoughCut: { value: 0.40 }, uRoughBand: { value: 0.20 },
       uRoughLod: { value: 4.0 }, uRoughFloor: { value: 0.09 }
     }
     this.mTemporal = shader(TEMPORAL)
@@ -245,7 +240,8 @@ export default class Ssr {
 
   render (ctx) {
     const out = ctx.targets?.ssr
-    if (!out || !ctx.targets.normal || !ctx.targets.hdr) return
+    // 러프니스가 없으면 샘플이 0(=완전 거울)로 읽혀 화면 전체가 반사판이 된다. 그럴 바엔 끈다.
+    if (!out || !ctx.targets.normal || !ctx.targets.roughness || !ctx.targets.hdr) return
     const r = ctx.renderer
     if (!this.enabled) {
       // 프리셋에서 꺼져 있으면 잔상이 남지 않도록 한 번 비운다
@@ -260,6 +256,7 @@ export default class Ssr {
     const m = this.mMarch.uniforms
     m.uDepth.value = ctx.depthTexture ?? ctx.targets.hdr.depthTexture
     m.uNormal.value = ctx.targets.normal.texture
+    m.uRough.value = ctx.targets.roughness?.texture ?? null
     m.uChain.value = this.chain.texture
     m.uNoise.value = ctx.blueNoise ?? null
     m.uHasNoise.value = ctx.blueNoise ? 1 : 0
