@@ -43,7 +43,8 @@ function releaseLock () {
 const argv = process.argv.slice(2)
 const outIdx = argv.indexOf('--out')
 const OUT = outIdx >= 0 ? argv[outIdx + 1] : 'shots'
-const only = argv.filter((a, i) => !a.startsWith('--') && !(outIdx >= 0 && i === outIdx + 1))
+const abArgIdx = argv.indexOf('--ab')
+const only = argv.filter((a, i) => !a.startsWith('--') && !(outIdx >= 0 && i === outIdx + 1) && !(abArgIdx >= 0 && i === abArgIdx + 1) && !(argv.indexOf('--off') >= 0 && i === argv.indexOf('--off') + 1))
 const PORT = Number(process.env.SHOT_PORT || (5100 + (process.pid % 700)))
 const W = 1280, H = 720
 
@@ -181,7 +182,7 @@ try {
   // --ab <file.json> : [{tag, js}] 를 순서대로 page에서 실행하고 변종마다 샷을 남긴다.
   // 한 세션 안에서 돌려야 warmup(20~30초)과 GPU 락을 변종 수만큼 반복하지 않는다.
   // js는 브라우저 컨텍스트에서 평가되며 window.__ENGINE__ / __CECIL__ 을 그대로 쓴다.
-  const abIdx = argv.indexOf('--ab')
+  const abIdx = abArgIdx
   const AB = abIdx >= 0 && argv[abIdx + 1] ? JSON.parse(readFileSync(argv[abIdx + 1], 'utf8')) : null
 
   const names = only.length ? only : await page.evaluate(() => Object.keys(window.__CECIL__.shots))
@@ -195,7 +196,12 @@ try {
       let stats = null, lum = null, err = null, applied = null
       try {
         await page.evaluate(n => window.__CECIL__.goto(n), name)
-        if (variant.js) applied = await page.evaluate(variant.js)
+        // 엔진은 QA 모드에서 RAF를 돌리지 않는다. goto 뒤에 상태를 바꾸면 그 프레임은 그려지지
+        // 않으므로, 변종 적용 후 반드시 다시 settle 해야 A/B가 성립한다.
+        if (variant.js) {
+          applied = await page.evaluate(variant.js)
+          await page.evaluate(() => { const p = window.__ENGINE__.modules.get('pipeline'); if (p?.taa?.clear) { try { p.taa.clear(p.ctx) } catch {} } window.__CECIL__.settle(48) })
+        }
         stats = await page.evaluate(() => window.__CECIL__.stats())
         await page.screenshot({ path: `${OUT}/${name}${suffix}.png`, timeout: 120000 })
         lum = await page.evaluate(LUM_PROBE)
