@@ -1,0 +1,44 @@
+// 증거 표지 데이터. 이름·성격은 docs/STORY.md §3, 링크 명제는 §5.4 지목 단계에서 그대로 가져왔다.
+// UI는 실제 게임 상태(state.evidence)를 우선 쓰고, 항목에 표기 정보가 없을 때만 여기서 채운다.
+
+export const EVIDENCE = {
+  register: { title: '숙박부', form: 'doc', note: ['밴다이버 — 10월 2일 입실', '2주치 현금 선불', '10일, 11일에도 객실 청구'] },
+  keyrack: { title: '열쇠 걸이', form: 'object', note: ['942 고리 비어 있음', 'ROOF 고리도 비어 있음'] },
+  flask: { title: '위스키 플라스크', form: 'object', note: ['프런트 데스크 아래', '근무 중'] },
+  'pressure-log': { title: '수압 민원 장부', form: 'doc', note: ['10월 9일부터 3층 위 급수 없음', '야간 접수 서명 — 루이즈'] },
+  photos: { title: '엘리베이터 사진', form: 'photo', note: ['4장', '하우스 디텍티브 촬영', '넬 밴스 사망 당일'] },
+  journal: { title: '찢긴 일기', form: 'doc', note: ['942호 침대 밑', '프라이스 — 세 번', '마지막 장에 944'] },
+  roofkey: { title: '옥상 열쇠', form: 'object', note: ['942호 매트리스 밑', '태그 필적 — 다이치'] },
+  'sink-trap': { title: '세면대 트랩 침전물', form: 'object', note: ['검은 침전물', '탱크에서 내려온 것'] },
+  autopsy: { title: '넬 밴스 부검 사본', form: 'doc', note: ['유족 비공개 서류', '폐의 물 — 낙하 시 흡인'] },
+  'water-log': { title: '급수 일지', form: 'doc', note: ['944호에서 나옴', '탱크 점검란 — 관리인 필적'] },
+  footprints: { title: '젖은 발자국', form: 'object', note: ['942호 앞에서 계단 쪽', '작업화 265밀리'] },
+  'hatch-lock': { title: '탱크 해치 자물쇠', form: 'object', note: ['걸쇠는 바깥에 있다', '잠겨 있었다'] },
+  wrench: { title: '도일의 렌치', form: 'object', note: ['캣워크 아래', '손에서 놓지 않던 물건'] },
+  shoes: { title: '놓인 구두', form: 'object', note: ['캣워크 위 나란히', '젖지 않은 자리'] }
+}
+
+export const LINKS = [
+  { id: 'L1', a: 'hatch-lock', b: 'shoes', claim: '자살이 아니다 — 해치는 바깥에서 잠겼고 구두는 가지런히 놓여 있었다' },
+  { id: 'L2', a: 'water-log', b: 'pressure-log', claim: '10월 9일 밤 탱크에 접근한 사람은 한 명뿐이다' },
+  { id: 'L3', a: 'photos', b: 'wrench', claim: '14개월 전에도 같은 사람이 같은 자리에 있었다' }
+]
+
+export function meta (id) {
+  return EVIDENCE[id] || { title: id, form: 'doc', note: [] }
+}
+
+// state.evidence 항목을 UI가 쓰는 모양으로 정규화한다. 게임 데이터가 항상 우선이다.
+export function normalize (e) {
+  const m = meta(e.id)
+  return {
+    id: e.id,
+    title: e.title || m.title,
+    form: e.form || (e.kind === 'photo' ? 'photo' : m.form),
+    note: e.note || (e.body ? [e.body] : m.note)
+  }
+}
+
+// 하네스 전용 프리뷰. 실제 진행에서는 절대 쓰이지 않는다 (state가 비어 있을 때만).
+export const QA_NOTEBOOK = ['register', 'pressure-log', 'photos', 'journal', 'autopsy', 'keyrack', 'roofkey', 'flask', 'sink-trap', 'footprints']
+export const QA_BOARD = ['register', 'roofkey', 'hatch-lock', 'water-log', 'autopsy', 'photos', 'sink-trap', 'shoes', 'wrench', 'pressure-log', 'footprints']

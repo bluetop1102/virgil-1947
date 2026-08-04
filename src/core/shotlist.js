@@ -1,0 +1,115 @@
+// QA 스크린샷 카메라 목록. 레벨/시네마틱 에이전트는 여기에 **추가만** 한다. 기존 엔트리 수정 금지.
+// pos/target은 월드 좌표(m), time은 결정론적 게임 시각(초), state는 촬영 전 강제할 게임 상태.
+
+export const SHOTS = {
+  'testbed-materials': {
+    pos: [0, 1.55, 5.6], target: [0, 1.1, -1.2], fov: 38, time: 8, act: 1,
+    state: { scene: 'testbed' },
+    note: '재질 쇼케이스 — 대리석/황동/목재/타일/젖은면 스펙큘러 비교. G3 단독 판정'
+  },
+  'testbed-props': {
+    pos: [2.4, 1.35, 3.2], target: [-0.6, 0.85, -0.8], fov: 44, time: 9, act: 1,
+    state: { scene: 'testbed' },
+    note: '소품 근접 — 베벨·마모·컨택트 섀도. G6/G10/D4/D5 판정'
+  },
+  'lobby-wide': {
+    pos: [0, 1.68, 9.2], target: [0, 1.5, -2], fov: 34, time: 12, act: 1,
+    note: '로비 전경 — 대리석 반사·샹들리에·프런트데스크. G5/G9 판정 기준 샷'
+  },
+  'lobby-desk': {
+    pos: [-1.1, 1.62, 1.6], target: [-3.4, 1.35, -3.2], fov: 42, time: 14, act: 1,
+    note: '프런트데스크 근접 — 황동/목재/숙박부. G3/G6 판정'
+  },
+  'lobby-elevator': {
+    pos: [4.2, 1.66, 2.0], target: [6.8, 1.5, -1.2], fov: 38, time: 16, act: 1,
+    note: '엘리베이터 로비 — 황동 도어·인디케이터. 볼류메트릭 광축 G2'
+  },
+  'corridor-long': {
+    pos: [0, 1.66, 14.0], target: [0, 1.55, -6], fov: 30, time: 22, act: 2,
+    note: '9층 복도 원경 — 안개 소멸·벽등 반복 변주. G2/G10 핵심 샷'
+  },
+  'corridor-942': {
+    pos: [1.3, 1.64, 4.2], target: [-1.4, 1.5, 1.4], fov: 40, time: 24, act: 2,
+    note: '942호 문 앞 — 카펫·문틀 몰딩·번호판. G6'
+  },
+  'room942-bed': {
+    pos: [2.6, 1.55, 2.8], target: [-0.8, 1.0, -1.0], fov: 38, time: 30, act: 2,
+    note: '942호 침대·창 — 블라인드 광선, 먼지. G1/G2'
+  },
+  'room942-bath': {
+    pos: [0.6, 1.5, 1.4], target: [-1.0, 1.15, -1.6], fov: 44, time: 32, act: 2,
+    note: '욕실 — 육각타일·세면대·거울 반사. G3/G5'
+  },
+  'rooftop-tanks': {
+    pos: [-6.5, 2.2, 8.0], target: [1.0, 3.2, -1.0], fov: 36, time: 44, act: 3,
+    note: '옥상 물탱크 — 야경·달빛·비. G1/G7/G9'
+  },
+  'rooftop-ladder': {
+    pos: [1.8, 3.4, 3.0], target: [0.4, 4.6, -0.6], fov: 40, time: 46, act: 3,
+    note: '탱크 사다리 앙각 — 실루엣·림라이트. G10'
+  },
+  'interrogation-deitch': {
+    pos: [0, 1.42, 1.35], target: [0, 1.40, -0.4], fov: 50, time: 18, act: 1,
+    state: { interrogating: 'deitch' },
+    note: '마를로 다이치 심문 클로즈업 — 텔 가독성 N2/N5'
+  },
+  'notebook-open': {
+    pos: [0, 1.5, 1.0], target: [0, 1.3, 0], fov: 45, time: 26, act: 2,
+    state: { ui: 'notebook' },
+    note: '수사노트 UI — 1947 물성 N8/D7'
+  },
+  'deduction-board': {
+    pos: [0, 1.5, 1.0], target: [0, 1.3, 0], fov: 45, time: 50, act: 3,
+    state: { ui: 'deduction' },
+    note: '증거판 — N4/N8'
+  },
+  // ATMOSPHERE 단독 검증 프로브. 레벨과 겹치지 않도록 월드 y=-500에 격리해 짓는다(y좌표에 -500이 이미 반영됨).
+  'atmo-lobby-night': {
+    pos: [4.6, -498.38, 5.4], target: [-0.6, -498.95, -2.2], fov: 40, time: 11, act: 1,
+    state: { scene: 'atmo-probe', mood: 'lobby-night' },
+    note: '[ATMOSPHERE QA] lobby-night — 텅스텐 샹들리에 vs 형광 프런트등 색온도 분리, 담배연기. G1/G2'
+  },
+  'atmo-corridor-night': {
+    pos: [0.4, -498.40, 6.2], target: [-0.4, -498.65, -6.0], fov: 32, time: 15, act: 2,
+    state: { scene: 'atmo-probe', mood: 'corridor-night' },
+    note: '[ATMOSPHERE QA] corridor-night — 원경 소멸·청록 그림자·벽등 광축. G2'
+  },
+  'atmo-room-dusk': {
+    pos: [3.8, -498.45, 4.0], target: [-1.4, -499.15, -2.6], fov: 42, time: 19, act: 2,
+    state: { scene: 'atmo-probe', mood: 'room-dusk' },
+    note: '[ATMOSPHERE QA] room-dusk — 블라인드 슬랫 광축·먼지 밀도 최대. G2'
+  },
+  'atmo-bathroom': {
+    pos: [2.6, -498.45, 3.4], target: [-0.8, -499.25, -2.0], fov: 44, time: 23, act: 2,
+    state: { scene: 'atmo-probe', mood: 'bathroom' },
+    note: '[ATMOSPHERE QA] bathroom — 4500K 단일광 차가운 룩·러프니스 램프. G3/G7'
+  },
+  'atmo-rooftop-rain': {
+    pos: [5.2, -498.15, 5.6], target: [-1.6, -498.90, -3.0], fov: 38, time: 27, act: 3,
+    state: { scene: 'atmo-probe', mood: 'rooftop-rain' },
+    note: '[ATMOSPHERE QA] rooftop-rain — 달빛+광해 IBL 배경·비·네온. G1/G7'
+  },
+  'atmo-interrogation': {
+    pos: [0.05, -498.58, 1.15], target: [0, -498.76, -0.4], fov: 50, time: 31, act: 1,
+    state: { scene: 'atmo-probe', mood: 'interrogation' },
+    note: '[ATMOSPHERE QA] interrogation — 단일 실광원 명암비·배경 폴오프. G1'
+  },
+  // UI 단독 검증. 카메라는 notebook-open과 같고 DOM 오버레이 상태만 다르다.
+  'notebook-present': {
+    pos: [0, 1.5, 1.0], target: [0, 1.3, 0], fov: 45, time: 27, act: 2,
+    state: { ui: 'present' },
+    note: '[UI QA] 심문 중 증거 제시 모드 — 펜으로 두른 선택 표시. N1/N8'
+  },
+  'notebook-photos': {
+    pos: [0, 1.5, 1.0], target: [0, 1.3, 0], fov: 45, time: 28, act: 2,
+    state: { ui: 'photos' },
+    note: '[UI QA] 엘리베이터 사진 스크럽 뷰어 — 인화지 계조·4장 넘김. N8'
+  },
+  'hud-prompt': {
+    pos: [1.3, 1.64, 4.2], target: [-1.4, 1.5, 1.4], fov: 40, time: 25, act: 2,
+    state: { ui: 'prompt' },
+    note: '[UI QA] HUD — 크로스헤어 없음, 타자체 프롬프트와 증거 슬립. D7'
+  }
+}
+
+export function shotNames () { return Object.keys(SHOTS) }

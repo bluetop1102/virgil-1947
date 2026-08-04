@@ -1,0 +1,306 @@
+{
+  "cases": [
+    {
+      "tag": "V0-ship",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 30.5376
+    },
+    {
+      "tag": "V1-noDust",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 30.5376
+    },
+    {
+      "tag": "V2-vol000",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 30.5376
+    },
+    {
+      "tag": "V3-volON",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 30.5376
+    },
+    {
+      "tag": "V4-dofOFF",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 30.5376
+    },
+    {
+      "tag": "V5-dofON-dust",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 30.5376
+    }
+  ],
+  "metrics": {
+    "info": {
+      "ev": 30.53757851863773,
+      "coc": 3,
+      "volI": 0.55,
+      "shaft": 0
+    },
+    "boxes": {
+      "V0-ship": {
+        "ceilLamp": {
+          "mean": 179.4,
+          "sd": 65.6
+        },
+        "rightSconce": {
+          "mean": 203.5,
+          "sd": 47.3
+        },
+        "farEnd": {
+          "mean": 61.7,
+          "sd": 14.9
+        },
+        "nearWall": {
+          "mean": 120.7,
+          "sd": 42.9
+        },
+        "midWall": {
+          "mean": 76.9,
+          "sd": 45.6
+        },
+        "nearCarpet": {
+          "mean": 129.5,
+          "sd": 19.5
+        },
+        "beamCore": {
+          "mean": 48.7,
+          "sd": 6.5
+        },
+        "beamOut": {
+          "mean": 35.1,
+          "sd": 3.1
+        }
+      },
+      "V1-noDust": {
+        "ceilLamp": {
+          "mean": 179.6,
+          "sd": 65.4
+        },
+        "rightSconce": {
+          "mean": 204.1,
+          "sd": 47.1
+        },
+        "farEnd": {
+          "mean": 62.5,
+          "sd": 15.5
+        },
+        "nearWall": {
+          "mean": 121.2,
+          "sd": 43.2
+        },
+        "midWall": {
+          "mean": 76.8,
+          "sd": 45.4
+        },
+        "nearCarpet": {
+          "mean": 130.7,
+          "sd": 20.5
+        },
+        "beamCore": {
+          "mean": 48.4,
+          "sd": 5.8
+        },
+        "beamOut": {
+          "mean": 35.1,
+          "sd": 3
+        }
+      },
+      "V2-vol000": {
+        "ceilLamp": {
+          "mean": 178.7,
+          "sd": 65.8
+        },
+        "rightSconce": {
+          "mean": 204.2,
+          "sd": 47.1
+        },
+        "farEnd": {
+          "mean": 30.8,
+          "sd": 4.7
+        },
+        "nearWall": {
+          "mean": 118.5,
+          "sd": 46.2
+        },
+        "midWall": {
+          "mean": 77.2,
+          "sd": 45.6
+        },
+        "nearCarpet": {
+          "mean": 126.8,
+          "sd": 23.5
+        },
+        "beamCore": {
+          "mean": 34.8,
+          "sd": 2.6
+        },
+        "beamOut": {
+          "mean": 34.5,
+          "sd": 3.1
+        }
+      },
+      "V3-volON": {
+        "ceilLamp": {
+          "mean": 180.2,
+          "sd": 65.3
+        },
+        "rightSconce": {
+          "mean": 205,
+          "sd": 46.7
+        },
+        "farEnd": {
+          "mean": 63.9,
+          "sd": 16.5
+        },
+        "nearWall": {
+          "mean": 122.3,
+          "sd": 44.1
+        },
+        "midWall": {
+          "mean": 77.8,
+          "sd": 45.6
+        },
+        "nearCarpet": {
+          "mean": 132.7,
+          "sd": 21.2
+        },
+        "beamCore": {
+          "mean": 48.4,
+          "sd": 5.9
+        },
+        "beamOut": {
+          "mean": 35,
+          "sd": 3
+        }
+      },
+      "V4-dofOFF": {
+        "ceilLamp": {
+          "mean": 169.3,
+          "sd": 68.6
+        },
+        "rightSconce": {
+          "mean": 205.3,
+          "sd": 46.8
+        },
+        "farEnd": {
+          "mean": 62.5,
+          "sd": 17.7
+        },
+        "nearWall": {
+          "mean": 118.2,
+          "sd": 42.6
+        },
+        "midWall": {
+          "mean": 67.1,
+          "sd": 38.8
+        },
+        "nearCarpet": {
+          "mean": 128.4,
+          "sd": 25
+        },
+        "beamCore": {
+          "mean": 43.8,
+          "sd": 4.1
+        },
+        "beamOut": {
+          "mean": 35,
+          "sd": 3.1
+        }
+      },
+      "V5-dofON-dust": {
+        "ceilLamp": {
+          "mean": 180.5,
+          "sd": 65.1
+        },
+        "rightSconce": {
+          "mean": 205,
+          "sd": 46.8
+        },
+        "farEnd": {
+          "mean": 64.5,
+          "sd": 16.8
+        },
+        "nearWall": {
+          "mean": 121.8,
+          "sd": 43.9
+        },
+        "midWall": {
+          "mean": 77.4,
+          "sd": 45.3
+        },
+        "nearCarpet": {
+          "mean": 132.7,
+          "sd": 21.5
+        },
+        "beamCore": {
+          "mean": 48.3,
+          "sd": 6.1
+        },
+        "beamOut": {
+          "mean": 36.1,
+          "sd": 6
+        }
+      }
+    },
+    "grad": {
+      "ceilLamp": {
+        "dofOn": 13.16,
+        "dofOff": 16.06,
+        "pct": 81.9
+      },
+      "rightSconce": {
+        "dofOn": 12.63,
+        "dofOff": 12.52,
+        "pct": 100.9
+      },
+      "midWall": {
+        "dofOn": 14.83,
+        "dofOff": 13.18,
+        "pct": 112.5
+      },
+      "nearWall": {
+        "dofOn": 11.26,
+        "dofOff": 10.74,
+        "pct": 104.8
+      },
+      "farEnd": {
+        "dofOn": 5.15,
+        "dofOff": 4.91,
+        "pct": 104.9
+      },
+      "nearCarpet": {
+        "dofOn": 8.84,
+        "dofOff": 8.5,
+        "pct": 104
+      }
+    },
+    "frame": {
+      "min": 6.1,
+      "p1": 8,
+      "p50": 55,
+      "p999": 252,
+      "blackPct": 0,
+      "over250Pct": 0.124,
+      "shadowR": 10.6,
+      "shadowB": 26.6
+    },
+    "beam": {
+      "deltaP999": 61,
+      "maskPct": 2.83,
+      "sameBgRatio": 2.16,
+      "veilPct": 3.11,
+      "farOverNear": 52.2,
+      "shaftCoreSd": 5.9,
+      "shaftOutSd": 3
+    }
+  },
+  "console": []
+}

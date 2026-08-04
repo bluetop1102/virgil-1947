@@ -1,0 +1,933 @@
+{
+  "cases": [
+    {
+      "tag": "A0-shellsOff-auto",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "A1-fixed",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "A2-ssrOFF",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "A3-bloomOFF",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "A4-dofOFF",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "A5-volOFF",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "A6-vol060",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "A7-vol100",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "A8-vol172",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "A9-vol250",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "B-shipDof",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    }
+  ],
+  "metrics": {
+    "info": {
+      "evFixed": 33.71399154673974
+    },
+    "frame": {
+      "A0-shellsOff-auto": {
+        "min": 6.1,
+        "p1": 8,
+        "p50": 68,
+        "p999": 252,
+        "blackPct": 0,
+        "darkPct": 0.07,
+        "shadowR": 12.9,
+        "shadowB": 28.3
+      },
+      "A1-fixed": {
+        "min": 6.1,
+        "p1": 8,
+        "p50": 67,
+        "p999": 252,
+        "blackPct": 0,
+        "darkPct": 0.07,
+        "shadowR": 12.9,
+        "shadowB": 28.4
+      },
+      "A2-ssrOFF": {
+        "min": 6.1,
+        "p1": 8,
+        "p50": 62,
+        "p999": 252,
+        "blackPct": 0,
+        "darkPct": 0.08,
+        "shadowR": 8.8,
+        "shadowB": 26.1
+      },
+      "A3-bloomOFF": {
+        "min": 6.1,
+        "p1": 8,
+        "p50": 62,
+        "p999": 252,
+        "blackPct": 0,
+        "darkPct": 0.08,
+        "shadowR": 8.8,
+        "shadowB": 26.1
+      },
+      "A4-dofOFF": {
+        "min": 6.1,
+        "p1": 8,
+        "p50": 61,
+        "p999": 252,
+        "blackPct": 0,
+        "darkPct": 0.08,
+        "shadowR": 8.8,
+        "shadowB": 26
+      },
+      "A5-volOFF": {
+        "min": 6.1,
+        "p1": 7,
+        "p50": 52,
+        "p999": 252,
+        "blackPct": 0,
+        "darkPct": 0.1,
+        "shadowR": 7.3,
+        "shadowB": 24.6
+      },
+      "A6-vol060": {
+        "min": 6.1,
+        "p1": 8,
+        "p50": 53,
+        "p999": 252,
+        "blackPct": 0,
+        "darkPct": 0.08,
+        "shadowR": 8.2,
+        "shadowB": 25.5
+      },
+      "A7-vol100": {
+        "min": 6.1,
+        "p1": 8,
+        "p50": 53,
+        "p999": 250,
+        "blackPct": 0,
+        "darkPct": 0.09,
+        "shadowR": 8.2,
+        "shadowB": 25.6
+      },
+      "A8-vol172": {
+        "min": 6.1,
+        "p1": 8,
+        "p50": 59,
+        "p999": 252,
+        "blackPct": 0,
+        "darkPct": 0.09,
+        "shadowR": 8.5,
+        "shadowB": 25.8
+      },
+      "A9-vol250": {
+        "min": 6.1,
+        "p1": 8,
+        "p50": 64,
+        "p999": 252,
+        "blackPct": 0,
+        "darkPct": 0.08,
+        "shadowR": 8.8,
+        "shadowB": 26
+      },
+      "B-shipDof": {
+        "min": 6.1,
+        "p1": 8,
+        "p50": 64,
+        "p999": 252,
+        "blackPct": 0,
+        "darkPct": 0.08,
+        "shadowR": 12.3,
+        "shadowB": 27.9
+      }
+    },
+    "boxes": {
+      "A0-shellsOff-auto": {
+        "ceilLamp": {
+          "mean": 181.1,
+          "sd": 64.4,
+          "min": 43,
+          "max": 254
+        },
+        "ceilGhostL": {
+          "mean": 85.3,
+          "sd": 65.8,
+          "min": 10,
+          "max": 223
+        },
+        "ceilGhostR": {
+          "mean": 75.5,
+          "sd": 60.4,
+          "min": 10,
+          "max": 219
+        },
+        "rightSconce": {
+          "mean": 205.7,
+          "sd": 46,
+          "min": 77,
+          "max": 247
+        },
+        "beamCol": {
+          "mean": 82.6,
+          "sd": 23.1,
+          "min": 31,
+          "max": 174
+        },
+        "farEnd": {
+          "mean": 99.9,
+          "sd": 25.7,
+          "min": 39,
+          "max": 164
+        },
+        "nearWall": {
+          "mean": 134.7,
+          "sd": 36.6,
+          "min": 50,
+          "max": 212
+        },
+        "midWall": {
+          "mean": 81.3,
+          "sd": 46.2,
+          "min": 14,
+          "max": 238
+        },
+        "nearCarpet": {
+          "mean": 146.2,
+          "sd": 19.6,
+          "min": 74,
+          "max": 190
+        },
+        "darkCeil": {
+          "mean": 33.8,
+          "sd": 28.2,
+          "min": 6,
+          "max": 172
+        }
+      },
+      "A1-fixed": {
+        "ceilLamp": {
+          "mean": 181.7,
+          "sd": 64.2,
+          "min": 42,
+          "max": 254
+        },
+        "ceilGhostL": {
+          "mean": 82.8,
+          "sd": 64.7,
+          "min": 11,
+          "max": 221
+        },
+        "ceilGhostR": {
+          "mean": 73.6,
+          "sd": 59.5,
+          "min": 9,
+          "max": 218
+        },
+        "rightSconce": {
+          "mean": 205.8,
+          "sd": 45.9,
+          "min": 74,
+          "max": 247
+        },
+        "beamCol": {
+          "mean": 81,
+          "sd": 23,
+          "min": 31,
+          "max": 143
+        },
+        "farEnd": {
+          "mean": 98.9,
+          "sd": 26.4,
+          "min": 38,
+          "max": 159
+        },
+        "nearWall": {
+          "mean": 133.6,
+          "sd": 36.8,
+          "min": 49,
+          "max": 208
+        },
+        "midWall": {
+          "mean": 80.5,
+          "sd": 45.7,
+          "min": 14,
+          "max": 236
+        },
+        "nearCarpet": {
+          "mean": 145,
+          "sd": 19.5,
+          "min": 73,
+          "max": 186
+        },
+        "darkCeil": {
+          "mean": 33.8,
+          "sd": 28.2,
+          "min": 6,
+          "max": 171
+        }
+      },
+      "A2-ssrOFF": {
+        "ceilLamp": {
+          "mean": 174.8,
+          "sd": 67.2,
+          "min": 39,
+          "max": 254
+        },
+        "ceilGhostL": {
+          "mean": 20.7,
+          "sd": 20.4,
+          "min": 9,
+          "max": 164
+        },
+        "ceilGhostR": {
+          "mean": 21.3,
+          "sd": 12.1,
+          "min": 8,
+          "max": 119
+        },
+        "rightSconce": {
+          "mean": 200.9,
+          "sd": 51.1,
+          "min": 64,
+          "max": 247
+        },
+        "beamCol": {
+          "mean": 75.3,
+          "sd": 22.4,
+          "min": 31,
+          "max": 139
+        },
+        "farEnd": {
+          "mean": 94.5,
+          "sd": 27.7,
+          "min": 38,
+          "max": 151
+        },
+        "nearWall": {
+          "mean": 126.9,
+          "sd": 36.8,
+          "min": 46,
+          "max": 204
+        },
+        "midWall": {
+          "mean": 74.5,
+          "sd": 42.8,
+          "min": 14,
+          "max": 229
+        },
+        "nearCarpet": {
+          "mean": 140.1,
+          "sd": 20.5,
+          "min": 65,
+          "max": 183
+        },
+        "darkCeil": {
+          "mean": 31.7,
+          "sd": 28.8,
+          "min": 6,
+          "max": 170
+        }
+      },
+      "A3-bloomOFF": {
+        "ceilLamp": {
+          "mean": 171.3,
+          "sd": 69.7,
+          "min": 29,
+          "max": 254
+        },
+        "ceilGhostL": {
+          "mean": 20.6,
+          "sd": 20.4,
+          "min": 9,
+          "max": 163
+        },
+        "ceilGhostR": {
+          "mean": 21,
+          "sd": 12,
+          "min": 8,
+          "max": 118
+        },
+        "rightSconce": {
+          "mean": 200.7,
+          "sd": 51.3,
+          "min": 64,
+          "max": 247
+        },
+        "beamCol": {
+          "mean": 81.5,
+          "sd": 22.7,
+          "min": 30,
+          "max": 143
+        },
+        "farEnd": {
+          "mean": 98.9,
+          "sd": 25.6,
+          "min": 39,
+          "max": 149
+        },
+        "nearWall": {
+          "mean": 128.4,
+          "sd": 37.8,
+          "min": 46,
+          "max": 210
+        },
+        "midWall": {
+          "mean": 80,
+          "sd": 46.1,
+          "min": 14,
+          "max": 237
+        },
+        "nearCarpet": {
+          "mean": 143.2,
+          "sd": 19.7,
+          "min": 74,
+          "max": 185
+        },
+        "darkCeil": {
+          "mean": 31.5,
+          "sd": 28.8,
+          "min": 7,
+          "max": 170
+        }
+      },
+      "A4-dofOFF": {
+        "ceilLamp": {
+          "mean": 170.5,
+          "sd": 69.8,
+          "min": 28,
+          "max": 254
+        },
+        "ceilGhostL": {
+          "mean": 20.6,
+          "sd": 20.3,
+          "min": 9,
+          "max": 162
+        },
+        "ceilGhostR": {
+          "mean": 21,
+          "sd": 12,
+          "min": 8,
+          "max": 119
+        },
+        "rightSconce": {
+          "mean": 201.1,
+          "sd": 51.1,
+          "min": 63,
+          "max": 247
+        },
+        "beamCol": {
+          "mean": 83,
+          "sd": 24.1,
+          "min": 30,
+          "max": 211
+        },
+        "farEnd": {
+          "mean": 100.3,
+          "sd": 26.3,
+          "min": 40,
+          "max": 156
+        },
+        "nearWall": {
+          "mean": 128.3,
+          "sd": 38.6,
+          "min": 43,
+          "max": 210
+        },
+        "midWall": {
+          "mean": 79.4,
+          "sd": 45.8,
+          "min": 14,
+          "max": 239
+        },
+        "nearCarpet": {
+          "mean": 144.9,
+          "sd": 20.1,
+          "min": 77,
+          "max": 188
+        },
+        "darkCeil": {
+          "mean": 31.4,
+          "sd": 28.8,
+          "min": 7,
+          "max": 170
+        }
+      },
+      "A5-volOFF": {
+        "ceilLamp": {
+          "mean": 174,
+          "sd": 68.1,
+          "min": 35,
+          "max": 254
+        },
+        "ceilGhostL": {
+          "mean": 21.6,
+          "sd": 21.1,
+          "min": 9,
+          "max": 167
+        },
+        "ceilGhostR": {
+          "mean": 21.6,
+          "sd": 12.2,
+          "min": 8,
+          "max": 119
+        },
+        "rightSconce": {
+          "mean": 202.9,
+          "sd": 50.5,
+          "min": 69,
+          "max": 247
+        },
+        "beamCol": {
+          "mean": 60.2,
+          "sd": 17.3,
+          "min": 38,
+          "max": 117
+        },
+        "farEnd": {
+          "mean": 51.3,
+          "sd": 5.2,
+          "min": 39,
+          "max": 112
+        },
+        "nearWall": {
+          "mean": 132,
+          "sd": 51.1,
+          "min": 6,
+          "max": 219
+        },
+        "midWall": {
+          "mean": 89.4,
+          "sd": 48.9,
+          "min": 15,
+          "max": 241
+        },
+        "nearCarpet": {
+          "mean": 159.3,
+          "sd": 21.2,
+          "min": 96,
+          "max": 198
+        },
+        "darkCeil": {
+          "mean": 32.6,
+          "sd": 29.7,
+          "min": 7,
+          "max": 171
+        }
+      },
+      "A6-vol060": {
+        "ceilLamp": {
+          "mean": 170.6,
+          "sd": 69.8,
+          "min": 34,
+          "max": 254
+        },
+        "ceilGhostL": {
+          "mean": 20.7,
+          "sd": 20.5,
+          "min": 9,
+          "max": 162
+        },
+        "ceilGhostR": {
+          "mean": 21,
+          "sd": 12,
+          "min": 8,
+          "max": 119
+        },
+        "rightSconce": {
+          "mean": 202,
+          "sd": 51,
+          "min": 66,
+          "max": 248
+        },
+        "beamCol": {
+          "mean": 63.9,
+          "sd": 16.5,
+          "min": 32,
+          "max": 113
+        },
+        "farEnd": {
+          "mean": 70,
+          "sd": 17.4,
+          "min": 34,
+          "max": 108
+        },
+        "nearWall": {
+          "mean": 122.3,
+          "sd": 44.9,
+          "min": 18,
+          "max": 212
+        },
+        "midWall": {
+          "mean": 80,
+          "sd": 45.9,
+          "min": 14,
+          "max": 237
+        },
+        "nearCarpet": {
+          "mean": 138.6,
+          "sd": 23.1,
+          "min": 76,
+          "max": 187
+        },
+        "darkCeil": {
+          "mean": 31.6,
+          "sd": 29,
+          "min": 7,
+          "max": 170
+        }
+      },
+      "A7-vol100": {
+        "ceilLamp": {
+          "mean": 160.2,
+          "sd": 70.7,
+          "min": 28,
+          "max": 253
+        },
+        "ceilGhostL": {
+          "mean": 20.6,
+          "sd": 20.4,
+          "min": 9,
+          "max": 164
+        },
+        "ceilGhostR": {
+          "mean": 20.9,
+          "sd": 12,
+          "min": 7,
+          "max": 119
+        },
+        "rightSconce": {
+          "mean": 202.2,
+          "sd": 51,
+          "min": 62,
+          "max": 247
+        },
+        "beamCol": {
+          "mean": 67.7,
+          "sd": 19.2,
+          "min": 31,
+          "max": 122
+        },
+        "farEnd": {
+          "mean": 82.3,
+          "sd": 24.3,
+          "min": 36,
+          "max": 129
+        },
+        "nearWall": {
+          "mean": 119.2,
+          "sd": 41.1,
+          "min": 27,
+          "max": 208
+        },
+        "midWall": {
+          "mean": 63,
+          "sd": 35.2,
+          "min": 14,
+          "max": 215
+        },
+        "nearCarpet": {
+          "mean": 135.9,
+          "sd": 26.9,
+          "min": 55,
+          "max": 186
+        },
+        "darkCeil": {
+          "mean": 31.4,
+          "sd": 28.9,
+          "min": 7,
+          "max": 169
+        }
+      },
+      "A8-vol172": {
+        "ceilLamp": {
+          "mean": 170.2,
+          "sd": 69.9,
+          "min": 29,
+          "max": 254
+        },
+        "ceilGhostL": {
+          "mean": 20.6,
+          "sd": 20.4,
+          "min": 9,
+          "max": 162
+        },
+        "ceilGhostR": {
+          "mean": 20.9,
+          "sd": 11.9,
+          "min": 7,
+          "max": 117
+        },
+        "rightSconce": {
+          "mean": 202.1,
+          "sd": 50.8,
+          "min": 62,
+          "max": 247
+        },
+        "beamCol": {
+          "mean": 82.1,
+          "sd": 23.5,
+          "min": 30,
+          "max": 147
+        },
+        "farEnd": {
+          "mean": 102.6,
+          "sd": 27.7,
+          "min": 40,
+          "max": 151
+        },
+        "nearWall": {
+          "mean": 127.7,
+          "sd": 39.9,
+          "min": 39,
+          "max": 210
+        },
+        "midWall": {
+          "mean": 79,
+          "sd": 45.2,
+          "min": 14,
+          "max": 237
+        },
+        "nearCarpet": {
+          "mean": 146.7,
+          "sd": 20.7,
+          "min": 73,
+          "max": 188
+        },
+        "darkCeil": {
+          "mean": 31.4,
+          "sd": 28.8,
+          "min": 6,
+          "max": 170
+        }
+      },
+      "A9-vol250": {
+        "ceilLamp": {
+          "mean": 171.5,
+          "sd": 69.7,
+          "min": 28,
+          "max": 254
+        },
+        "ceilGhostL": {
+          "mean": 20.6,
+          "sd": 20.4,
+          "min": 9,
+          "max": 164
+        },
+        "ceilGhostR": {
+          "mean": 20.9,
+          "sd": 11.9,
+          "min": 8,
+          "max": 119
+        },
+        "rightSconce": {
+          "mean": 201.9,
+          "sd": 50.7,
+          "min": 63,
+          "max": 247
+        },
+        "beamCol": {
+          "mean": 91.7,
+          "sd": 27.6,
+          "min": 30,
+          "max": 163
+        },
+        "farEnd": {
+          "mean": 116.5,
+          "sd": 30.1,
+          "min": 42,
+          "max": 167
+        },
+        "nearWall": {
+          "mean": 131.7,
+          "sd": 37.7,
+          "min": 49,
+          "max": 212
+        },
+        "midWall": {
+          "mean": 81.3,
+          "sd": 46.3,
+          "min": 14,
+          "max": 238
+        },
+        "nearCarpet": {
+          "mean": 151.8,
+          "sd": 20.4,
+          "min": 79,
+          "max": 193
+        },
+        "darkCeil": {
+          "mean": 31.4,
+          "sd": 28.8,
+          "min": 7,
+          "max": 168
+        }
+      },
+      "B-shipDof": {
+        "ceilLamp": {
+          "mean": 180.1,
+          "sd": 64.7,
+          "min": 38,
+          "max": 254
+        },
+        "ceilGhostL": {
+          "mean": 86.1,
+          "sd": 66.1,
+          "min": 11,
+          "max": 222
+        },
+        "ceilGhostR": {
+          "mean": 75.5,
+          "sd": 60.7,
+          "min": 9,
+          "max": 219
+        },
+        "rightSconce": {
+          "mean": 206.4,
+          "sd": 45.7,
+          "min": 70,
+          "max": 247
+        },
+        "beamCol": {
+          "mean": 85.1,
+          "sd": 25.5,
+          "min": 31,
+          "max": 223
+        },
+        "farEnd": {
+          "mean": 103.7,
+          "sd": 27.4,
+          "min": 40,
+          "max": 201
+        },
+        "nearWall": {
+          "mean": 131.6,
+          "sd": 39.5,
+          "min": 35,
+          "max": 210
+        },
+        "midWall": {
+          "mean": 81,
+          "sd": 45.8,
+          "min": 14,
+          "max": 238
+        },
+        "nearCarpet": {
+          "mean": 148.5,
+          "sd": 20.5,
+          "min": 76,
+          "max": 192
+        },
+        "darkCeil": {
+          "mean": 33.4,
+          "sd": 28.1,
+          "min": 7,
+          "max": 171
+        }
+      }
+    },
+    "grad": {
+      "A4-dofOFF": {
+        "midWall": 15.9,
+        "nearWall": 10.65,
+        "rightSconce": 13.66,
+        "ceilLamp": 17.83,
+        "farEnd": 5.93
+      },
+      "A8-vol172": {
+        "midWall": 15.4,
+        "nearWall": 10.65,
+        "rightSconce": 13.71,
+        "ceilLamp": 17.77,
+        "farEnd": 5.91
+      },
+      "B-shipDof": {
+        "midWall": 15.19,
+        "nearWall": 10.5,
+        "rightSconce": 12.47,
+        "ceilLamp": 13.97,
+        "farEnd": 6.1
+      }
+    },
+    "beam": {
+      "A6-vol060": {
+        "deltaP999": 48,
+        "maskPct": 3.37,
+        "coreL": 94.6,
+        "edgeL": 43.7,
+        "coreEdge": 2.17,
+        "outsidePct": -7.86,
+        "farOverNear": 57.2
+      },
+      "A7-vol100": {
+        "deltaP999": 70,
+        "maskPct": 3.71,
+        "coreL": 115,
+        "edgeL": 52.3,
+        "coreEdge": 2.2,
+        "outsidePct": -12.21,
+        "farOverNear": 69
+      },
+      "A8-vol172": {
+        "deltaP999": 93,
+        "maskPct": 4.8,
+        "coreL": 137.2,
+        "edgeL": 68.4,
+        "coreEdge": 2.01,
+        "outsidePct": -5.21,
+        "farOverNear": 80.3
+      },
+      "A9-vol250": {
+        "deltaP999": 109,
+        "maskPct": 5.7,
+        "coreL": 152.6,
+        "edgeL": 81.4,
+        "coreEdge": 1.87,
+        "outsidePct": -3.19,
+        "farOverNear": 88.5
+      }
+    }
+  },
+  "console": []
+}

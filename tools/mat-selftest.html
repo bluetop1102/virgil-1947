@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>materials selftest</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script type="module">
+// MATERIALS 단독 검수면. 씬 안개·포스트가 재질 판정을 덮으므로 여기서는 둘 다 끈다.
+//   ?view=grid   24종 구체+판 근접 — G3(스펙큘러 롭·러프니스 변주)
+//   ?view=tile   대형 패널 8종 정면 — D3(반복 인지)
+//   ?view=graze  바닥 4종 원경 그레이징 — D3 원거리 + 이방성
+import * as THREE from 'three'
+import { QUALITY } from '/src/core/config.js'
+import { kelvin } from '/src/core/util.js'
+import { mat, preload, MATERIAL_NAMES, tick } from '/src/materials/library.js'
+
+const q = new URLSearchParams(location.search)
+const VIEW = q.get('view') || 'grid'
+const W = 1280, H = 720
+const canvas = document.getElementById('c')
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, stencil: false, depth: true })
+renderer.setPixelRatio(2)
+renderer.setSize(W, H)
+renderer.outputColorSpace = THREE.SRGBColorSpace
+renderer.toneMapping = THREE.AgXToneMapping
+renderer.toneMappingExposure = 1.0
+renderer.shadowMap.enabled = true
+renderer.shadowMap.type = THREE.PCFShadowMap
+
+const scene = new THREE.Scene()
+scene.background = new THREE.Color(0x05070a)
+const camera = new THREE.PerspectiveCamera(38, W / H, 0.05, 400)
+
+function studioEnv () {
+  const w = 64, h = 32
+  const d = new Uint16Array(w * h * 4)
+  for (let y = 0; y < h; y++) {
+    const el = (0.5 - (y + 0.5) / h) * Math.PI
+    for (let x = 0; x < w; x++) {
+      const az = (x + 0.5) / w * Math.PI * 2
+      const up = Math.max(0, Math.sin(el))
+      const key = Math.pow(Math.max(0, Math.cos(az - 1.1) * Math.cos(el * 1.2)), 8)
+      const cool = Math.pow(Math.max(0, Math.cos(az - 4.0) * Math.cos(el * 1.1)), 6)
+      const i = (y * w + x) * 4
+      d[i] = THREE.DataUtils.toHalfFloat(0.05 + up * 0.09 + key * 1.9 + cool * 0.10)
+      d[i + 1] = THREE.DataUtils.toHalfFloat(0.06 + up * 0.11 + key * 1.5 + cool * 0.16)
+      d[i + 2] = THREE.DataUtils.toHalfFloat(0.08 + up * 0.15 + key * 1.0 + cool * 0.28)
+      d[i + 3] = THREE.DataUtils.toHalfFloat(1)
+    }
+  }
+  const t = new THREE.DataTexture(d, w, h, THREE.RGBAFormat, THREE.HalfFloatType)
+  t.mapping = THREE.EquirectangularReflectionMapping
+  t.colorSpace = THREE.LinearSRGBColorSpace
+  t.needsUpdate = true
+  const pm = new THREE.PMREMGenerator(renderer)
+  const rt = pm.fromEquirectangular(t)
+  pm.dispose(); t.dispose()
+  return rt.texture
+}
+
+function spot (k, inten, pos, tgt, ang) {
+  const l = new THREE.SpotLight(new THREE.Color().setRGB(...kelvin(k)), inten, 120, ang, 0.55, 2)
+  l.position.set(...pos); l.target.position.set(...tgt)
+  l.castShadow = true
+  l.shadow.mapSize.set(2048, 2048)
+  l.shadow.camera.near = 0.5; l.shadow.camera.far = 80
+  l.shadow.bias = -0.0006; l.shadow.normalBias = 0.02
+  scene.add(l, l.target)
+  return l
+}
+
+preload(renderer, QUALITY.cinematic)
+scene.environment = studioEnv()
+scene.environmentIntensity = 0.90
+
+const FLOORS = ['marble.lobby.floor', 'carpet.corridor.red', 'concrete.rooftop', 'tile.hex.bathroom']
+const PANELS = ['marble.lobby.floor', 'wallpaper.damask.green', 'plaster.cracked', 'tile.subway.white',
+  'tile.hex.bathroom', 'concrete.rooftop', 'carpet.corridor.red', 'wood.varnished.dark']
+
+if (VIEW === 'grid') {
+  camera.position.set(0, 0.0, 9.6); camera.lookAt(0, 0.0, 0)
+  const sph = new THREE.SphereGeometry(0.40, 80, 52)
+  const slab = new THREE.PlaneGeometry(1.00, 0.62, 2, 2)
+  const cols = 6, rows = 4
+  for (let i = 0; i < MATERIAL_NAMES.length; i++) {
+    const m = mat(MATERIAL_NAMES[i])
+    const cx = (i % cols - (cols - 1) / 2) * 1.72
+    const cy = ((rows - 1) / 2 - Math.floor(i / cols)) * 1.44
+    const s = new THREE.Mesh(sph, m); s.position.set(cx, cy + 0.16, 0.50)
+    s.castShadow = s.receiveShadow = true; scene.add(s)
+    const p = new THREE.Mesh(slab, m); p.position.set(cx, cy - 0.44, 0.02)
+    p.rotation.x = -1.05; p.receiveShadow = true; scene.add(p)
+  }
+  const back = new THREE.Mesh(new THREE.PlaneGeometry(24, 12), new THREE.MeshStandardMaterial({ color: 0x14161a, roughness: 0.92 }))
+  back.position.set(0, 0, -1.6); back.receiveShadow = true; scene.add(back)
+  spot(2700, 620, [5.0, 3.6, 7.0], [0, 0, 0], 0.72)
+  spot(5600, 300, [-5.6, 1.4, 6.2], [0, 0, 0], 0.80)
+  spot(8000, 420, [0.5, 4.4, -1.2], [0, 0.2, 0.4], 0.95)
+} else if (VIEW === 'tile') {
+  camera.position.set(0, 0, 15.4); camera.lookAt(0, 0, 0)
+  const g = new THREE.PlaneGeometry(4.4, 4.4, 4, 4)
+  for (let i = 0; i < PANELS.length; i++) {
+    const p = new THREE.Mesh(g, mat(PANELS[i]))
+    p.position.set((i % 4 - 1.5) * 4.6, (i < 4 ? 1 : -1) * 2.35, 0)
+    p.receiveShadow = true; scene.add(p)
+  }
+  spot(3200, 4000, [7.0, 6.0, 11.0], [0, 0, 0], 0.85)
+  spot(6500, 1600, [-8.0, -3.0, 10.0], [0, 0, 0], 0.9)
+} else {
+  camera.position.set(0, 1.62, 15.0); camera.lookAt(0, 1.05, -14)
+  const g = new THREE.PlaneGeometry(3.4, 34, 4, 34)
+  for (let i = 0; i < FLOORS.length; i++) {
+    const p = new THREE.Mesh(g, mat(FLOORS[i]))
+    p.rotation.x = -Math.PI / 2
+    p.position.set((i - 1.5) * 3.5, 0, -3.0)
+    p.receiveShadow = true; scene.add(p)
+  }
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(14, 4), mat('plaster.cracked'))
+  wall.position.set(0, 2, -20); wall.receiveShadow = true; scene.add(wall)
+  spot(2700, 2600, [3.0, 4.4, 8.0], [0, 0, -4], 0.7)
+  spot(8000, 1800, [-4.0, 5.0, -14.0], [0, 0.5, -2], 0.8)
+}
+
+let frame = 0
+function loop () {
+  frame++
+  tick(frame / 60)
+  renderer.render(scene, camera)
+  if (frame < 4) requestAnimationFrame(loop)
+  else window.__MATREADY__ = true
+}
+requestAnimationFrame(loop)
+</script>
+</body>
+</html>

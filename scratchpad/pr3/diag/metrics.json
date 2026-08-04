@@ -1,0 +1,493 @@
+{
+  "cases": [
+    {
+      "tag": "A0-ship",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 28.1913
+    },
+    {
+      "tag": "A1-dofOFF",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 28.1913
+    },
+    {
+      "tag": "A2-volOFF",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 28.1913
+    },
+    {
+      "tag": "A3-volOFF-fogOFF",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 28.1913
+    },
+    {
+      "tag": "A4-volON-fogOFF",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 28.1913
+    },
+    {
+      "tag": "A5-restore",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 28.1913
+    }
+  ],
+  "metrics": {
+    "info": {
+      "ev": 28.191,
+      "dof": {
+        "focusFixed": 0,
+        "fstop": 11,
+        "maxCoc": 3,
+        "near": 0.6
+      },
+      "vol": {
+        "scatter": 0.179928,
+        "extinct": 0.19992,
+        "maxDist": 10,
+        "nearFade": [
+          1.1,
+          3.2
+        ],
+        "beam": 70,
+        "rim": 0.28,
+        "g": 0.62,
+        "ambient": 0.03,
+        "nScale": 0.1
+      },
+      "sceneFog": {
+        "d": 0.0833,
+        "c": "030506"
+      },
+      "cam": [
+        0.4,
+        -498.4,
+        6.2
+      ]
+    },
+    "grad": {
+      "A0-ship": {
+        "rightFore": 6.19,
+        "rightFrame": 5.99,
+        "leftNearWall": 6.84,
+        "ceilDome": 13.24,
+        "rightSconce": 11.49,
+        "shaft": 7.17,
+        "shaftOut": 17.15,
+        "midDoor": 18.16,
+        "damaskMid": 15.1,
+        "carpet": 11.01,
+        "farEnd": 4.98,
+        "nearWallL": 10.46,
+        "cart": 16.06
+      },
+      "A1-dofOFF": {
+        "rightFore": 6.25,
+        "rightFrame": 6.11,
+        "leftNearWall": 6.87,
+        "ceilDome": 14.23,
+        "rightSconce": 11.49,
+        "shaft": 7.14,
+        "shaftOut": 17.21,
+        "midDoor": 18.34,
+        "damaskMid": 15.14,
+        "carpet": 10.49,
+        "farEnd": 5.02,
+        "nearWallL": 10.57,
+        "cart": 16.24
+      },
+      "A2-volOFF": {
+        "rightFore": 6.21,
+        "rightFrame": 6.04,
+        "leftNearWall": 6.86,
+        "ceilDome": 13.26,
+        "rightSconce": 11.51,
+        "shaft": 7.56,
+        "shaftOut": 17.14,
+        "midDoor": 18.3,
+        "damaskMid": 15.55,
+        "carpet": 10.77,
+        "farEnd": 4.57,
+        "nearWallL": 10.82,
+        "cart": 15.9
+      },
+      "A3-volOFF-fogOFF": {
+        "rightFore": 6.13,
+        "rightFrame": 5.93,
+        "leftNearWall": 6.62,
+        "ceilDome": 15.72,
+        "rightSconce": 11.47,
+        "shaft": 12.92,
+        "shaftOut": 15.54,
+        "midDoor": 16.49,
+        "damaskMid": 14.84,
+        "carpet": 10.59,
+        "farEnd": 8.96,
+        "nearWallL": 10.54,
+        "cart": 15.98
+      },
+      "A4-volON-fogOFF": {
+        "rightFore": 6.2,
+        "rightFrame": 6,
+        "leftNearWall": 7.08,
+        "ceilDome": 13.1,
+        "rightSconce": 11.52,
+        "shaft": 10.52,
+        "shaftOut": 16.49,
+        "midDoor": 17.64,
+        "damaskMid": 15.63,
+        "carpet": 11.25,
+        "farEnd": 8.19,
+        "nearWallL": 10.39,
+        "cart": 17.1
+      },
+      "A5-restore": {
+        "rightFore": 6.15,
+        "rightFrame": 5.93,
+        "leftNearWall": 6.81,
+        "ceilDome": 14.19,
+        "rightSconce": 11.44,
+        "shaft": 6.95,
+        "shaftOut": 16.87,
+        "midDoor": 18.05,
+        "damaskMid": 14.76,
+        "carpet": 10.02,
+        "farEnd": 4.94,
+        "nearWallL": 10.54,
+        "cart": 16.3
+      }
+    },
+    "box": {
+      "A0-ship": {
+        "rightFore": {
+          "m": 50.9,
+          "sd": 55.4
+        },
+        "rightFrame": {
+          "m": 53.5,
+          "sd": 50.6
+        },
+        "leftNearWall": {
+          "m": 35.3,
+          "sd": 34.7
+        },
+        "ceilDome": {
+          "m": 169.3,
+          "sd": 67.4
+        },
+        "rightSconce": {
+          "m": 169.2,
+          "sd": 61.1
+        },
+        "shaft": {
+          "m": 74.3,
+          "sd": 32.9
+        },
+        "shaftOut": {
+          "m": 124.9,
+          "sd": 44.3
+        },
+        "midDoor": {
+          "m": 127.9,
+          "sd": 44.7
+        },
+        "damaskMid": {
+          "m": 120.1,
+          "sd": 48
+        },
+        "carpet": {
+          "m": 122.2,
+          "sd": 32.2
+        },
+        "farEnd": {
+          "m": 50.1,
+          "sd": 16.5
+        },
+        "nearWallL": {
+          "m": 108.7,
+          "sd": 50.5
+        },
+        "cart": {
+          "m": 40.1,
+          "sd": 43.5
+        }
+      },
+      "A1-dofOFF": {
+        "rightFore": {
+          "m": 50.9,
+          "sd": 55.4
+        },
+        "rightFrame": {
+          "m": 53.4,
+          "sd": 50.6
+        },
+        "leftNearWall": {
+          "m": 35.4,
+          "sd": 34.8
+        },
+        "ceilDome": {
+          "m": 166.6,
+          "sd": 68.1
+        },
+        "rightSconce": {
+          "m": 169.6,
+          "sd": 61
+        },
+        "shaft": {
+          "m": 74.3,
+          "sd": 31.9
+        },
+        "shaftOut": {
+          "m": 123.3,
+          "sd": 44.3
+        },
+        "midDoor": {
+          "m": 126.8,
+          "sd": 44.5
+        },
+        "damaskMid": {
+          "m": 119,
+          "sd": 47.5
+        },
+        "carpet": {
+          "m": 122.8,
+          "sd": 32.8
+        },
+        "farEnd": {
+          "m": 50.4,
+          "sd": 16.7
+        },
+        "nearWallL": {
+          "m": 108.8,
+          "sd": 50.6
+        },
+        "cart": {
+          "m": 40.2,
+          "sd": 43.6
+        }
+      },
+      "A2-volOFF": {
+        "rightFore": {
+          "m": 50.9,
+          "sd": 55.5
+        },
+        "rightFrame": {
+          "m": 53.5,
+          "sd": 50.6
+        },
+        "leftNearWall": {
+          "m": 34.7,
+          "sd": 35.1
+        },
+        "ceilDome": {
+          "m": 169.6,
+          "sd": 67.3
+        },
+        "rightSconce": {
+          "m": 170.1,
+          "sd": 61.3
+        },
+        "shaft": {
+          "m": 48.3,
+          "sd": 38.7
+        },
+        "shaftOut": {
+          "m": 125.7,
+          "sd": 44.3
+        },
+        "midDoor": {
+          "m": 128.6,
+          "sd": 44.7
+        },
+        "damaskMid": {
+          "m": 116.2,
+          "sd": 48.8
+        },
+        "carpet": {
+          "m": 120.8,
+          "sd": 33.2
+        },
+        "farEnd": {
+          "m": 31.8,
+          "sd": 8.6
+        },
+        "nearWallL": {
+          "m": 106.4,
+          "sd": 54.7
+        },
+        "cart": {
+          "m": 40.4,
+          "sd": 43.9
+        }
+      },
+      "A3-volOFF-fogOFF": {
+        "rightFore": {
+          "m": 51.5,
+          "sd": 56.1
+        },
+        "rightFrame": {
+          "m": 54.4,
+          "sd": 51.6
+        },
+        "leftNearWall": {
+          "m": 32.1,
+          "sd": 32.7
+        },
+        "ceilDome": {
+          "m": 158.1,
+          "sd": 69.4
+        },
+        "rightSconce": {
+          "m": 171,
+          "sd": 61
+        },
+        "shaft": {
+          "m": 44.9,
+          "sd": 51
+        },
+        "shaftOut": {
+          "m": 123.9,
+          "sd": 46.3
+        },
+        "midDoor": {
+          "m": 129.8,
+          "sd": 44.6
+        },
+        "damaskMid": {
+          "m": 117,
+          "sd": 48.2
+        },
+        "carpet": {
+          "m": 125.8,
+          "sd": 37.6
+        },
+        "farEnd": {
+          "m": 22.5,
+          "sd": 21.7
+        },
+        "nearWallL": {
+          "m": 109.2,
+          "sd": 57.1
+        },
+        "cart": {
+          "m": 40.1,
+          "sd": 46
+        }
+      },
+      "A4-volON-fogOFF": {
+        "rightFore": {
+          "m": 52.3,
+          "sd": 56.6
+        },
+        "rightFrame": {
+          "m": 55.4,
+          "sd": 51.9
+        },
+        "leftNearWall": {
+          "m": 35.1,
+          "sd": 35.9
+        },
+        "ceilDome": {
+          "m": 170.5,
+          "sd": 66.1
+        },
+        "rightSconce": {
+          "m": 171.4,
+          "sd": 60.3
+        },
+        "shaft": {
+          "m": 75.9,
+          "sd": 49.3
+        },
+        "shaftOut": {
+          "m": 142.9,
+          "sd": 46.8
+        },
+        "midDoor": {
+          "m": 147.7,
+          "sd": 45.3
+        },
+        "damaskMid": {
+          "m": 133.8,
+          "sd": 52.4
+        },
+        "carpet": {
+          "m": 135.4,
+          "sd": 35.5
+        },
+        "farEnd": {
+          "m": 41.6,
+          "sd": 26.2
+        },
+        "nearWallL": {
+          "m": 115.2,
+          "sd": 55.3
+        },
+        "cart": {
+          "m": 42.4,
+          "sd": 48.4
+        }
+      },
+      "A5-restore": {
+        "rightFore": {
+          "m": 50.8,
+          "sd": 55.3
+        },
+        "rightFrame": {
+          "m": 53.4,
+          "sd": 50.5
+        },
+        "leftNearWall": {
+          "m": 35.5,
+          "sd": 34.8
+        },
+        "ceilDome": {
+          "m": 166.5,
+          "sd": 68.1
+        },
+        "rightSconce": {
+          "m": 170.2,
+          "sd": 60.8
+        },
+        "shaft": {
+          "m": 74.9,
+          "sd": 31.6
+        },
+        "shaftOut": {
+          "m": 124.2,
+          "sd": 44.3
+        },
+        "midDoor": {
+          "m": 127.7,
+          "sd": 44.4
+        },
+        "damaskMid": {
+          "m": 119.5,
+          "sd": 47.4
+        },
+        "carpet": {
+          "m": 125,
+          "sd": 33.9
+        },
+        "farEnd": {
+          "m": 50.9,
+          "sd": 17.1
+        },
+        "nearWallL": {
+          "m": 109,
+          "sd": 51.2
+        },
+        "cart": {
+          "m": 40.6,
+          "sd": 44.3
+        }
+      }
+    }
+  },
+  "console": []
+}

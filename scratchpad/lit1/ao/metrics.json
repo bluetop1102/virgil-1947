@@ -1,0 +1,64 @@
+{
+  "cases": [
+    {
+      "tag": "A0-ship",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 37.9045
+    },
+    {
+      "tag": "A1-gtaoOFF",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 37.9045
+    },
+    {
+      "tag": "A2-contactOFF",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 37.9045
+    },
+    {
+      "tag": "A3-bothON",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 37.9045
+    },
+    {
+      "tag": "A4-tiny",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 37.9045
+    },
+    {
+      "tag": "A5-tinyThick0",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 37.9045
+    },
+    {
+      "tag": "A6-small",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 37.9045
+    },
+    {
+      "tag": "A7-smallStrong",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 37.9045
+    },
+    {
+      "tag": "A8-mid",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 37.9045
+    }
+  ],
+  "metrics": {
+    "ev": 37.905,
+    "aoPow": 1.7,
+    "aoStr": 1
+  },
+  "console": []
+}

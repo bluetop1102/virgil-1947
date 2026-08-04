@@ -1,0 +1,26 @@
+{
+  "cases": [
+    {
+      "tag": "R0-mine",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 12.8646
+    },
+    {
+      "tag": "R1-oldGtao",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 12.8646
+    },
+    {
+      "tag": "R2-mine",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 12.8646
+    }
+  ],
+  "metrics": {
+    "ev": 12.865
+  },
+  "console": []
+}

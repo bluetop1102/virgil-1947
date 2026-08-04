@@ -1,0 +1,330 @@
+{
+  "cases": [
+    {
+      "tag": "E0-ship",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 28.2722
+    },
+    {
+      "tag": "E1-s045-v045",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 28.2722
+    },
+    {
+      "tag": "E2-s065-v038",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 28.2722
+    },
+    {
+      "tag": "E3-s085-v030",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 28.2722
+    },
+    {
+      "tag": "E4-s065-v030",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 28.2722
+    },
+    {
+      "tag": "E5-free-e2",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 26.6527
+    }
+  ],
+  "metrics": {
+    "info": {
+      "ev": 28.272,
+      "vol0": 0.55,
+      "evE2": 26.648
+    },
+    "box": {
+      "E0-ship": {
+        "shaftCore": {
+          "m": 66.1,
+          "sd": 22.4
+        },
+        "ceilBeamR": {
+          "m": 60,
+          "sd": 27
+        },
+        "shaftOut": {
+          "m": 125,
+          "sd": 44.3
+        },
+        "leftNearWall": {
+          "m": 35.7,
+          "sd": 34.8
+        },
+        "nearWallL": {
+          "m": 108.9,
+          "sd": 50.5
+        },
+        "carpet": {
+          "m": 121,
+          "sd": 31.8
+        },
+        "farEnd": {
+          "m": 50.2,
+          "sd": 16.5
+        },
+        "damaskMid": {
+          "m": 125.5,
+          "sd": 47.1
+        }
+      },
+      "E1-s045-v045": {
+        "shaftCore": {
+          "m": 71.9,
+          "sd": 22.9
+        },
+        "ceilBeamR": {
+          "m": 72.9,
+          "sd": 30.9
+        },
+        "shaftOut": {
+          "m": 124.7,
+          "sd": 43.9
+        },
+        "leftNearWall": {
+          "m": 37.9,
+          "sd": 33.6
+        },
+        "nearWallL": {
+          "m": 110.2,
+          "sd": 50.4
+        },
+        "carpet": {
+          "m": 121.5,
+          "sd": 32.6
+        },
+        "farEnd": {
+          "m": 56.5,
+          "sd": 16.3
+        },
+        "damaskMid": {
+          "m": 128.5,
+          "sd": 46.7
+        }
+      },
+      "E2-s065-v038": {
+        "shaftCore": {
+          "m": 69.3,
+          "sd": 22.2
+        },
+        "ceilBeamR": {
+          "m": 75.7,
+          "sd": 31.4
+        },
+        "shaftOut": {
+          "m": 126.6,
+          "sd": 44
+        },
+        "leftNearWall": {
+          "m": 39.2,
+          "sd": 34.8
+        },
+        "nearWallL": {
+          "m": 109.6,
+          "sd": 50.2
+        },
+        "carpet": {
+          "m": 121.8,
+          "sd": 32.1
+        },
+        "farEnd": {
+          "m": 59.5,
+          "sd": 16.1
+        },
+        "damaskMid": {
+          "m": 129.7,
+          "sd": 47.3
+        }
+      },
+      "E3-s085-v030": {
+        "shaftCore": {
+          "m": 65.4,
+          "sd": 22.2
+        },
+        "ceilBeamR": {
+          "m": 78.2,
+          "sd": 32.3
+        },
+        "shaftOut": {
+          "m": 126.2,
+          "sd": 43.9
+        },
+        "leftNearWall": {
+          "m": 39.4,
+          "sd": 34.8
+        },
+        "nearWallL": {
+          "m": 110.3,
+          "sd": 49.2
+        },
+        "carpet": {
+          "m": 121.1,
+          "sd": 32
+        },
+        "farEnd": {
+          "m": 60.4,
+          "sd": 18.7
+        },
+        "damaskMid": {
+          "m": 128.7,
+          "sd": 47.6
+        }
+      },
+      "E4-s065-v030": {
+        "shaftCore": {
+          "m": 60.4,
+          "sd": 21
+        },
+        "ceilBeamR": {
+          "m": 75.5,
+          "sd": 31.6
+        },
+        "shaftOut": {
+          "m": 125.4,
+          "sd": 44
+        },
+        "leftNearWall": {
+          "m": 38.4,
+          "sd": 34.6
+        },
+        "nearWallL": {
+          "m": 107.3,
+          "sd": 49.1
+        },
+        "carpet": {
+          "m": 117.8,
+          "sd": 30.7
+        },
+        "farEnd": {
+          "m": 55.4,
+          "sd": 15.7
+        },
+        "damaskMid": {
+          "m": 125.9,
+          "sd": 47.6
+        }
+      },
+      "E5-free-e2": {
+        "shaftCore": {
+          "m": 63.3,
+          "sd": 21.6
+        },
+        "ceilBeamR": {
+          "m": 75.7,
+          "sd": 32.2
+        },
+        "shaftOut": {
+          "m": 122.3,
+          "sd": 44
+        },
+        "leftNearWall": {
+          "m": 37,
+          "sd": 34.2
+        },
+        "nearWallL": {
+          "m": 105.9,
+          "sd": 48.8
+        },
+        "carpet": {
+          "m": 117,
+          "sd": 31
+        },
+        "farEnd": {
+          "m": 55.5,
+          "sd": 16.9
+        },
+        "damaskMid": {
+          "m": 125.9,
+          "sd": 47.1
+        }
+      }
+    },
+    "frame": {
+      "E0-ship": {
+        "mean": 68.6,
+        "p50": 53,
+        "p99": 213,
+        "darkPct": 0.31,
+        "whitePct": 0.127,
+        "farOverNear": 46.1
+      },
+      "E1-s045-v045": {
+        "mean": 69.9,
+        "p50": 55,
+        "p99": 212,
+        "darkPct": 0.32,
+        "whitePct": 0.126,
+        "farOverNear": 51.3
+      },
+      "E2-s065-v038": {
+        "mean": 70.4,
+        "p50": 57,
+        "p99": 213,
+        "darkPct": 0.33,
+        "whitePct": 0.129,
+        "farOverNear": 54.3
+      },
+      "E3-s085-v030": {
+        "mean": 70.9,
+        "p50": 58,
+        "p99": 213,
+        "darkPct": 0.33,
+        "whitePct": 0.129,
+        "farOverNear": 54.8
+      },
+      "E4-s065-v030": {
+        "mean": 69.6,
+        "p50": 55,
+        "p99": 212,
+        "darkPct": 0.32,
+        "whitePct": 0.128,
+        "farOverNear": 51.6
+      },
+      "E5-free-e2": {
+        "mean": 68.2,
+        "p50": 55,
+        "p99": 211,
+        "darkPct": 0.36,
+        "whitePct": 0.124,
+        "farOverNear": 52.4
+      }
+    },
+    "step": {
+      "E0-ship": {
+        "jump": 21.35,
+        "y": 486
+      },
+      "E1-s045-v045": {
+        "jump": 15.38,
+        "y": 486
+      },
+      "E2-s065-v038": {
+        "jump": 15.44,
+        "y": 486
+      },
+      "E3-s085-v030": {
+        "jump": 13.22,
+        "y": 485
+      },
+      "E4-s065-v030": {
+        "jump": 14.45,
+        "y": 486
+      },
+      "E5-free-e2": {
+        "jump": 12.88,
+        "y": 486
+      }
+    }
+  },
+  "console": []
+}

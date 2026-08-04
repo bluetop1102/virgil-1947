@@ -1,0 +1,88 @@
+{
+  "cases": [
+    {
+      "tag": "V0-mine",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 48.9205
+    },
+    {
+      "tag": "V1-oldFog",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 48.9205
+    },
+    {
+      "tag": "V2-mineFog",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 48.9205
+    },
+    {
+      "tag": "V3-oldGtao",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 48.9205
+    },
+    {
+      "tag": "V4-mineGtao",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 48.9205
+    },
+    {
+      "tag": "V5-noSceneFog",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 48.9205
+    },
+    {
+      "tag": "V6-noVol",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 48.9205
+    },
+    {
+      "tag": "V7-back",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 48.9205
+    }
+  ],
+  "metrics": {
+    "ev": 48.92,
+    "fog": {
+      "density": 0.135,
+      "albedo": 0.24,
+      "ambient": 0.012,
+      "extinctK": 1.1,
+      "heightFalloff": 0.85,
+      "color": [
+        0.001,
+        0.0014,
+        0.0018
+      ],
+      "scattering": 0.62,
+      "anisotropy": 0.62,
+      "windDir": [
+        0.02,
+        0.006,
+        0.075
+      ],
+      "baseHeight": 0,
+      "noiseScale": 0.1,
+      "spark": 4.5,
+      "sparkScale": 2.2,
+      "maxDist": 10
+    },
+    "halation": 0.17,
+    "volI": 0.22,
+    "gtao": {
+      "r": 0.9,
+      "m": 0.02,
+      "p": 3.6,
+      "t": 0.05
+    }
+  },
+  "console": []
+}

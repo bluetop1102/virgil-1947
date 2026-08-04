@@ -1,0 +1,193 @@
+{
+  "cases": [
+    {
+      "tag": "G0-pre",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 42.0871
+    },
+    {
+      "tag": "G1-on",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 42.4082
+    },
+    {
+      "tag": "G1-off",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 42.4082
+    },
+    {
+      "tag": "G2-on",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 53.4029
+    },
+    {
+      "tag": "G2-off",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 53.4029
+    },
+    {
+      "tag": "G3-on",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 53.2425
+    },
+    {
+      "tag": "G3-off",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 53.2425
+    },
+    {
+      "tag": "G4-on",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 68.6056
+    },
+    {
+      "tag": "G4-off",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 68.6056
+    },
+    {
+      "tag": "G5-on",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 67.5665
+    },
+    {
+      "tag": "G5-off",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 67.5665
+    }
+  ],
+  "metrics": {
+    "G1": {
+      "sameBgRatio": 1.89,
+      "veilPct": 1.69,
+      "farOverNear": 51.6,
+      "coreSd": 5.3,
+      "outSd": 3.4,
+      "sdRatio": 1.56,
+      "maskPct": 3.33,
+      "deltaP999": 52,
+      "p1": 8,
+      "p50": 66,
+      "p999f": 252,
+      "blackPct": 0,
+      "over250Pct": 0.161,
+      "shadowR": 16.4,
+      "shadowB": 29.8,
+      "bandSd": [
+        21.7,
+        47.7,
+        13.9
+      ],
+      "farMean": 69.5,
+      "nearMean": 134.8
+    },
+    "G2": {
+      "sameBgRatio": 1.95,
+      "veilPct": 3.02,
+      "farOverNear": 63.1,
+      "coreSd": 6,
+      "outSd": 3.7,
+      "sdRatio": 1.62,
+      "maskPct": 3.89,
+      "deltaP999": 68,
+      "p1": 10,
+      "p50": 71,
+      "p999f": 252,
+      "blackPct": 0,
+      "over250Pct": 0.202,
+      "shadowR": 23.4,
+      "shadowB": 35.4,
+      "bandSd": [
+        22.7,
+        41.6,
+        17.5
+      ],
+      "farMean": 84.2,
+      "nearMean": 133.5
+    },
+    "G3": {
+      "sameBgRatio": 1.98,
+      "veilPct": 3.06,
+      "farOverNear": 62.8,
+      "coreSd": 6.8,
+      "outSd": 3.6,
+      "sdRatio": 1.89,
+      "maskPct": 4.71,
+      "deltaP999": 67,
+      "p1": 10,
+      "p50": 71,
+      "p999f": 252,
+      "blackPct": 0,
+      "over250Pct": 0.206,
+      "shadowR": 23,
+      "shadowB": 35.4,
+      "bandSd": [
+        22.4,
+        41.7,
+        15.4
+      ],
+      "farMean": 83.8,
+      "nearMean": 133.4
+    },
+    "G4": {
+      "sameBgRatio": 2.01,
+      "veilPct": 1.29,
+      "farOverNear": 74.5,
+      "coreSd": 6.6,
+      "outSd": 4,
+      "sdRatio": 1.65,
+      "maskPct": 7.31,
+      "deltaP999": 79,
+      "p1": 13,
+      "p50": 74,
+      "p999f": 252,
+      "blackPct": 0,
+      "over250Pct": 0.148,
+      "shadowR": 32.9,
+      "shadowB": 43.4,
+      "bandSd": [
+        22,
+        27.5,
+        18.8
+      ],
+      "farMean": 94.4,
+      "nearMean": 126.7
+    },
+    "G5": {
+      "sameBgRatio": 2.03,
+      "veilPct": 3.91,
+      "farOverNear": 73.7,
+      "coreSd": 8.6,
+      "outSd": 4,
+      "sdRatio": 2.15,
+      "maskPct": 8.04,
+      "deltaP999": 80,
+      "p1": 13,
+      "p50": 75,
+      "p999f": 252,
+      "blackPct": 0,
+      "over250Pct": 0.237,
+      "shadowR": 32.6,
+      "shadowB": 43.3,
+      "bandSd": [
+        19.8,
+        33.7,
+        18.6
+      ],
+      "farMean": 96,
+      "nearMean": 130.2
+    }
+  },
+  "console": []
+}

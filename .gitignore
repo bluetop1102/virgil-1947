@@ -1,0 +1,4 @@
+node_modules/
+shots/
+.shot-lock/
+dist/

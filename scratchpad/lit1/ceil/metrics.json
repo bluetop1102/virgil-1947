@@ -1,0 +1,78 @@
+{
+  "cases": [
+    {
+      "tag": "F0-base",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 10.4959
+    },
+    {
+      "tag": "F1-upOFF",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 10.4959
+    },
+    {
+      "tag": "F2-upON",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 10.4959
+    },
+    {
+      "tag": "F3-up3x",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 10.4959
+    },
+    {
+      "tag": "F4-up3x-cast",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 10.4959
+    },
+    {
+      "tag": "F5-up3x-cast-tight",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 10.4959
+    },
+    {
+      "tag": "F6-up3x-nocast-tight",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 10.4959
+    },
+    {
+      "tag": "F7-up6x-cast",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 10.4959
+    },
+    {
+      "tag": "F8-mainOFF",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 10.4959
+    },
+    {
+      "tag": "F9-restore",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 10.4959
+    }
+  ],
+  "metrics": {
+    "ev": 10.496,
+    "ups": [
+      3.34,
+      6.28,
+      5.43,
+      0,
+      1.54
+    ]
+  },
+  "console": [
+    "error: THREE.WebGLProgram: Shader Error 0 - VALIDATE_STATUS false\n\nMaterial Name: \nMaterial Type: RawShaderMaterial\n\nProgram Info Log: Fragment shader is not compiled.\n\u0000\n\nFRAGMENT\n\nERROR: 0:298: '=' : dimension mismatch\nERROR: 0:298: '=' : cannot convert from 'highp 2-component vector of float' to 'highp float'\n\u0000\n\n  293:   float drip = wDrip(uv);\n  294:   alb = mix(alb, vec3(0.0348, 0.0242, 0.0126), drip * 0.62);\n  295:   // 금분 마모 — 셀 단위로 문질러 벗겨진 구역이 다르다\n  296:   float rub = smoothstep(0.46, 0.84, FBM(uv, vec2(6.0, 3.5), 4)) * (0.35 + 0.85 * dk.z);\n  297:   alb = mix(alb, mix(ground, alb, 0.30), d * clamp(rub, 0.0, 1.0) * 0.85);\n> 298:   float seam = wSeam(uv), lift = wLift(uv), tear = wTear(uv);\n  299:   alb *= 1.0 - seam * 0.52;\n  300:   // 들뜬 자리는 뒤판 석고가 비쳐 나오고, 뜯겨 나간 자리는 아예 석고 맨면이다\n  301:   alb = mix(alb, vec3(0.0455, 0.0392, 0.0322), lift * 0.60);\n  302:   alb = mix(alb, vec3(0.0605, 0.0538, 0.0448), tear * 0.82);\n  303:   rgh = 0.80 - d * 0.11 + stain * 0.10 + drip * 0.07 + (blot - 0.5) * 0.20 + rub * 0.08\n  304:     + lift * 0.12 + tear * 0.14 - gh.x * 0.06;",
+    "warning: WebGL: INVALID_OPERATION: useProgram: program not valid"
+  ]
+}

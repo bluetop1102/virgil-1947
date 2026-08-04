@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>CECIL — UI selftest</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; background:#05060a; overflow:hidden; }
+  body { font-family: ui-serif, Georgia, serif; }
+  #ui-root { position:fixed; inset:0; pointer-events:none; z-index:10; }
+</style>
+</head>
+<body>
+  <div id="ui-root"></div>
+  <script type="module">
+    import { EventBus } from '/src/core/bus.js'
+    import { GameState } from '/src/core/state.js'
+    import hud from '/src/ui/hud.js'
+    import notebook from '/src/ui/notebook.js'
+    import subtitles from '/src/ui/subtitles.js'
+
+    const bus = new EventBus()
+    const state = new GameState(bus)
+    state.act = 2
+    const engine = {
+      qa: true, time: 20, frameIndex: 0,
+      size: { w: window.innerWidth, h: window.innerHeight, dpr: 2 },
+      bus, state, quality: {}, look: {},
+      modules: new Map(),
+      get (n) { return this.modules.get(n) }
+    }
+    const mods = [hud, notebook, subtitles]
+    for (const m of mods) engine.modules.set(m.name, m)
+    const errs = []
+    window.addEventListener('error', e => errs.push(String(e.message)))
+    for (const m of mods) await m.init(engine)
+    for (const m of mods) m.resize?.(engine.size.w, engine.size.h)
+
+    window.__UI__ = {
+      ready: true,
+      errors: errs,
+      async go (name) {
+        bus.emit('qa:shot', { name })
+        const map = {
+          'notebook-open': { ui: 'notebook' },
+          'deduction-board': { ui: 'deduction' },
+          'notebook-present': { ui: 'present' },
+          'notebook-photos': { ui: 'photos' },
+          'hud-prompt': { ui: 'prompt' },
+          'subtitle-line': { interrogating: 'deitch' }
+        }
+        if (map[name]) bus.emit('qa:state', map[name])
+        for (let i = 0; i < 6; i++) { engine.time += 1 / 60; for (const m of mods) m.update?.(1 / 60, engine.time) }
+        await new Promise(r => setTimeout(r, 120))
+        return true
+      }
+    }
+  </script>
+</body>
+</html>

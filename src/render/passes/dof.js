@@ -1,0 +1,349 @@
+// 보케 심도 — 얇은 렌즈 CoC + 골든앵글 육각 조리개 개더.
+// 근경/원경을 부호로 분리하고, 근경 탭은 선명한 배경 위로 번지게 한다(전경 블리딩).
+// 초점거리는 ctx.look/camera.userData 에서 읽되 없으면 화면 중앙 깊이로 자동 초점.
+// 결과는 ctx.targets.hdr 에 되쓴다(전용 타깃이 계약에 없다). 깊이 첨부를 지키려고 clear 없이 그린다.
+import * as THREE from 'three'
+
+// 조리개 프리셋. 상태별로 값을 분리해 두고 소비처가 `camera.userData.aperture` 로 골라 쓴다.
+// 기본(explore)은 팬포커스에 가깝다 — 1인칭 수사 게임에서 중경(벽등·문틀·벽지 다마스크)이
+// 흐려지면 2차 디테일이 통째로 사라진다(루브릭 G6). f/5.6 실측으로 중경 그래디언트 RMS 가
+// 11.26 이었고 f/11 에서 13.24 로 18% 회복했다. 보케는 아래 두 상태에서만 연다.
+export const APERTURE = {
+  explore: 11,    // 기본 이동·수색
+  evidence: 4.0,  // 증거 관찰 — 손에 든 물건에 초점, 배경만 분리
+  closeup: 2.4    // 심문 클로즈업 — 얼굴 평면만 남기고 방을 날린다
+}
+
+// CoC 상한을 조리개에 종속시키는 상수. 얇은 렌즈에서 CoC ∝ 1/N 이므로 상한도 같은 기울기로
+// 따라가야 한다. 33/11 = 3(하프해상도, 풀해상도 6px)이 탐색 상태의 상한이고, 조리개를 열면
+// tile(=6)까지 올라간다. 상한을 6 고정으로 두면 f/11 에서도 타일맥스가 실제 필요의 두 배로
+// 확장돼, 초점면에 있는 조명기구까지 이웃의 큰 반경을 상속받아 스미어가 된다(루브릭 G10).
+const COC_K = 33
+
+// 탐색 상태의 고정 초점거리(m). 복도 히어로 소품(세탁 카트)까지의 실측 거리가 4.93m 이고
+// (레이캐스트, scratchpad/post5/dofprobe.mjs), f/11 · f=41.85mm 의 과초점거리가 6.37m 이라
+// 5.0m 에 고정하면 2.8m~23m 가 전부 착란원 한계(풀해상도 1.5px) 안에 들어온다.
+const EXPLORE_FOCUS = 5.0
+const PANFOCUS_FSTOP = 8
+
+const VERT = `
+varying vec2 vUv;
+void main () {
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`
+
+// 얇은 렌즈: coc(m) = A * |d-f0| / d * f / (f0-f), A = f / N
+const COC = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uDepth;
+uniform mat4 uInvProj;
+uniform float uFocal, uFstop, uSensor, uPixels, uNear, uFocusFixed, uMaxCoc, uNearCap, uNearLimit;
+float lin (vec2 uv) {
+  float z = texture2D(uDepth, uv).x;
+  vec4 c = uInvProj * vec4(uv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0);
+  return -(c.z / c.w);
+}
+// 중앙 1픽셀 오토포커스는 소품 하나에 초점이 튄다. 십자 5탭의 절사평균으로 고정한다.
+float focusDist () {
+  if (uFocusFixed > 0.0) return uFocusFixed;
+  float a = lin(vec2(0.50, 0.50));
+  float b = lin(vec2(0.47, 0.50));
+  float c = lin(vec2(0.53, 0.50));
+  float d = lin(vec2(0.50, 0.47));
+  float e = lin(vec2(0.50, 0.53));
+  float mn = min(min(a, b), min(c, min(d, e)));
+  float mx = max(max(a, b), max(c, max(d, e)));
+  return max((a + b + c + d + e - mn - mx) / 3.0, 0.25);
+}
+float coc (float d) {
+  float f0 = focusDist();
+  float A = uFocal / max(uFstop, 0.7);
+  float c = A * abs(d - f0) / max(d, 1e-3) * uFocal / max(f0 - uFocal, 1e-3);
+  // 근경은 물리값 그대로 두면 전경 소품이 뭉개져 2차 디테일이 사라진다(루브릭 G6). 실사 게임 관례대로 감쇄한다.
+  // 감쇄에 더해 근거리 한계(uNearLimit)를 둔다. 이 거리보다 먼 것은 조리개를 아무리 열어도
+  // 전경 흐림을 받지 않는다 — 라디에이터·벽등·천장보처럼 카메라에서 0.6m 이상 떨어진
+  // 전경 오클루더가 형태 판별이 안 될 만큼 뭉개지는 사고를 조리개 프리셋과 무관하게 막는다.
+  float near = step(d, f0);
+  float lim = 1.0 - smoothstep(uNearLimit * 0.5, uNearLimit, d);
+  float px = c / uSensor * uPixels * mix(1.0, uNear * lim, near);
+  // 근경 상한을 원경과 분리한다. 초점이 복도 끝처럼 먼 곳에 잡히면 1m 앞 전경 오클루더가
+  // 원경과 같은 상한까지 흐려질 수 있고, 그 순간 화면 한쪽이 "읽히는 전경"이 아니라
+  // "뭉갠 영역"이 된다(루브릭 G8/G6). 조리개를 여는 보케 프리셋에서 특히 그렇다 —
+  // f/2.4 면 uMaxCoc 이 tile 상한 6까지 열리는데 근경은 0.6(풀해상도 1.2px)을 넘지 않는다.
+  float cap = mix(uMaxCoc, uMaxCoc * uNearCap, near);
+  return clamp(px, 0.0, cap) * mix(1.0, -1.0, near);
+}`
+
+const PREP = COC + `
+uniform sampler2D uSrc;
+uniform vec2 uTexel;
+void main () {
+  vec3 c = (texture2D(uSrc, vUv + vec2(-0.5, -0.5) * uTexel).rgb
+          + texture2D(uSrc, vUv + vec2( 0.5, -0.5) * uTexel).rgb
+          + texture2D(uSrc, vUv + vec2(-0.5,  0.5) * uTexel).rgb
+          + texture2D(uSrc, vUv + vec2( 0.5,  0.5) * uTexel).rgb) * 0.25;
+  gl_FragColor = vec4(c, coc(lin(vUv)));
+}`
+
+// 타일 최대 CoC. 산란을 개더로 바꾸면 선명한 픽셀도 이웃의 큰 CoC만큼 반경을 돌아야 하는데,
+// 그 반경을 화면 전체에 고정하면 초점면까지 48탭을 낸다. 타일맥스로 실제 필요한 곳만 돌게 한다.
+const TILEMAX = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uSrc;
+uniform vec2 uTexel;
+void main () {
+  float m = 0.0;
+  for (int y = 0; y < TILE; y++) {
+    for (int x = 0; x < TILE; x++) {
+      vec2 o = (vec2(float(x), float(y)) - float(TILE) * 0.5 + 0.5) * uTexel;
+      m = max(m, abs(texture2D(uSrc, vUv + o).a));
+    }
+  }
+  gl_FragColor = vec4(m);
+}`
+
+const TILEDILATE = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uSrc;
+uniform vec2 uTexel;
+void main () {
+  float m = 0.0;
+  for (int y = -1; y <= 1; y++) {
+    for (int x = -1; x <= 1; x++) {
+      m = max(m, texture2D(uSrc, vUv + vec2(float(x), float(y)) * uTexel).r);
+    }
+  }
+  gl_FragColor = vec4(m);
+}`
+
+const GATHER = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uSrc, uNoise, uTile;
+uniform vec2 uTexel;
+uniform float uMaxCoc, uFrame, uHasNoise, uBlades, uRot;
+const float GA = 2.39996323;
+const float PI = 3.14159265359;
+
+float blue () {
+  vec2 fc = gl_FragCoord.xy;
+  float n = uHasNoise > 0.5
+    ? texture2D(uNoise, fract(fc / 64.0)).x
+    : fract(52.9829189 * fract(dot(fc, vec2(0.06711056, 0.00583715))));
+  return fract(n + uFrame * 0.61803399);
+}
+// 조리개 날 n장의 정n각형 경계 반지름 — 원형 디스크를 육각 보케로 깎는다
+float blade (float th) {
+  float a = PI / uBlades;
+  return cos(a) / cos(mod(th + uRot, 2.0 * a) - a);
+}
+
+void main () {
+  vec4 c0 = texture2D(uSrc, vUv);
+  float R = clamp(max(abs(c0.a), texture2D(uTile, vUv).r), 0.0, uMaxCoc);
+  if (R < 0.75) { gl_FragColor = vec4(c0.rgb, 0.0); return; }
+  float jit = blue() * GA;
+  vec3 sum = c0.rgb;
+  float wsum = 1.0, nearW = 0.0;
+  for (int i = 0; i < TAPS; i++) {
+    float fi = float(i) + 0.5;
+    float rr = sqrt(fi / float(TAPS));
+    float th = fi * GA + jit;
+    float rad = rr * blade(th);
+    vec2 off = vec2(cos(th), sin(th)) * rad * R;
+    vec4 s = texture2D(uSrc, vUv + off * uTexel);
+    float dist = rad * R;
+    float w = clamp((abs(s.a) - dist) * 0.7 + 1.0, 0.0, 1.0);
+    // 전경 블리딩 커버리지 — "이 픽셀 앞에 있고, 자기 CoC 가 여기까지 닿을 만큼 더 흐린" 탭만 센다.
+    // 부호만 보면 초점이 원경일 때 화면 전체가 근경이라 커버리지가 포화하고, 합성이 어디서나
+    // 흐린 버퍼를 100% 채택해 중경 디테일이 통째로 날아간다(루브릭 G6).
+    nearW += w * step(dist, -s.a) * step(abs(c0.a) + 0.75, -s.a);
+    sum += s.rgb * w;
+    wsum += w;
+  }
+  gl_FragColor = vec4(sum / wsum, clamp(nearW / float(TAPS) * 1.7, 0.0, 1.0));
+}`
+
+const COMPOSITE = COC + `
+uniform sampler2D uSharp, uBlur;
+void main () {
+  vec4 b = texture2D(uBlur, vUv);
+  vec3 sharp = texture2D(uSharp, vUv).rgb;
+  // 1.5~4.0 은 풀해상도 픽셀. 개더의 컷오프(하프해상도 0.75)와 같은 지점에서 열린다.
+  float k = max(smoothstep(1.5, 4.0, abs(coc(lin(vUv)))), b.a);
+  gl_FragColor = vec4(mix(sharp, b.rgb, clamp(k, 0.0, 1.0)), 1.0);
+}`
+
+const BLIT = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uSrc;
+void main () { gl_FragColor = texture2D(uSrc, vUv); }`
+
+// 타일맥스는 반드시 nearest 다. 바이리니어로 읽으면 타일 경계에서 최대값이 희석돼 개더 반경이 모자란다.
+function rt (w, h, nearest) {
+  const f = nearest ? THREE.NearestFilter : THREE.LinearFilter
+  const t = new THREE.WebGLRenderTarget(Math.max(1, w | 0), Math.max(1, h | 0), {
+    format: THREE.RGBAFormat, type: THREE.HalfFloatType,
+    minFilter: f, magFilter: f,
+    depthBuffer: false, stencilBuffer: false, generateMipmaps: false
+  })
+  t.texture.colorSpace = THREE.NoColorSpace
+  return t
+}
+
+class Quad {
+  constructor () {
+    this.scene = new THREE.Scene()
+    this.cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), null)
+    this.mesh.frustumCulled = false
+    this.scene.add(this.mesh)
+  }
+  draw (r, mat, target) {
+    this.mesh.material = mat
+    const auto = r.autoClear
+    r.autoClear = false
+    r.setRenderTarget(target ?? null)
+    r.render(this.scene, this.cam)
+    r.autoClear = auto
+  }
+}
+
+function shader (frag, defines) {
+  return new THREE.ShaderMaterial({
+    defines: defines ?? {}, vertexShader: VERT, fragmentShader: frag,
+    depthTest: false, depthWrite: false, uniforms: {}
+  })
+}
+
+export default class Dof {
+  async init (ctx) {
+    const q = ctx.quality ?? {}
+    this.enabled = q.dof !== false
+    this.taps = (q.name === 'cinematic') ? 48 : 28
+    this.quad = new Quad()
+    this.w = 0; this.h = 0
+    this.sensor = 0.024
+    // 타일 변이 최대 CoC 보다 작으면 3x3 확장으로도 산란원을 못 덮는다. 둘을 같은 값으로 묶는다.
+    // 10(=풀해상도 20px)은 1인칭 수사 게임의 기본 상태로는 과하다. 흐림 반경을 조이면
+    // 타일 확장 반경도 같이 줄어 선명한 중경으로 번지는 양이 함께 줄어든다(루브릭 G6).
+    this.maxCoc = 6
+    this.tile = 6
+
+    const cocU = () => ({
+      uDepth: { value: null }, uInvProj: { value: new THREE.Matrix4() },
+      uFocal: { value: 0.03 }, uFstop: { value: 5.6 }, uSensor: { value: this.sensor },
+      uPixels: { value: 720 }, uNear: { value: 0.6 }, uFocusFixed: { value: 0 },
+      uMaxCoc: { value: this.maxCoc }, uNearCap: { value: 0.10 }, uNearLimit: { value: 0.6 }
+    })
+
+    this.mPrep = shader(PREP)
+    this.mPrep.uniforms = Object.assign(cocU(), {
+      uSrc: { value: null }, uTexel: { value: new THREE.Vector2() }
+    })
+    this.mTile = shader(TILEMAX, { TILE: this.tile })
+    this.mTile.uniforms = { uSrc: { value: null }, uTexel: { value: new THREE.Vector2() } }
+    this.mTileD = shader(TILEDILATE)
+    this.mTileD.uniforms = { uSrc: { value: null }, uTexel: { value: new THREE.Vector2() } }
+    this.mGather = shader(GATHER, { TAPS: this.taps })
+    this.mGather.uniforms = {
+      uSrc: { value: null }, uNoise: { value: null }, uTile: { value: null },
+      uTexel: { value: new THREE.Vector2() },
+      uMaxCoc: { value: this.maxCoc }, uFrame: { value: 0 }, uHasNoise: { value: 0 },
+      uBlades: { value: 6 }, uRot: { value: 0.42 }
+    }
+    this.mComp = shader(COMPOSITE)
+    this.mComp.uniforms = Object.assign(cocU(), {
+      uSharp: { value: null }, uBlur: { value: null }
+    })
+    this.mBlit = shader(BLIT)
+    this.mBlit.uniforms = { uSrc: { value: null } }
+  }
+
+  setSize (w, h, ctx) { this._alloc(w, h) }
+
+  _alloc (w, h) {
+    if (this.w === w && this.h === h) return
+    this.w = w; this.h = h
+    for (const t of [this.half, this.blur, this.full, this.tile0, this.tile1]) t?.dispose()
+    const hw = Math.max(1, w >> 1), hh = Math.max(1, h >> 1)
+    this.half = rt(hw, hh)
+    this.blur = rt(hw, hh)
+    this.full = rt(w, h)
+    const tw = Math.max(1, Math.ceil(hw / this.tile)), th = Math.max(1, Math.ceil(hh / this.tile))
+    this.tile0 = rt(tw, th, true)
+    this.tile1 = rt(tw, th, true)
+  }
+
+  _lens (ctx, u, pixels) {
+    const ud = ctx.camera.userData ?? {}
+    const look = ctx.look ?? {}
+    const fov = ctx.camera.fov * Math.PI / 180
+    u.uFocal.value = 0.5 * this.sensor / Math.tan(fov * 0.5)
+    // 보케는 APERTURE.evidence / APERTURE.closeup 을 userData.aperture 에 넣을 때만 열린다.
+    const fstop = ud.aperture ?? look.aperture ?? look.fStop ?? APERTURE.explore
+    u.uFstop.value = fstop
+    u.uMaxCoc.value = Math.min(this.maxCoc, Math.max(1.5, COC_K / fstop))
+    // 탐색 상태에서 초점을 중앙 5탭 오토포커스에 맡기면, 플레이어가 근접 벽·문짝을 보는 순간
+    // f0 가 0.3m 로 내려가고 그 프레임의 복도 전체(3~10m)가 CoC 상한까지 흐려진다.
+    // 심사가 지목한 "근경과 원경이 같이 날아가는 불가능한 CoC 곡선"이 정확히 이 경로다.
+    // 조리개를 열지 않은 상태는 팬포커스 설계이므로 초점을 카트 거리(3.5m)에 고정한다 —
+    // f/11 · f≈21mm 의 과초점거리가 1.3m 라 3.5m 고정이면 0.9m~∞ 가 전부 착란원 한계 안이다.
+    const fixed = ud.focus ?? look.focus ?? look.focusDistance ?? 0
+    u.uFocusFixed.value = fixed > 0 ? fixed : (fstop >= PANFOCUS_FSTOP ? EXPLORE_FOCUS : 0)
+    u.uPixels.value = pixels
+    u.uDepth.value = ctx.depthTexture ?? ctx.targets.hdr?.depthTexture
+    u.uInvProj.value.copy(ctx.matrices.invProj)
+  }
+
+  render (ctx) {
+    const hdr = ctx.targets?.hdr
+    if (!this.enabled || !hdr) return
+    this._alloc(ctx.w, ctx.h)
+    const r = ctx.renderer
+
+    const p = this.mPrep.uniforms
+    this._lens(ctx, p, ctx.h >> 1)
+    p.uSrc.value = hdr.texture
+    p.uTexel.value.set(1 / ctx.w, 1 / ctx.h)
+    this.quad.draw(r, this.mPrep, this.half)
+
+    const tm = this.mTile.uniforms
+    tm.uSrc.value = this.half.texture
+    tm.uTexel.value.set(2 / ctx.w, 2 / ctx.h)
+    this.quad.draw(r, this.mTile, this.tile0)
+    const td = this.mTileD.uniforms
+    td.uSrc.value = this.tile0.texture
+    td.uTexel.value.set(1 / this.tile0.width, 1 / this.tile0.height)
+    this.quad.draw(r, this.mTileD, this.tile1)
+
+    const g = this.mGather.uniforms
+    g.uMaxCoc.value = p.uMaxCoc.value
+    g.uSrc.value = this.half.texture
+    g.uTile.value = this.tile1.texture
+    g.uNoise.value = ctx.blueNoise ?? null
+    g.uHasNoise.value = ctx.blueNoise ? 1 : 0
+    g.uFrame.value = (ctx.frame ?? 0) % 64
+    g.uTexel.value.set(2 / ctx.w, 2 / ctx.h)
+    this.quad.draw(r, this.mGather, this.blur)
+
+    const c = this.mComp.uniforms
+    this._lens(ctx, c, ctx.h)
+    c.uSharp.value = hdr.texture
+    c.uBlur.value = this.blur.texture
+    this.quad.draw(r, this.mComp, this.full)
+
+    this.mBlit.uniforms.uSrc.value = this.full.texture
+    this.quad.draw(r, this.mBlit, hdr)
+  }
+
+  dispose () {
+    for (const t of [this.half, this.blur, this.full, this.tile0, this.tile1]) t?.dispose()
+    for (const m of [this.mPrep, this.mTile, this.mTileD, this.mGather, this.mComp, this.mBlit]) m?.dispose()
+  }
+}

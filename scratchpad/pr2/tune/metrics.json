@@ -1,0 +1,580 @@
+{
+  "cases": [
+    {
+      "tag": "C0-auto",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "C1-i000",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "C2-i030",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "C3-i040",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "C4-i050",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "C5-i060",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "C6-i080",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "D0-coc6",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "D1-coc4",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "D2-coc3",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "D3-coc2",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    },
+    {
+      "tag": "D4-dofOFF",
+      "w": 2560,
+      "h": 1440,
+      "exposure": 33.714
+    }
+  ],
+  "metrics": {
+    "info": {
+      "ev": 33.71399154673974
+    },
+    "boxes": {
+      "C0-auto": {
+        "ceilLamp": {
+          "mean": 181.1,
+          "sd": 64.4
+        },
+        "rightSconce": {
+          "mean": 205.7,
+          "sd": 46
+        },
+        "leftSconce": {
+          "mean": 222.4,
+          "sd": 39.2
+        },
+        "farEnd": {
+          "mean": 99.9,
+          "sd": 25.7
+        },
+        "nearWall": {
+          "mean": 134.7,
+          "sd": 36.6
+        },
+        "midWall": {
+          "mean": 81.3,
+          "sd": 46.2
+        },
+        "nearCarpet": {
+          "mean": 146.2,
+          "sd": 19.6
+        }
+      },
+      "C1-i000": {
+        "ceilLamp": {
+          "mean": 181.6,
+          "sd": 64.3
+        },
+        "rightSconce": {
+          "mean": 205.5,
+          "sd": 46.4
+        },
+        "leftSconce": {
+          "mean": 221.4,
+          "sd": 39.6
+        },
+        "farEnd": {
+          "mean": 33.5,
+          "sd": 5.1
+        },
+        "nearWall": {
+          "mean": 121.3,
+          "sd": 46.9
+        },
+        "midWall": {
+          "mean": 80,
+          "sd": 45.9
+        },
+        "nearCarpet": {
+          "mean": 129.1,
+          "sd": 22.8
+        }
+      },
+      "C2-i030": {
+        "ceilLamp": {
+          "mean": 177.5,
+          "sd": 65.6
+        },
+        "rightSconce": {
+          "mean": 205.1,
+          "sd": 46.6
+        },
+        "leftSconce": {
+          "mean": 219.2,
+          "sd": 41.1
+        },
+        "farEnd": {
+          "mean": 52.8,
+          "sd": 11.1
+        },
+        "nearWall": {
+          "mean": 120,
+          "sd": 44.4
+        },
+        "midWall": {
+          "mean": 75.4,
+          "sd": 43
+        },
+        "nearCarpet": {
+          "mean": 128,
+          "sd": 21.3
+        }
+      },
+      "C3-i040": {
+        "ceilLamp": {
+          "mean": 182.5,
+          "sd": 64
+        },
+        "rightSconce": {
+          "mean": 205.2,
+          "sd": 46.4
+        },
+        "leftSconce": {
+          "mean": 222.2,
+          "sd": 38.8
+        },
+        "farEnd": {
+          "mean": 59,
+          "sd": 12.6
+        },
+        "nearWall": {
+          "mean": 123.8,
+          "sd": 44.3
+        },
+        "midWall": {
+          "mean": 80.9,
+          "sd": 46.4
+        },
+        "nearCarpet": {
+          "mean": 132.8,
+          "sd": 20.2
+        }
+      },
+      "C4-i050": {
+        "ceilLamp": {
+          "mean": 179.9,
+          "sd": 64.9
+        },
+        "rightSconce": {
+          "mean": 205.7,
+          "sd": 46.2
+        },
+        "leftSconce": {
+          "mean": 221.9,
+          "sd": 39.2
+        },
+        "farEnd": {
+          "mean": 64.4,
+          "sd": 15
+        },
+        "nearWall": {
+          "mean": 125.1,
+          "sd": 43.9
+        },
+        "midWall": {
+          "mean": 80.5,
+          "sd": 46
+        },
+        "nearCarpet": {
+          "mean": 135.4,
+          "sd": 20.8
+        }
+      },
+      "C5-i060": {
+        "ceilLamp": {
+          "mean": 183,
+          "sd": 63.8
+        },
+        "rightSconce": {
+          "mean": 206.1,
+          "sd": 46
+        },
+        "leftSconce": {
+          "mean": 222,
+          "sd": 39.1
+        },
+        "farEnd": {
+          "mean": 69,
+          "sd": 16.9
+        },
+        "nearWall": {
+          "mean": 126.4,
+          "sd": 43.9
+        },
+        "midWall": {
+          "mean": 82.2,
+          "sd": 46.6
+        },
+        "nearCarpet": {
+          "mean": 137.4,
+          "sd": 20.8
+        }
+      },
+      "C6-i080": {
+        "ceilLamp": {
+          "mean": 179.8,
+          "sd": 65
+        },
+        "rightSconce": {
+          "mean": 206.7,
+          "sd": 45.8
+        },
+        "leftSconce": {
+          "mean": 221.7,
+          "sd": 39.3
+        },
+        "farEnd": {
+          "mean": 77.6,
+          "sd": 20.2
+        },
+        "nearWall": {
+          "mean": 128.1,
+          "sd": 42.9
+        },
+        "midWall": {
+          "mean": 80.8,
+          "sd": 45.8
+        },
+        "nearCarpet": {
+          "mean": 140.4,
+          "sd": 20.9
+        }
+      },
+      "D0-coc6": {
+        "ceilLamp": {
+          "mean": 164.6,
+          "sd": 68.1
+        },
+        "rightSconce": {
+          "mean": 206.9,
+          "sd": 46
+        },
+        "leftSconce": {
+          "mean": 217.4,
+          "sd": 42.3
+        },
+        "farEnd": {
+          "mean": 63.6,
+          "sd": 17.5
+        },
+        "nearWall": {
+          "mean": 120.7,
+          "sd": 42.4
+        },
+        "midWall": {
+          "mean": 64.8,
+          "sd": 35.5
+        },
+        "nearCarpet": {
+          "mean": 131.2,
+          "sd": 28.6
+        }
+      },
+      "D1-coc4": {
+        "ceilLamp": {
+          "mean": 179.4,
+          "sd": 65.1
+        },
+        "rightSconce": {
+          "mean": 206.7,
+          "sd": 45.9
+        },
+        "leftSconce": {
+          "mean": 220.6,
+          "sd": 39.7
+        },
+        "farEnd": {
+          "mean": 64.8,
+          "sd": 17.3
+        },
+        "nearWall": {
+          "mean": 125.3,
+          "sd": 44.4
+        },
+        "midWall": {
+          "mean": 80.2,
+          "sd": 45.4
+        },
+        "nearCarpet": {
+          "mean": 137,
+          "sd": 22.4
+        }
+      },
+      "D2-coc3": {
+        "ceilLamp": {
+          "mean": 182.8,
+          "sd": 63.9
+        },
+        "rightSconce": {
+          "mean": 206.4,
+          "sd": 46
+        },
+        "leftSconce": {
+          "mean": 221.6,
+          "sd": 39.3
+        },
+        "farEnd": {
+          "mean": 64.7,
+          "sd": 17.2
+        },
+        "nearWall": {
+          "mean": 125.6,
+          "sd": 44.7
+        },
+        "midWall": {
+          "mean": 82.4,
+          "sd": 46.7
+        },
+        "nearCarpet": {
+          "mean": 137.2,
+          "sd": 21.9
+        }
+      },
+      "D3-coc2": {
+        "ceilLamp": {
+          "mean": 180,
+          "sd": 64.7
+        },
+        "rightSconce": {
+          "mean": 206.3,
+          "sd": 46
+        },
+        "leftSconce": {
+          "mean": 221.8,
+          "sd": 39.2
+        },
+        "farEnd": {
+          "mean": 65.3,
+          "sd": 18.3
+        },
+        "nearWall": {
+          "mean": 125,
+          "sd": 44.5
+        },
+        "midWall": {
+          "mean": 80.8,
+          "sd": 45.9
+        },
+        "nearCarpet": {
+          "mean": 137,
+          "sd": 22.1
+        }
+      },
+      "D4-dofOFF": {
+        "ceilLamp": {
+          "mean": 185.2,
+          "sd": 62.3
+        },
+        "rightSconce": {
+          "mean": 206,
+          "sd": 46.1
+        },
+        "leftSconce": {
+          "mean": 222.6,
+          "sd": 38.9
+        },
+        "farEnd": {
+          "mean": 66.8,
+          "sd": 20.7
+        },
+        "nearWall": {
+          "mean": 125,
+          "sd": 44.9
+        },
+        "midWall": {
+          "mean": 82.4,
+          "sd": 46.8
+        },
+        "nearCarpet": {
+          "mean": 136.9,
+          "sd": 21.5
+        }
+      }
+    },
+    "vol": {
+      "C2-i030": {
+        "deltaP999": 39,
+        "maskPct": 3.1,
+        "coreEdge": 1.53,
+        "veilPct": -0.81,
+        "farOverNear": 44,
+        "bandSd": [
+          21.3,
+          43,
+          11.1
+        ]
+      },
+      "C3-i040": {
+        "deltaP999": 48,
+        "maskPct": 3.71,
+        "coreEdge": 1.44,
+        "veilPct": 2.29,
+        "farOverNear": 47.7,
+        "bandSd": [
+          20.2,
+          46.4,
+          12.6
+        ]
+      },
+      "C4-i050": {
+        "deltaP999": 57,
+        "maskPct": 3.27,
+        "coreEdge": 1.41,
+        "veilPct": 2.73,
+        "farOverNear": 51.5,
+        "bandSd": [
+          20.8,
+          46,
+          15
+        ]
+      },
+      "C5-i060": {
+        "deltaP999": 64,
+        "maskPct": 3.35,
+        "coreEdge": 1.35,
+        "veilPct": 3.72,
+        "farOverNear": 54.6,
+        "bandSd": [
+          20.8,
+          46.6,
+          16.9
+        ]
+      },
+      "C6-i080": {
+        "deltaP999": 77,
+        "maskPct": 3.54,
+        "coreEdge": 1.47,
+        "veilPct": 4.37,
+        "farOverNear": 60.6,
+        "bandSd": [
+          20.9,
+          45.8,
+          20.2
+        ]
+      }
+    },
+    "dof": {
+      "D0-coc6": {
+        "ceilLamp": 17.32,
+        "rightSconce": 12.45,
+        "leftSconce": 17.71,
+        "midWall": 12.86,
+        "nearWall": 10.68,
+        "farEnd": 5.16,
+        "pctOfSharp": {
+          "ceilLamp": 132.5,
+          "rightSconce": 98.5,
+          "leftSconce": 93.7,
+          "midWall": 84.2,
+          "nearWall": 92.9,
+          "farEnd": 92.5
+        }
+      },
+      "D1-coc4": {
+        "ceilLamp": 13.96,
+        "rightSconce": 12.51,
+        "leftSconce": 18.62,
+        "midWall": 14.87,
+        "nearWall": 11.22,
+        "farEnd": 5.29,
+        "pctOfSharp": {
+          "ceilLamp": 106.8,
+          "rightSconce": 99,
+          "leftSconce": 98.5,
+          "midWall": 97.3,
+          "nearWall": 97.6,
+          "farEnd": 94.8
+        }
+      },
+      "D2-coc3": {
+        "ceilLamp": 12.89,
+        "rightSconce": 12.56,
+        "leftSconce": 18.39,
+        "midWall": 15.07,
+        "nearWall": 11.42,
+        "farEnd": 5.32,
+        "pctOfSharp": {
+          "ceilLamp": 98.6,
+          "rightSconce": 99.4,
+          "leftSconce": 97.3,
+          "midWall": 98.6,
+          "nearWall": 99.3,
+          "farEnd": 95.3
+        }
+      },
+      "D3-coc2": {
+        "ceilLamp": 13.99,
+        "rightSconce": 12.58,
+        "leftSconce": 18.74,
+        "midWall": 15.23,
+        "nearWall": 11.45,
+        "farEnd": 5.42,
+        "pctOfSharp": {
+          "ceilLamp": 107,
+          "rightSconce": 99.5,
+          "leftSconce": 99.2,
+          "midWall": 99.7,
+          "nearWall": 99.6,
+          "farEnd": 97.1
+        }
+      },
+      "D4-dofOFF": {
+        "ceilLamp": 13.07,
+        "rightSconce": 12.64,
+        "leftSconce": 18.9,
+        "midWall": 15.28,
+        "nearWall": 11.5,
+        "farEnd": 5.58
+      }
+    }
+  },
+  "console": []
+}
