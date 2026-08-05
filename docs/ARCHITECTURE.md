@@ -35,7 +35,9 @@ npm run shot     # 헤드리스 스크린샷 하네스 (tools/shoot.mjs)
 
 ```
 src/
-  main.js          [CORE] 부트스트랩·씬 모드 진입로 (?scene= 경로 보존 — AGENTS.md)
+  main.js          [CORE] 부트스트랩·씬 모드 진입로 (?scene= 경로 보존 — AGENTS.md).
+                   잠금 대상은 core/ 디렉터리만 — main.js의 부트 훅(boot:progress 발화) 추가는
+                   T-P1-05 범위로 허용 *(v2)*
   core/            [CORE — 잠김. 읽기 전용. 절대 수정 금지]
     engine.js      Engine 클래스, 모듈 레지스트리, 렌더 루프
     bus.js         이벤트 버스
@@ -211,20 +213,24 @@ engine.bus.emit('interrogation:start', {npc: 'deitch'})
 | `interrogation:start` | `{npc}` | gameplay |
 | `interrogation:statement` | `{npc, line, truth}` | interrogation |
 | `interrogation:verdict` | `{npc, choice, correct}` | interrogation |
-| `interrogation:end` | `{npc, score}` | interrogation |
+| `interrogation:end` | `{npc, score, tier}` | interrogation — tier ∈ 만점/부분/실패(E5 §2.4 상태식). 노트 인물 면이 소비 *(v2에서 tier 추가)* |
 | `player:interact` | `{targetId}` | gameplay |
 | `player:footstep` | `{material, speed}` | gameplay |
 | `cinematic:start` / `cinematic:end` | `{id}` | cinematics |
 | `subtitle` | `{speaker, text, dur}` | any |
 | `sfx` | `{id, pos?, gain?}` | any |
 | `room:changed` | `{room}` | levels |
-| `act:phase` | `{act, phase}` | narrative — 막 내 페이즈 전환(조명·오디오 무드 연동) *(v2)* |
+| `act:phase` | `{act, phase}` | narrative — 막 내 페이즈 전환(조명·오디오 무드 연동). **phase 정본 어휘: `early` / `main` / `late` 3값 공통** — E2 결박: act1 late=7:00 도일 통과 개시 · act2 late=30:00 보일러 소리 · act3 late=지목 개시 *(v2)* |
 | `lore:heard` | `{id, medium}` | gameplay — 괴담 유닛 접촉, 노트 괴담 면 축적 *(v2)* |
 | `npc:sighted` | `{npc, kind}` | levels — 프리젠스 목격, 정보 없는 존재감 (E4 §1 도일) *(v2)* |
 | `checkpoint:saved` | `{act}` | gameplay/save — 막 경계 저장 *(v2)* |
 | `settings:changed` | `{key, value}` | ui/settings *(v2)* |
 | `interrogation:prompt` | `{npc, sid, options}` | interrogation — UI에 3선택(또는 재질문 2선택) 요구. 렌더는 [UI] 소유 *(v2)* |
-| `interrogation:choose` | `{sid, choice, evidence?}` | ui — 플레이어 선택 반환 (hud 3선택·notebook 증거 지목) *(v2)* |
+| `interrogation:choose` | `{sid, choice, evidence?}` | ui — 플레이어 선택 반환(단일 발화 — LIE는 증거 확정 시점에만, 판정도 그때만) *(v2)* |
+| `interrogation:aiming` | `{sid, on}` | ui — LIE 증거 지목 모드 진입(on:true)/취소(on:false). 카메라 푸시인·롤백(E7 §1 3행)의 트리거. 판정 아님 *(v2)* |
+| `deduction:present` | `{linkId, evidence}` | ui(board) — 증거판에 링크 제시 입력. 판정·`deduction:link` 발화는 deduction 소유 *(v2)* |
+| `deduction:sign` | `{}` | ui(board) — 조서 서명 = 지목 종결 선언. deduction이 성립 링크 수로 엔딩 분기(E5 §5) *(v2)* |
+| `boot:progress` | `{done, total}` | main.js — 부트 진행(모듈 init 계수+첫 프레임). 로딩 화면(E8 §3)이 구독 *(v2)* |
 | `perf:state` | `{npc, state}` | interrogation — 연기 상태 idle/anxious/lying/breaking. perf.js는 이것만 구독하며 진위를 모른다. 산출 규칙(기계): 진술 제시 중 `truth:false`→lying, `anxiousTell:true`→anxious, 그 외→idle. **breaking은 case-graph `breakingOn:true` 진술의 lieCorrect 판정 직후에만**(현행 3건: deitch.S4·ruiz.S4·pryce.S3) *(v2)* |
 | `deduction:link` | `{id, ok}` | deduction — 지목판 링크 성립/실패. perf(도일 반응)·cinematics(광각화)가 구독 *(v2)* |
 | `camera:dof` | `{bias, ms}` | cinematics — LIE 푸시인의 조리개 개방(보케 붕괴) 요청. 수신·보간은 [PIPELINE-CORE]가 dof 패스에 전달(수신부 구현은 HANDOFF 큐 경유 — E10 T-P1-08 비고) *(v2)* |
@@ -290,6 +296,13 @@ setMood('corridor-night')   // 안개 밀도·볼류메트릭 세기·IBL을 한
   API 경유로 등록한다(시그니처는 [PHYSICS]가 P1 착수 시 이 절에 공표 — 그 전까지 레벨
   발주는 "physics 정적 등록 의무"만 전제). QA 프로브의 레이캐스트 폴백(`player.body=null`)은
   씬 모드 전용 경로다 — 정식 레벨이 이 폴백에 의존하는 것을 금지한다(AGENTS.md 보존 규칙).
+- **앵커 규약 *(v2)***: NPC·시네마틱의 시각 실체는 레벨이 만들지 않는다. 레벨은 빈
+  Object3D 앵커만 배치한다 — `userData.anchor` 정본 값: `npc/deitch`·`npc/ruiz`·
+  `npc/pryce`·`npc/doyle`(심문 위치, 동일 문자열이 qaId 겸용) · `presence/doyle-lobby`·
+  `presence/doyle-corridor-1`·`presence/doyle-corridor-2`(프리젠스 실루엣 위치) ·
+  `cin/act2-elevator`·`cin/act3-window`(시네마틱 기준점). chars 모듈이 `room:changed`
+  구독 후 현재 공간의 앵커를 검색해 리그·실루엣을 자기 배치하고, `npc:sighted` 발화는
+  프리젠스 앵커 활성 시 chars가 아니라 **레벨이** 한다(§5 발신자 유지).
 
 ## 9. 스크린샷·QA 하네스 계약
 
@@ -308,7 +321,9 @@ setMood('corridor-night')   // 안개 밀도·볼류메트릭 세기·IBL을 한
   `qa.interact(qaId)` 상호작용. interact/walk는 gameplay가 자기 경로로 `player:interact`를
   발화하므로 §5 발신 방향 계약과 충돌하지 않는다.
 - 심문·지목 입력([UI] 구현): `qa.choose({sid, choice, evidence?})` — UI의
-  `interrogation:choose` 발신 경로를 대리 구동 · `qa.link(linkId)` — 증거판 링크 제시 대리.
+  `interrogation:choose` 발신 경로를 대리 구동 · `qa.link(linkId)` — 증거판 `deduction:present`
+  대리 · `qa.sign()` — 조서 서명(`deduction:sign`) 대리 · `qa.notebook({op, arg?})` —
+  수사노트 구동(op: open/close/tab/scrub/inspect — C3 스크럽·반사 상호작용 재현용).
 - 관측(gameplay 구현): `qa.state()` → `{act, evidence[], burned[], flags[], room}` 읽기 전용
   스냅샷 · `qa.events(sinceIndex?)` → 버스 이벤트 링버퍼(QA 모드에서 gameplay가 기록).
   봇은 버스를 직접 발화·구독하지 않는다.
