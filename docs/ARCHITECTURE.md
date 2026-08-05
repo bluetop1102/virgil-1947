@@ -207,7 +207,7 @@ engine.bus.emit('interrogation:start', {npc: 'deitch'})
 | 이벤트 | payload | 발신 |
 |---|---|---|
 | `game:ready` | — | core |
-| `act:enter` | `{act: 1\|2\|3}` | narrative |
+| `act:enter` | `{act: 1\|2\|3}` | narrative — **발화 파일: interrogation.js (판정 상태기계와 함께 막·페이즈 진행 상태기계를 소유, E5 §4)** *(v2에서 소유 명시)* |
 | `evidence:collected` | `{id, kind}` | gameplay |
 | `evidence:presented` | `{id, npc, correct}` | interrogation |
 | `interrogation:start` | `{npc}` | gameplay |
@@ -220,7 +220,7 @@ engine.bus.emit('interrogation:start', {npc: 'deitch'})
 | `subtitle` | `{speaker, text, dur}` | any |
 | `sfx` | `{id, pos?, gain?}` | any |
 | `room:changed` | `{room}` | levels |
-| `act:phase` | `{act, phase}` | narrative — 막 내 페이즈 전환(조명·오디오 무드 연동). **phase 정본 어휘: `early` / `main` / `late` 3값 공통** — E2 결박: act1 late=7:00 도일 통과 개시 · act2 late=30:00 보일러 소리 · act3 late=지목 개시 *(v2)* |
+| `act:phase` | `{act, phase}` | narrative(발화 파일: interrogation.js — act:enter와 동일 소유) — 막 내 페이즈 전환(조명·오디오 무드 연동). **phase 정본 어휘: `early` / `main` / `late` 3값 공통** — E2 결박: act1 late=7:00 도일 통과 개시 · act2 late=30:00 보일러 소리 · act3 late=지목 개시 *(v2)* |
 | `lore:heard` | `{id, medium}` | gameplay — 괴담 유닛 접촉, 노트 괴담 면 축적 *(v2)* |
 | `npc:sighted` | `{npc, kind}` | levels — 프리젠스 목격, 정보 없는 존재감 (E4 §1 도일) *(v2)* |
 | `checkpoint:saved` | `{act}` | gameplay/save — 막 경계 저장 *(v2)* |
@@ -302,7 +302,9 @@ setMood('corridor-night')   // 안개 밀도·볼류메트릭 세기·IBL을 한
   `npc/pryce`·`npc/doyle`(심문 위치, 동일 문자열이 qaId 겸용) · `presence/doyle-lobby`·
   `presence/doyle-corridor-1`·`presence/doyle-corridor-2`(프리젠스 실루엣 위치) ·
   `presence/ruiz-lobby`(1막 원경 — 린넨 카트 통과 경로 기점)·`presence/pryce-lobby`
-  (1막 원경 — 소파, 닳은 팔걸이 쪽) · `cin/act2-elevator`·`cin/act3-window`(시네마틱 기준점).
+  (1막 원경 — 소파, 닳은 팔걸이 쪽) · `cin/act2-elevator`·`cin/act3-window`(시네마틱 기준점) ·
+  `spawn/act1`·`spawn/act2`·`spawn/act3`(막 문턱 시작 위치 — 각 막의 첫 레벨이 배치:
+  lobby/corridor/rooftop. 부트 초기 배치와 save.js "이어서" 복원이 소비).
   원경 2종(ruiz·pryce)은 배치만 하고 `npc:sighted`를 발화하지 않는다 — sighted는 목격
   연출이 있는 도일 프리젠스 전용이다(E4 §1). chars 모듈이 `room:changed`
   구독 후 현재 공간의 앵커를 검색해 리그·실루엣을 자기 배치하고, `npc:sighted` 발화는

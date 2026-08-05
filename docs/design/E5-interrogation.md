@@ -116,7 +116,8 @@ DOUBT→LIE정답은 +2이지 +2.5가 아니다. DOUBT 선제시가 점수 이�
 
 ## [구현]
 
-- `narrative/interrogation.js` [INTERROGATION]: §1 판정표·재질문·종료 3단의 상태기계.
+- `narrative/interrogation.js` [INTERROGATION]: §1 판정표·재질문·종료 3단의 상태기계 +
+  **§4 막·페이즈 진행 상태기계(`act:enter`·`act:phase` 발화 — ARCH §5 소유 명시)**.
   **렌더 금지 — 상태·판정만.** 이벤트 발화: `interrogation:start/statement/verdict/end`,
   `evidence:presented`, `interrogation:prompt`(선택 요구), `perf:state`(연기 상태 —
   ARCHITECTURE v2 §5).

@@ -87,7 +87,7 @@
 - 상호작용 밀도(권역 차등 — "정보 있는 상호작용" = 증거+환경서사+괴담 매체 합산.
   관찰 문구의 진실원은 STORY §6 — 목록의 전 항목이 §6에 문장을 가진다):
   - 로비 **7**: register(+여백 낙서 lore.lightwell) · keyrack · flask · 라디오(lore.pipes) ·
-    개업 연혁 판(lore.1912) · 소파 팔걸이 · 프런트 원경.
+    개업 연혁 판(lore.1912) · 소파 팔걸이 · 프런트 압지(필적 모티프의 선노출).
   - 복도+린넨실 **6**: footprints · linen-wall 낙서(lore.linen·lightwell) · 카펫 띠 ·
     회색 팻말 · 채광정 난간 · 린넨 카트.
   - 942+욕실 **6**: journal · roofkey · sink-trap · autopsy · 눌린 침대/액자 자국 · 양동이.
