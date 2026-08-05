@@ -54,7 +54,10 @@
 - 상태 4종: `idle` / `anxious`(진실이나 불안) / `lying` / `breaking`. 심문 상태기계가
   `perf:state {npc, state}` 이벤트로 발화한다(ARCH v2 §5) — 상태 산출 근거는 진술의
   `truth`와 **`anxiousTell` 필드**(case-graph.json statements — 불안 발화 진실 진술 4건:
-  deitch.S1·S3, ruiz.S1, pryce.S2)이며, 이 배정 데이터의 진실원은 case-graph다(E3 소유).
+  deitch.S1·S3, ruiz.S1, pryce.S2)이며, **breaking은 `breakingOn:true` 진술(deitch.S4·
+  ruiz.S4·pryce.S3)의 lieCorrect 직후에만** 발화한다. 이 배정 데이터의 진실원은
+  case-graph다(E3 소유). 프라이스 S4의 고해는 breaking이 아니라 이미 무너진 뒤의
+  anxious 지속이다 — 붕괴는 인물당 한 번이다.
 - **P5 상관 게이트**: 스크립트 전수에서 거짓 진술과 텔 발화의 상관이 1.0이면 FAIL —
   불안 시 텔 발화가 전체 텔 발화의 30% 이상이어야 PASS(E9). 즉 진실을 말하는데 신호가
   나오는 경우가 구조적으로 존재해야 한다. 읽기는 도박이어야 한다.

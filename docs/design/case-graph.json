@@ -493,7 +493,8 @@
       "obtain": [
         {
           "via": "spawn",
-          "flag": "two-voices"
+          "flag": "two-voices",
+          "where": "corridor9/footprints"
         }
       ]
     },
@@ -627,7 +628,8 @@
           "requiresEvidence": "roofkey"
         }
       },
-      "key": true
+      "key": true,
+      "breakingOn": true
     },
     {
       "id": "deitch.S5",
@@ -697,7 +699,8 @@
             "doyle-pattern"
           ]
         }
-      }
+      },
+      "breakingOn": true
     },
     {
       "id": "pryce.S1",
@@ -749,7 +752,8 @@
           ]
         }
       },
-      "key": true
+      "key": true,
+      "breakingOn": true
     },
     {
       "id": "pryce.S4",

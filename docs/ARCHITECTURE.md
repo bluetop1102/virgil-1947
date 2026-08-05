@@ -225,8 +225,9 @@ engine.bus.emit('interrogation:start', {npc: 'deitch'})
 | `settings:changed` | `{key, value}` | ui/settings *(v2)* |
 | `interrogation:prompt` | `{npc, sid, options}` | interrogation — UI에 3선택(또는 재질문 2선택) 요구. 렌더는 [UI] 소유 *(v2)* |
 | `interrogation:choose` | `{sid, choice, evidence?}` | ui — 플레이어 선택 반환 (hud 3선택·notebook 증거 지목) *(v2)* |
-| `perf:state` | `{npc, state}` | interrogation — 연기 상태 idle/anxious/lying/breaking. perf.js는 이것만 구독하며 진위를 모른다. 상태 산출은 진술의 truth·`anxiousTell`(case-graph)·판정 결과에서 interrogation이 계산 *(v2)* |
+| `perf:state` | `{npc, state}` | interrogation — 연기 상태 idle/anxious/lying/breaking. perf.js는 이것만 구독하며 진위를 모른다. 산출 규칙(기계): 진술 제시 중 `truth:false`→lying, `anxiousTell:true`→anxious, 그 외→idle. **breaking은 case-graph `breakingOn:true` 진술의 lieCorrect 판정 직후에만**(현행 3건: deitch.S4·ruiz.S4·pryce.S3) *(v2)* |
 | `deduction:link` | `{id, ok}` | deduction — 지목판 링크 성립/실패. perf(도일 반응)·cinematics(광각화)가 구독 *(v2)* |
+| `camera:dof` | `{bias, ms}` | cinematics — LIE 푸시인의 조리개 개방(보케 붕괴) 요청. 수신·보간은 [PIPELINE-CORE]가 dof 패스에 전달(수신부 구현은 HANDOFF 큐 경유 — E10 T-P1-08 비고) *(v2)* |
 
 **`room:changed` 값 어휘 (정본 — v2)**: `lobby` · `elevator` · `corridor9` · `linen` ·
 `room942` · `bathroom942` · `room944` · `stairs-roof` · `rooftop`. 오디오 리버브 전환(E7 §3)·
@@ -294,15 +295,27 @@ setMood('corridor-night')   // 안개 밀도·볼류메트릭 세기·IBL을 한
 
 게임은 반드시 `window.__CECIL__`을 노출한다 (core가 처리). 각 레벨/시네마틱 에이전트는 `core/shotlist.js`에 **엔트리를 추가**한다 (기존 엔트리 수정 금지).
 
-**완주 봇 구동 API *(v2 — `__CECIL__.qa`, gameplay가 QA 모드에서 구현)***
+**완주 봇 구동 API *(v2 — `__CECIL__.qa`, QA 모드 전용)***
 - 타깃 명명: 상호작용 오브젝트의 `userData.qaId` = case-graph `obtain.where` 슬러그 그대로
-  (`lobby/front-desk` 등). 레벨 모듈이 배치 시 부여할 의무를 진다.
-- `__CECIL__.qa.list()` → 현재 공간의 상호작용 가능 qaId 목록 · `__CECIL__.qa.goto(qaId)` →
-  타깃 앞 텔레포트 · `__CECIL__.qa.interact(qaId)` → 상호작용 실행. interact는 gameplay가
-  자기 경로로 `player:interact`를 발화하므로 §5의 발신 방향 계약과 충돌하지 않는다.
-- 완주 봇 2모드: `--fast`(goto 텔레포트 — 도달성·이벤트 검증, P1 게이트) / `--paced`
-  (실보행 — 페이싱 실측, P3 게이트 ±40%·무사건 ≤3:00). QA 모드(`?qa=1`) 밖에서 이 API는
-  비노출이다.
+  (`lobby/front-desk` 등). 레벨 모듈이 배치 시 부여할 의무를 진다. **비증거 타깃의 정본
+  qaId**: NPC 심문 개시 `npc/deitch`·`npc/ruiz`·`npc/pryce`·`npc/doyle` · 막 전환
+  `lobby/elevator`·`stairs-roof/door` · 층계창 관찰 `stairs-roof/window` · 괴담 매체는
+  lore의 media 값 그대로(`radio-lobby`·`linen-wall`·`lobby-frame`; `register-margin`은
+  register 관찰에 포함). 스폰 증거는 case-graph obtain에 `where`를 병기한다
+  (footprints = `corridor9/footprints`).
+- 구동(gameplay 구현): `qa.list()` 현재 공간 qaId 목록 · `qa.goto(qaId)` 텔레포트 ·
+  `qa.walk(qaId)` 등속 보행 이동(직선+웨이포인트, 경로 실패 시 goto 폴백+로그) ·
+  `qa.interact(qaId)` 상호작용. interact/walk는 gameplay가 자기 경로로 `player:interact`를
+  발화하므로 §5 발신 방향 계약과 충돌하지 않는다.
+- 심문·지목 입력([UI] 구현): `qa.choose({sid, choice, evidence?})` — UI의
+  `interrogation:choose` 발신 경로를 대리 구동 · `qa.link(linkId)` — 증거판 링크 제시 대리.
+- 관측(gameplay 구현): `qa.state()` → `{act, evidence[], burned[], flags[], room}` 읽기 전용
+  스냅샷 · `qa.events(sinceIndex?)` → 버스 이벤트 링버퍼(QA 모드에서 gameplay가 기록).
+  봇은 버스를 직접 발화·구독하지 않는다.
+- 완주 봇 2모드: `--fast`(goto — 도달성·이벤트 검증, P1 게이트) / `--paced`(walk + E2 표의
+  t를 행동 스케줄로 — 행 t에 행동 개시, 콘텐츠가 슬롯을 넘치면 지연으로 기록. P3 판정 =
+  막 경계 실측(스케줄+지연) +40% 상한 검출 + 무사건 ≤3:00. 하한 -40%는 스케줄 구동에서
+  자동 충족되므로 실질 게이트는 지연 검출이다). QA 모드(`?qa=1`) 밖에서 이 API는 비노출.
 
 ```js
 // core/shotlist.js
