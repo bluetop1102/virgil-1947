@@ -11,24 +11,28 @@
 - [x] `?scene=` 수동 진입로 — 6개 공간 직접 걸어다니기
 - [x] 헐레이션 커널 진단·수리 — 램프 가로 막대·복제 돔 소멸
 
-## 다음 세션 시작점 — 기획 라운드 (2026-08-05 방향 전환)
+## 기획 라운드 (2026-08-05) — 완료분
 
-**진입로: `PROMPT-plan-v1.md`를 새 세션에 그대로 붙여넣는다.** 이상적 기획(요소 분해·이중 관점·
-M1~M7 블라인드 채점·골든 패스·위임 티켓)을 goal 루프로 완성하고, 통과 시 구현 발사문
-(PROMPT-build-p0/p1)까지 산출. 방향·게이트는 `docs/MASTER-PLAN.md`.
-아래 Phase 0 항목 중 문서 작업은 기획 라운드가 흡수하고, 코드 청소·린트 훅은 PROMPT-build-p0로 이월.
+기획 문서 세트 `docs/design/E0~E10` + 채점기(`graders/`) + `case-graph.json` +
+`tools/factcheck.mjs` 산출. E1 코어 확정(사용자 게이트 1: 비가역 대면). 라운드 로그는
+`docs/design/ROUNDS-PLAN.md`.
+
+- [x] ARCHITECTURE.md v2 — §0 재허구화·§2 소유권 표 실파일 동기화·§5 이벤트 5종 추가
+- [x] STORY.md v2 — 재허구화(버질·계단참 사진), 결함 3건 수정, 괴담 유닛 4개 집필(§7),
+      판정표는 E5로 이관. 셀 단위 타임라인은 case-graph.json이 진실원
+- [x] 가제 "호텔 버질" 실존 호텔·상표 검색 검증 (E0 §0 — 확정, 외부 공개 시 USPTO 재확인)
+- [x] AAA-RUBRIC.md v2 — P1~P6·P-판정자·게이트 4·순서 재정의(4→2→1→3)
+- [x] tools/factcheck.mjs — F1~F4 + R1~R3, 변이 테스트 5종 검출 확인
+- [x] 문서 표기 "세실" 정리 (docs/design·STORY·ARCH — 코드 식별자는 P0에서)
+- [ ] Phase D 통합 검수 진행 중 (신선 테스트 전수 + M1~M7 블라인드 채점) → 게이트 2(최종)
+
+## 다음 세션 시작점 — 구현 P0
+
+**진입로: `PROMPT-build-p0.md`** (정지작업 — 계약 린트 훅·예외 청소·script v2 이행·500줄
+분할·P5 검사기). 완료 후 `PROMPT-build-p1.md`(수직 슬라이스 — 1막 완주). 티켓 진실원은
+`docs/design/E10-production.md` §2.
 
 **그래픽은 R6-4 기준선에서 동결.** 아래 그래픽 백로그는 Phase 5(게이트 4·2 통과 후)로 이월 — 동결 중 투입 금지.
-
-- [ ] ARCHITECTURE.md §2 소유권 표를 실파일로 갱신 (atmo/*·kit-mat·props-*·recipes.a 등재)
-- [ ] 재질·조명 계약 위반 청소 또는 예외 명문화 (kit-mat 폴백·glow, props 광원 3건, testbed 1건)
-- [ ] 계약 린트 커밋 훅 (MASTER-PLAN §7.4 grep 규칙 5종)
-- [ ] STORY.md v2 — 재허구화(버질 가제·계단참 사진), 타임라인 매트릭스 편입, 개연성 결함 3건 수정
-      (프라이스 해고 시점 · 도일 동기 · roofkey 위치), 괴담 유닛 3~5개 집필
-- [ ] 가제 "호텔 버질" 실존 호텔·상표 검색 검증
-- [ ] AAA-RUBRIC.md v2 — P1~P6 신설, 게이트 4·게이트 순서 재정의
-- [ ] tools/factcheck.mjs — 사실 그래프 검증 F1~F4
-- [ ] 화면 표출 "세실" grep 0 확인
 
 ## 그래픽 백로그 (동결 — Phase 5 이월)
 
