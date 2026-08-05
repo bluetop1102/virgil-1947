@@ -77,8 +77,13 @@
 
 ## 2. 공통 계약
 
-- 진입 이벤트: 각 레벨은 `room:changed {room}` 발화 + `core/shotlist.js`에 자기 샷 엔트리
-  **추가**(기존 수정 금지). 증거 오브젝트는 `gameplay/evidence.js`의 수집 규약 소비.
+- 진입 이벤트: 각 레벨은 `room:changed {room}` 발화 — **room 값은 ARCH v2 §5의 정본
+  어휘만**(lobby/elevator/corridor9/linen/room942/bathroom942/room944/stairs-roof/rooftop).
+  `core/shotlist.js`에 자기 샷 엔트리 **추가**(기존 수정 금지). 증거 오브젝트는
+  `gameplay/evidence.js`의 수집 규약 소비 + `userData.qaId` = case-graph `obtain.where`
+  슬러그 부여(완주 봇 구동 계약, ARCH v2 §9).
+- 충돌: 걷기 가능 바닥·벽은 physics 정적 등록 API 경유(ARCH v2 §8 규약) — QA 프로브의
+  레이캐스트 폴백 의존 금지.
 - 상호작용 밀도: 공간당 "정보 있는 상호작용" ≥6 (증거+환경서사+괴담 매체 합산,
   E2 무사건 3분 규칙의 공간 측 보증).
 - 성능: 레벨 라운드는 프레임 예산 게이트(high 60fps / medium 30fps, `?stats=1` 계측) 선행

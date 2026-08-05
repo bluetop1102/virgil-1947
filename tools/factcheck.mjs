@@ -164,6 +164,15 @@ const worst = solve(new Set(g.statements.filter(s => s.burnable).map(s => s.id))
   check('F4', fails.length === 0, fails.length ? fails : `고아 0 · LORE ${g.lore.length}건 인과 격리 유지`)
 }
 
+// ── P5d 텔 분포 데이터 사전 검사 (E4 §2 — 정적 근사, 본검사는 T-P0-05) ────────
+{
+  const lying = g.statements.filter(s => s.truth === false).length
+  const anxious = g.statements.filter(s => s.anxiousTell === true).length
+  const ratio = anxious / (lying + anxious)
+  check('P5d', ratio >= 0.30,
+    `불안 텔 진술 ${anxious} / 텔 발화 진술 ${lying + anxious} = ${(ratio * 100).toFixed(0)}% (기준 ≥30%)`)
+}
+
 // ── R1~R3 개연성 결함 회귀 (MASTER-PLAN §3.3) ───────────────────────────────
 {
   const fa9 = facts.get('FA9')

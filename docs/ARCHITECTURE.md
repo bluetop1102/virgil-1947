@@ -82,7 +82,8 @@ src/
     script.js      [NARRATIVE] 전체 대사·스토리 데이터 (코드 없음, 데이터만. id는 case-graph.json과 1:1)
     interrogation.js [INTERROGATION] 심문 상태기계 (규칙: docs/design/E5-interrogation.md)
     deduction.js   [INTERROGATION] 증거판
-    cinematics.js  [CINEMATICS] ※ P2 신설 예정 — 카메라 시퀀스·타임라인 (E7 §2)
+    cinematics.js  [CINEMATICS] ※ P1 신설 예정(T-P1-07·08) — 카메라 시퀀스·타임라인·심문 카메라 (E7 §1·§2)
+    case-graph-loader.js [NARRATIVE] ※ P0 신설 허용(T-P0-03) — case-graph.json 관계 데이터 로더
   audio/
     engine.js      [AUDIO] WebAudio 그래프·공간 리버브·발소리
     dsp.js graph.js ir.js  [AUDIO] 분권
@@ -222,6 +223,16 @@ engine.bus.emit('interrogation:start', {npc: 'deitch'})
 | `npc:sighted` | `{npc, kind}` | levels — 프리젠스 목격, 정보 없는 존재감 (E4 §1 도일) *(v2)* |
 | `checkpoint:saved` | `{act}` | gameplay/save — 막 경계 저장 *(v2)* |
 | `settings:changed` | `{key, value}` | ui/settings *(v2)* |
+| `interrogation:prompt` | `{npc, sid, options}` | interrogation — UI에 3선택(또는 재질문 2선택) 요구. 렌더는 [UI] 소유 *(v2)* |
+| `interrogation:choose` | `{sid, choice, evidence?}` | ui — 플레이어 선택 반환 (hud 3선택·notebook 증거 지목) *(v2)* |
+| `perf:state` | `{npc, state}` | interrogation — 연기 상태 idle/anxious/lying/breaking. perf.js는 이것만 구독하며 진위를 모른다. 상태 산출은 진술의 truth·`anxiousTell`(case-graph)·판정 결과에서 interrogation이 계산 *(v2)* |
+| `deduction:link` | `{id, ok}` | deduction — 지목판 링크 성립/실패. perf(도일 반응)·cinematics(광각화)가 구독 *(v2)* |
+
+**`room:changed` 값 어휘 (정본 — v2)**: `lobby` · `elevator` · `corridor9` · `linen` ·
+`room942` · `bathroom942` · `room944` · `stairs-roof` · `rooftop`. 오디오 리버브 전환(E7 §3)·
+완주 봇 로그가 이 문자열을 그대로 소비한다. 기존 코드의 `corridor` 등 이형 표기는
+T-P0-03 정합 라운드에서 이 어휘로 수렴한다. `elevator`는 이동 공간이라 case-graph 셀이
+아니며, `boiler`는 진입 불가 공간이라 room 값으로 발화되지 않는다(소리 원점 전용, E6 §0).
 
 ## 6. 재질 계약 (MATERIALS 소유, 전원 소비)
 
@@ -274,10 +285,24 @@ setMood('corridor-night')   // 안개 밀도·볼류메트릭 세기·IBL을 한
 - 반복 배치되는 요소(문, 조명, 액자)는 반드시 회전·위치·마모도에 시드 기반 변주를 준다.
 - 모든 오브젝트는 `castShadow`/`receiveShadow` 명시.
 - 그라운딩: 바닥에 놓이는 오브젝트는 `kit.groundContact(obj)` 호출로 컨택트 섀도 데칼을 받는다 (루브릭 D5).
+- **정식 레벨 충돌 규약 *(v2)***: 레벨 모듈은 걷기 가능 바닥·벽을 physics 모듈의 정적 등록
+  API 경유로 등록한다(시그니처는 [PHYSICS]가 P1 착수 시 이 절에 공표 — 그 전까지 레벨
+  발주는 "physics 정적 등록 의무"만 전제). QA 프로브의 레이캐스트 폴백(`player.body=null`)은
+  씬 모드 전용 경로다 — 정식 레벨이 이 폴백에 의존하는 것을 금지한다(AGENTS.md 보존 규칙).
 
-## 9. 스크린샷 하네스 계약
+## 9. 스크린샷·QA 하네스 계약
 
 게임은 반드시 `window.__CECIL__`을 노출한다 (core가 처리). 각 레벨/시네마틱 에이전트는 `core/shotlist.js`에 **엔트리를 추가**한다 (기존 엔트리 수정 금지).
+
+**완주 봇 구동 API *(v2 — `__CECIL__.qa`, gameplay가 QA 모드에서 구현)***
+- 타깃 명명: 상호작용 오브젝트의 `userData.qaId` = case-graph `obtain.where` 슬러그 그대로
+  (`lobby/front-desk` 등). 레벨 모듈이 배치 시 부여할 의무를 진다.
+- `__CECIL__.qa.list()` → 현재 공간의 상호작용 가능 qaId 목록 · `__CECIL__.qa.goto(qaId)` →
+  타깃 앞 텔레포트 · `__CECIL__.qa.interact(qaId)` → 상호작용 실행. interact는 gameplay가
+  자기 경로로 `player:interact`를 발화하므로 §5의 발신 방향 계약과 충돌하지 않는다.
+- 완주 봇 2모드: `--fast`(goto 텔레포트 — 도달성·이벤트 검증, P1 게이트) / `--paced`
+  (실보행 — 페이싱 실측, P3 게이트 ±40%·무사건 ≤3:00). QA 모드(`?qa=1`) 밖에서 이 API는
+  비노출이다.
 
 ```js
 // core/shotlist.js

@@ -47,9 +47,13 @@
 
 ## 4. 소비 계약
 
-- **script.js v2 이행(P0 티켓)**: `src/narrative/script.js`의 진술·증거 객체는 case-graph.json의
+- **script.js v2 이행(T-P0-03)**: `src/narrative/script.js`의 진술·증거 객체는 case-graph.json의
   id를 그대로 쓴다(`deitch.S2`, `register`). 원산지·반박 관계를 script.js에 중복 기재하지
-  않는다 — 게임 코드는 대사·연출만, 관계는 그래프만.
+  않는다 — 게임 코드는 대사·연출만, 관계는 그래프만. 소비자(interrogation.js·deduction.js)의
+  관계 접근은 `narrative/case-graph-loader.js`(T-P0-03 신설 허용) 경유로 전환한다.
+- **텔 배정 데이터**: 진실 진술의 불안 발화는 statements의 `anxiousTell` 필드가 진실원
+  (현행 4건 — factcheck P5d가 비율 ≥30%를 정적 감시, 본검사는 T-P0-05). 핵심 진술은
+  `key:true`(종료 3단 판정이 소비, E5 §2.4).
 - **2단 커널(E5 §4)**: 자유 서술 지목의 의미 매칭 대상이 FACT 노드의 `text`다. 명제가 문장
   단위로 존재하는 것이 스왑의 전제 조건 — 이 그래프가 곧 2단의 정답지다.
 - **factcheck 실행 시점**: 내러티브 데이터 변경마다 (커밋 게이트, E9 §기계 게이트 총목록).

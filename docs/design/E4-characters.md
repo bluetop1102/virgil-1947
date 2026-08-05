@@ -52,7 +52,9 @@
 
 신호 원문은 STORY §2 표가 진실원. 이 문서가 계약하는 것은 **분포**다:
 - 상태 4종: `idle` / `anxious`(진실이나 불안) / `lying` / `breaking`. 심문 상태기계가
-  진술 진위·판정 결과로 상태를 발화한다.
+  `perf:state {npc, state}` 이벤트로 발화한다(ARCH v2 §5) — 상태 산출 근거는 진술의
+  `truth`와 **`anxiousTell` 필드**(case-graph.json statements — 불안 발화 진실 진술 4건:
+  deitch.S1·S3, ruiz.S1, pryce.S2)이며, 이 배정 데이터의 진실원은 case-graph다(E3 소유).
 - **P5 상관 게이트**: 스크립트 전수에서 거짓 진술과 텔 발화의 상관이 1.0이면 FAIL —
   불안 시 텔 발화가 전체 텔 발화의 30% 이상이어야 PASS(E9). 즉 진실을 말하는데 신호가
   나오는 경우가 구조적으로 존재해야 한다. 읽기는 도박이어야 한다.
@@ -64,8 +66,9 @@
   다이치 안경+조끼 · 루이즈 앞치마+천 · 프라이스 셔츠+서스펜더 · 도일 작업복+렌치.
   페이셜 없음 — 머리는 자세·시선 방향만.
 - `chars/perf.js` [CHARACTERS]: 상태 4종별 루프 애니메이션 + 텔 원샷(STORY §2 신호를
-  1신호=1클립으로). 클립 재생은 `interrogation:statement`/`verdict` 이벤트 구독으로만
-  트리거 — perf.js는 진위를 모른다(상태만 받는다). 결정론: `rng(seed)`.
+  1신호=1클립으로). 클립 재생은 `perf:state` 구독으로만 트리거 — perf.js는 진위를 모른다
+  (상태만 받는다). 도일 3막 반응은 `deduction:link {id, ok}` 구독(링크별 웃음의 질 변화).
+  결정론: `rng(seed)`.
 - 프리젠스 이벤트: `npc:sighted {npc, kind}` (ARCHITECTURE v2 §5 추가분).
 
 ---

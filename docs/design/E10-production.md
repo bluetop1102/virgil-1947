@@ -26,7 +26,7 @@ goal 계약 형식은 [E9 §3](E9-gates.md) — 중단 조건 없는 루프 금�
 |---|---|---|---|---|
 | T-P0-01 | 계약 린트 커밋 훅 — grep 5종(materials 밖 재질 생성·atmosphere 밖 광원·랜덤/시계 직호출·500줄 초과·화면 표출 "세실") | `tools/lint-contract.mjs` + `.git/hooks` 설치 스크립트 | 위반 5종 각각 주입 시 커밋 차단 재현 | 외부 |
 | T-P0-02 | 재질·조명 계약 예외 청소(kit-mat 폴백·glow, props 광원 3건, testbed 1건) — 팩토리 경유화, 불가한 것만 §6/§6.5 예외 등재 | `src/world/kit-mat.js` `props.js` `testbed.js` + ARCH §6 예외 절 | T-P0-01 린트 통과 + `pix diff` 기준선 대비 무변화 | 외부 (회귀 게이트 필수) |
-| T-P0-03 | script.js v2 이행 — STORY v2 대사 반영·case-graph id 정합·관계 중복 기재 제거 | `src/narrative/script.js` | factcheck PASS · `test-interrogation.mjs` 통과 · 표출 "세실" grep 0 | 외부 |
+| T-P0-03 | script.js v2 이행 — STORY v2 대사 반영(종료 노트 문구 포함)·case-graph id 정합·관계 중복 기재 제거 · **소비자 적응 포함**: interrogation.js/deduction.js의 관계 필드 접근을 case-graph 로더 경유로 전환(`narrative/case-graph-loader.js` 신설 허용) · `room:changed` 이형 표기(`corridor` 등)를 ARCH §5 정본 어휘로 수렴 | `src/narrative/script.js` + `interrogation.js`·`deduction.js`의 데이터 접근층 + `case-graph-loader.js`(신설) | factcheck PASS · `test-interrogation.mjs` 통과 · 표출 "세실" grep 0 | 외부 |
 | T-P0-04 | 500줄 초과 4파일 분할(atmosphere 574 · recipes.a 528 · atmo/fixtures 506 · props 504) | 해당 4파일 + 분할 신규 파일 | 전 파일 ≤500 · `pix diff` 무변화 · 콘솔 0 | 외부 |
 | T-P0-05 | P5 텔 상관 검사기 — factcheck 확장, script v2의 텔 발화 상관 측정 | `tools/factcheck.mjs` §P5 절 | 완전판별기 변이 주입 시 FAIL 재현 | 외부 |
 
@@ -40,7 +40,9 @@ goal 계약 형식은 [E9 §3](E9-gates.md) — 중단 조건 없는 루프 금�
 | T-P1-04 | 심문 1건 E2E — 소각 직렬화 포함 (E5 §1·§2) | `src/narrative/interrogation.js` | T-P1-01 | 판정표 6행 배터리·소각 후 unlocks 미발화·`state` 직렬화 포함 | 외부 |
 | T-P1-05 | 로딩 화면+설정 뼈대+프레임 계측 (E8 §2·§3·§5) | `src/ui/settings.js` + 로딩 훅 | P0 | P6 정지샷·`settings:changed` 발화·`?stats=1` 동작 | 외부 |
 | T-P1-06 | 완주 봇 — E2 골든 패스 표 소비, 1막 구간 | `tools/playthrough.mjs` | T-P1-01·04 | 1막 완주 로그·무사건 간격 측정 출력 | 외부 |
-| T-P1-07 | 첫 30초 시네마틱 `cin-intro` (E2 §첫 30초 표) | `src/narrative/cinematics.js` | T-P1-01 | 30초 캡처가 E2 표와 초 단위 대조 통과(P2) | **단일 최강** |
+| T-P1-07 | 첫 30초 시네마틱 `cin-intro` (E2 §첫 30초 표) | `src/narrative/cinematics.js`(신설 — ARCH §2 표기 P1) | T-P1-01 | 30초 캡처가 E2 표와 초 단위 대조 통과(P2) | **단일 최강** |
+| T-P1-08 | 심문 카메라·침묵 연출 — E7 §1 수치 7행(렌즈·트래킹·높이) + 오답 룸톤 -6dB·3초(E7 §3). 이벤트 구독만으로 트리거 | `src/narrative/cinematics.js` 심문 절 + `src/audio/engine.js` 룸톤 규칙 | T-P1-04·07 | 오답 시퀀스 캡처 P4 무설명 판독 · 심문 중 컷 0회 검증 | **단일 최강** |
+| T-P1-09 | 심문 UI — hud 3선택 프롬프트 + notebook 증거 지목 모드 (`interrogation:prompt`/`choose` 배선, E5 [구현]) | `src/ui/hud.js` + `src/ui/notebook.js` 지목 모드 | T-P1-04 | C1 시퀀스 완주 봇 재현 · 정지샷 힌트 요소 0(P6·E5 §1) | 외부 |
 
 ### P2~P5 — 계열 티켓 (P1 완료 후 상세화)
 
@@ -76,8 +78,9 @@ P0가 생략되면 심문 대사가 사실 그래프와 어긋난 채 출하되�
 ## [구현]
 
 - 이 보드가 발사문 2종의 티켓 원천 — 발사문은 보드를 복사하지 않고 티켓 id로 참조한다.
-- 의존 그래프: P0(병렬 5) → P1(T-01→04·06·07, T-02→03, T-05 독립) → P2 → P3 → P4 → P5.
-  순환 0 (위상 정렬: 01·02·03·04·05 → 11·12·15 → 13·14·16·17 → …).
+- 의존 그래프: P0(병렬 5) → P1(T-01→{04·06·07}, T-04→{08·09}, T-07→08, T-02→03, T-05 독립)
+  → P2 → P3 → P4 → P5. 순환 0 (위상 정렬 예: P0 5장 → T-P1-01·02·05 → T-P1-03·04·06·07 →
+  T-P1-08·09 → P2 계열).
 - 수용 기준: 전 티켓 수용 기준이 기계 판정(게이트명·배터리·grep·diff) — 형용사 0.
 
 ## [판정]
