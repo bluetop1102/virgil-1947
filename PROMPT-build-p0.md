@@ -12,8 +12,9 @@ ultracode. /goal P0 정지작업: 계약 문서와 실코드의 어긋남을 0�
 **통과 조건**: T-P0-01~05 수용 기준 전건(E10 §2 P0 표) + `node tools/factcheck.mjs` 전건
 PASS + 화면 표출 "세실" grep 0 + `pix diff` 기준선(`shots/_baseline/corridor.png`) 대비
 무변화 + 콘솔 에러·경고 0.
-**중단 조건**: 라운드 10회 상한 · 티켓당 담당 1명 직렬(동시 팬아웃 금지 — 같은 픽셀을
-두 손이 만지면 귀속 불가) · 세션 한도 근처에서 라운드 경계 종료 후 HANDOFF 기록.
+**중단 조건**: 라운드 10회 상한 · **서브에이전트 토큰 상한 500만** · 티켓당 담당 1명
+직렬(동시 팬아웃 금지 — 같은 픽셀을 두 손이 만지면 귀속 불가) · 세션 한도 근처에서
+라운드 경계 종료 후 HANDOFF 기록.
 
 프로젝트: /Users/kang-yunbyeong/Documents/WORK/Projects/cecil-hotel-noir
 

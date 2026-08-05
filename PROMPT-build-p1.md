@@ -13,8 +13,9 @@ ultracode. /goal P1 수직 슬라이스: **1막을 완주 가능하게 만들라
 (`tools/playthrough.mjs`, E2 골든 패스 표 소비) + 콘솔 0 + 프레임 예산(high 60fps /
 medium 30fps, `?stats=1`) + P2(30초 캡처가 E2 §첫 30초 표와 행 단위 대조 통과) +
 P4(오답 시퀀스: 카메라 반 발짝·룸톤 -6dB 무설명 판독) + P5 상관 검사 PASS.
-**중단 조건**: 라운드 14회 상한 · 라운드당 티켓 1개·담당 1명 · 세션 한도 근처 팬아웃 금지 —
-라운드 경계에서 끊고 ROUNDS.md에 인수인계.
+**중단 조건**: 라운드 14회 상한 · **서브에이전트 토큰 상한 1,500만**(CECIL 복도 실측 기준) ·
+라운드당 티켓 1개·담당 1명 · 세션 한도 근처 팬아웃 금지 — 라운드 경계에서 끊고
+ROUNDS.md에 인수인계.
 
 프로젝트: /Users/kang-yunbyeong/Documents/WORK/Projects/cecil-hotel-noir
 
