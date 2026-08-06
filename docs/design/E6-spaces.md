@@ -51,7 +51,8 @@
 - **이벤트**: 수색 5개소(E2 16:00–21:00) — 개소당 개별 상호작용, 순서 자유.
 - **증거**: `journal`(침대 밑) `roofkey`(매트리스) `sink-trap`(욕실 트랩+양동이)
   `autopsy`(여행가방 안감).
-- **무드**: `room-dusk` / 욕실 `bathroom`. 색온도: 스탠드 2700K + 창광 6500K(흐린 오후).
+- **무드**: `room-dusk` / 욕실 `bathroom`. 색온도: 스탠드 2700K + 창광 6500K(**흐린 오전** —
+  2막 픽션 시간대, E2 시간 구조 결박. 프리셋명 room-dusk는 코드 식별자 잔존 허용).
 - **조립**: `wood.varnished.dark`(침대·서랍) `paper.aged`(일기·사본) `tile.hex.bathroom`
   `ceramic.sink` `steel.galvanized`(양동이).
 

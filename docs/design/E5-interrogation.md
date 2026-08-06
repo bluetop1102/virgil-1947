@@ -140,7 +140,9 @@ DOUBT→LIE정답은 +2이지 +2.5가 아니다. DOUBT 선제시가 점수 이�
 
 - 선행 의존: E3(진술·링크 데이터) · E1(U1 정의).
 - 배타 소유 파일: `docs/design/E5-interrogation.md` · (구현 시) `src/narrative/interrogation.js`,
-  `src/narrative/deduction.js`.
+  `src/narrative/deduction.js`. **승인 조항**: T-P0-03(E10)이 두 파일의 **데이터 접근층**
+  (관계 필드 참조를 `case-graph-loader.js` 경유로 전환)을 편집하는 것을 소유자로서
+  승인한다 — 판정 로직·이벤트 발화 절은 T-P0-03 범위 밖이다.
 - 수용 기준: 위 [구현] 4항 (전건 기계 판정).
 - 권장 모델 클래스: 상태기계·증거판은 계약 두껍고 테스트 배터리가 수용 기준 — **외부 모델
   가능**. 2단 커널 스왑은 판정 배터리 설계 포함 — **단일 최강 모델**(E10).
