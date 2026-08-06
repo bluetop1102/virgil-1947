@@ -7,7 +7,7 @@
 
 | Phase | 내용 | 통과 게이트 |
 |---|---|---|
-| **P0 정지작업** | 계약 린트 훅 · 예외 청소 · script.js v2 이행 · 500줄 분할 · P5 검사기 | 계약 린트 · factcheck · grep 세실 0 · 픽셀 회귀 무변화 |
+| **P0 정지작업** | 계약 린트 훅 · 예외 청소 · script.js v2 이행 · 500줄 분할 · P5 검사기 · low 품질 프리셋 | 계약 린트 · factcheck · grep 세실 0 · 픽셀 회귀 무변화 |
 | **P1 수직 슬라이스** | 1막 완주: 로비 정식 레벨 + 다이치(리그+텔) + 심문 1건 + 로딩·설정 뼈대 + 완주 봇 + 첫 30초 | 완주 봇(1막) · 콘솔 0 · 프레임 예산 · P2·P4 |
 | **P2 전 막** | 2·3막 레벨 3종 + 루이즈·프라이스·도일 + 시네마틱 + 체크포인트 | 완주 봇 3경로 · F3 |
 | **P3 채점 루프** | 게이트 4(P1~P6) → 게이트 2(N1~N8) | 게이트 4 · 2 |
@@ -20,15 +20,16 @@ goal 계약 형식은 [E9 §3](E9-gates.md) — 중단 조건 없는 루프 금�
 
 ## 2. 티켓 보드 (의존 순서 — 위상 정렬 가능, 순환 0)
 
-### P0 — 정지작업 (전 티켓 상호 독립, T-P0-03만 E3 산출 의존)
+### P0 — 정지작업 (T-P0-02→T-P0-04 의존 · T-P0-03만 E3 산출 의존 · 나머지 상호 독립)
 
 | 티켓 | 내용 | 소유 파일(배타) | 수용 기준(기계) | 모델 |
 |---|---|---|---|---|
-| T-P0-01 | 계약 린트 커밋 훅 — grep 5종(materials 밖 재질 생성·atmosphere 밖 광원·랜덤/시계 직호출·500줄 초과·화면 표출 "세실") | `tools/lint-contract.mjs` + `.git/hooks` 설치 스크립트 | 위반 5종 각각 주입 시 커밋 차단 재현 | 외부 |
-| T-P0-02 | 재질·조명 계약 예외 청소(kit-mat 폴백·glow, props 광원 3건, testbed 1건) — 팩토리 경유화, 불가한 것만 §6/§6.5 예외 등재 | `src/world/kit-mat.js` `props.js` `testbed.js` + ARCH §6 예외 절 | T-P0-01 린트 통과 + `pix diff` 기준선 대비 무변화 | 외부 (회귀 게이트 필수) |
-| T-P0-03 | script.js v2 이행 — STORY v2 대사 반영(종료 노트 문구 포함)·case-graph id 정합·관계 중복 기재 제거 · **소비자 적응 포함**: interrogation.js/deduction.js의 관계 필드 접근을 case-graph 로더 경유로 전환(`narrative/case-graph-loader.js` 신설 허용) · `room:changed` 이형 표기(`corridor` 등)를 ARCH §5 정본 어휘로 수렴 | `src/narrative/script.js` + `interrogation.js`·`deduction.js`의 데이터 접근층 + `case-graph-loader.js`(신설) | factcheck PASS · `test-interrogation.mjs` 통과 · 표출 "세실" grep 0 | 외부 |
+| T-P0-01 | 계약 린트 커밋 훅 — grep 5종(materials 밖 재질 생성·atmosphere 밖 광원·랜덤/시계 직호출·500줄 초과·화면 표출 "세실"). **검사 범위(`index.html` 포함)·표출 판별·훅 공존 정책은 E9 §2 판별 규칙이 정본** — `src/` 만 훑는 구현은 수용 불가 | `tools/lint-contract.mjs` + `.git/hooks` 설치 스크립트 | 위반 5종 각각 주입 시 커밋 차단 재현(`index.html` 표출 주입 포함) | 외부 |
+| T-P0-02 | 재질·조명 계약 예외 청소(kit-mat 폴백·glow, props 광원 3건, testbed 1건) — 팩토리 경유화, 불가한 것만 §6/§6.5 예외 등재. **의존: T-P0-04**(분할 후의 파일에서 청소한다 — 동시 발주 금지) | `src/world/kit-mat.js` `props.js` `testbed.js` + ARCH §6 예외 절 | T-P0-01 린트 통과 + `pix diff` 기준선 대비 무변화 | 외부 (회귀 게이트 필수) |
+| T-P0-03 | script.js v2 이행 — STORY v2 대사 반영(종료 노트 문구 포함)·case-graph id 정합·관계 중복 기재 제거 · **소비자 적응 포함**: interrogation.js/deduction.js의 관계 필드 접근을 case-graph 로더 경유로 전환(`narrative/case-graph-loader.js` 신설 허용) · `room:changed` 이형 표기(`corridor` 등)를 ARCH §5 정본 어휘로 수렴 · **표출 문자열 재허구화 2건(구역 소유 — 문자열만, 로직 무수정)**: `ui/casebook.js:101` "실종 · 세실 호텔 942호"→"실종 · 호텔 버질 942호" · `deduction.js:33` "세실은 계속 영업했다."→"버질은 계속 영업했다."(E2 부록 A 원문 그대로 — 창작 불요) | `src/narrative/script.js` + `interrogation.js`·`deduction.js`의 데이터 접근층 + `case-graph-loader.js`(신설) + `src/ui/casebook.js`·`deduction.js`의 표출 문자열 구역 | factcheck PASS · `test-interrogation.mjs` 통과 · 표출 "세실" grep 0(범위: E9 §2 판별 규칙) | 외부 |
 | T-P0-04 | 500줄 초과 4파일 분할(atmosphere 574 · recipes.a 528 · atmo/fixtures 506 · props 504) | 해당 4파일 + 분할 신규 파일 | 전 파일 ≤500 · `pix diff` 무변화 · 콘솔 0 | 외부 |
 | T-P0-05 | P5 텔 상관 검사기 — factcheck 확장, script v2의 텔 발화 상관 측정 | `tools/factcheck.mjs` §P5 절 | 완전판별기 변이 주입 시 FAIL 재현 | 외부 |
+| T-P0-06 | `QUALITY.low` 프리셋 신설 — `volumetric: false` · `gtao: false` · `ssr: false` · `bloom: true`(느와르 룩 최소선) · `texRes: 256` · `shadowMap: 512` · `cascades: 1` · `particles: 0` · `maxLights: 4` + `pickQuality` 미지 값 폴백에 콘솔 경고(미지 값 유입 시에만 — 콘솔 0 게이트 양립). E8 §2 설정 표·E9 §2 프레임 예산이 소비 | `src/core/config.js` (**core 잠금 예외 — 이 티켓 한정**, ARCH §2) | `?q=low` 부트 콘솔 0 + volumetric·gtao·ssr 비활성 확인 · 미지 값(`?q=zzz`) 주입 시 경고 1건 재현 · `?q=` 무지정 기본 경로 `pix diff` 무변화 | 외부 |
 
 ### P1 — 수직 슬라이스 (P0 전체 완료 후 착수)
 
@@ -60,11 +61,15 @@ P3: 채점 라운드 (티켓 아님 — goal 루프). P4: 2단 커널(T-P4-01)+�
 - **외부 모델(GPT sol · Grok build) 투입 조건**: P0 완료 + P1 1회전 이후. 계약 문서가
   실코드와 어긋난 상태의 외부 투입 금지. 티켓 양식: `{소유 파일(배타), 소비 계약(§ 인용),
   수용 기준(기계 게이트+샷/로그), 금지 사항, 반환 형식(CONTRACT_CHANGE_REQUEST 경로)}`.
+  **캘리브레이션 파일럿은 투입이 아니라 측정이다** — 산출물을 머지하지 않는 드라이런
+  (`tools/calibration/protocol.md`)이므로 이 조건 이전에 실행할 수 있다. 위 조건은
+  산출물이 저장소에 머지되는 발주에만 적용된다.
 - 검수는 소유자와 분리된 판정자가 기계 게이트로 — 구현 모델이 무엇이든 같은 관문.
 
 ## 4. 발사문 2종 (Phase E 산출 — 이 보드의 실체화)
 
-- `PROMPT-build-p0.md`: P0 티켓 5종 — 정지작업. 게임 코드 신규 기능 0, 청소·게이트만.
+- `PROMPT-build-p0.md`: P0 티켓 6종 — 정지작업. 게임 코드 신규 기능 0(`QUALITY.low`는
+  기능이 아니라 프리셋 값 추가), 청소·게이트만.
 - `PROMPT-build-p1.md`: P1 티켓 7종 — 수직 슬라이스, 1막 완주가 통과 조건.
 
 ---
@@ -79,9 +84,9 @@ P0가 생략되면 심문 대사가 사실 그래프와 어긋난 채 출하되�
 ## [구현]
 
 - 이 보드가 발사문 2종의 티켓 원천 — 발사문은 보드를 복사하지 않고 티켓 id로 참조한다.
-- 의존 그래프: P0(병렬 5) → P1(T-01→{04·06·07}, T-04→{08·09}, T-07→08, T-02→03, T-05 독립)
-  → P2 → P3 → P4 → P5. 순환 0 (위상 정렬 예: P0 5장 → T-P1-01·02·05 → T-P1-03·04·06·07 →
-  T-P1-08·09 → P2 계열).
+- 의존 그래프: P0(6장 — T-P0-04→T-P0-02 직렬, 나머지 병렬) → P1(T-01→{04·06·07},
+  T-04→{08·09}, T-07→08, T-02→03, T-05 독립) → P2 → P3 → P4 → P5. 순환 0
+  (위상 정렬 예: P0 6장 → T-P1-01·02·05 → T-P1-03·04·06·07 → T-P1-08·09 → P2 계열).
 - 수용 기준: 전 티켓 수용 기준이 기계 판정(게이트명·배터리·grep·diff) — 형용사 0.
 
 ## [판정]

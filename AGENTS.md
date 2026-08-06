@@ -55,7 +55,12 @@ http://127.0.0.1:5173/?scene=corridor-night
 - 남이 소유한 파일을 편집하지 않는다. **다른 소유자의 파일을 고쳐야 하면 `docs/HANDOFF.md` 큐에 항목을
   추가**하고 자기 소유분만 진행한다. "그 에이전트가 지금 안 보인다"는 안전 신호가 아니다 — 여러 워크플로가
   동시에 돌고 소유자는 라운드 사이에 다시 살아난다.
-- `src/core/*`는 잠김. `core/shotlist.js`에 엔트리 추가만 허용.
+- `src/core/*`는 잠김. 예외 2건만 허용 — `core/shotlist.js` 엔트리 추가 ·
+  `core/config.js` QUALITY.low 신설(T-P0-06 담당 한정, ARCH §2).
+- **병렬 세션 커밋 규약**: `git commit -a` 와 무인자 `git add -A` 금지.
+  **자기 소유 경로를 명시해 스테이지한다** — 예: `git add docs/design docs/ROUNDS.md`.
+  커밋 이력이 제출물(AI 활용 기술 문서)의 재료라, 한 커밋에 두 세션의 작업이 섞이면
+  라운드↔변경 대응이 깨지고 이력 재작성은 요건 위반이라 되돌릴 수 없다.
 - 외부 에셋 다운로드 금지. 모든 텍스처·지오메트리·오디오는 절차 생성.
 - `Math.random()` / `Date.now()` 직접 호출 금지 (`core/util.js`의 `rng`, `engine.time` 사용).
 - 실제 사건 피해자를 재현하지 않는다. 인물·사건은 전부 허구.

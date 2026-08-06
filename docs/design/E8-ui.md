@@ -44,7 +44,7 @@ cinematics·interrogation·audio가 구독해 자기 update를 스킵하고, **�
 
 | 항목 | 방식 | 반영 |
 |---|---|---|
-| 품질 프리셋 | `?q=` URL 재작성 + 리로드 (감사 결론 승계 — 무리로드 전환은 비경제) | 리로드 시 |
+| 품질 프리셋 | **선택지 3종 `high`/`medium`/`low`**(`cinematic`은 QA 전용 — UI 비노출. low 신설은 T-P0-06, 정본 `core/config.js` QUALITY) — `?q=` URL 재작성 + 리로드 (감사 결론 승계 — 무리로드 전환은 비경제) | 리로드 시 |
 | FOV | 60~80, `camera.fov`+`updateProjectionMatrix()` | 즉시 |
 | 마우스 감도 | `player.js` SENS 인스턴스 필드 | 즉시 |
 | 자막 | `subtitles.js` 플래그 | 즉시 |

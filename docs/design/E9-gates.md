@@ -28,9 +28,22 @@
 | 완주 봇 3경로 | `tools/playthrough.mjs` (신설) — 판정용 시퀀스 캡처(`--capture`)도 이 도구가 소유 | 게임플레이 변경마다 | P1 티켓 |
 | 텔 상관 (P5) | factcheck 확장 — script v2의 텔 발화 상관 | 스크립트 변경마다 | P1 티켓 |
 | 콘솔 에러·경고 0 | 샷 하네스 기존 | 전 라운드 | 가동 중 |
-| 계약 린트 | 커밋 훅 grep 5종: materials 밖 `Mesh*Material` · atmosphere 밖 `*Light` · `Math.random(`/`Date.now(`/`performance.now(` · 500줄 초과 · 화면 표출 "세실" | 커밋마다 | P0 티켓 |
-| 프레임 예산 | `?stats=1` 통계 오버레이(frametime p50/p95·드로우콜·메모리 — QA 전용·플레이어 비노출·D7 면제) + 샷 하네스 게이트: high 60fps / medium 30fps. 구현 티켓 T-P1-05 (E8 §5에서 이관) | 레벨 라운드마다 | P1 티켓 |
+| 계약 린트 | 커밋 훅 grep 5종: materials 밖 `Mesh*Material` · atmosphere 밖 `*Light` · `Math.random(`/`Date.now(`/`performance.now(` · 500줄 초과 · 화면 표출 "세실" — 검사 범위·판별법·훅 공존은 표 아래 판별 규칙이 정본 | 커밋마다 | P0 티켓 |
+| 프레임 예산 | `?stats=1` 통계 오버레이(frametime p50/p95·드로우콜·메모리 — QA 전용·플레이어 비노출·D7 면제) + 샷 하네스 게이트: high 60fps / medium 30fps / **low 30fps @ CPU 4× 스로틀링**(저사양 리허설 기준 — 프리셋 신설은 T-P0-06). 구현 티켓 T-P1-05 (E8 §5에서 이관) | 레벨 라운드마다 | P1 티켓 |
 | 판정 배터리 (2단) | 정답/오답/무관 60건 오판 0 | 커널 스왑 머지 조건 | P4 티켓 |
+
+**계약 린트 판별 규칙 (T-P0-01 정본 — 규칙 5종의 적용 범위·판별법. 이 세 줄이 없으면
+에이전트마다 다른 판정이 난다):**
+
+- **검사 범위**: `src/**` · `tools/**` · `index.html` 의 `.js`/`.mjs`/`.html`.
+  500줄 초과 규칙만 `.js`/`.mjs` 로 한정.
+- **화면 표출 "세실" 판별**: 표출 sink 추적은 정적으로 결정 불가 — 검사 범위 내
+  **문자열 리터럴·HTML 텍스트 전수 검사**가 정본이다. 표출이 아닌 잔존 허용분
+  (코드 식별자·`cecil*` 접두 재질명 등 — ARCH §0)은 해당 행의
+  `// lint-allow: display-name` 주석(HTML은 `<!-- lint-allow: display-name -->`)
+  화이트리스트로 제외한다.
+- **pre-commit 훅 공존**: 기존 훅이 이 설치기의 산출이면 멱등 갱신, 아니면
+  덮어쓰지 않고 exit 1.
 
 ## 3. goal 계약 형식 (전 구현 Phase 공통 — 중단 조건 없는 goal 루프 금지)
 
