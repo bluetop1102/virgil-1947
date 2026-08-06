@@ -30,7 +30,11 @@ const MIME = {
   '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon'
 }
 
-if (!existsSync(join(DIST, 'index.html'))) {
+// --url 은 로컬 서버를 세우지 않고 이미 배포된 주소를 그대로 연다 —
+// 제출 체크리스트의 "실제 공개 URL 을 열어봤다" 항목이 이것이다.
+const LIVE = arg('--url', null)
+
+if (!LIVE && !existsSync(join(DIST, 'index.html'))) {
   console.error(`배포 산출물이 없다 — ${DIST}/index.html. 먼저 빌드하라.`)
   process.exit(2)
 }
@@ -49,7 +53,7 @@ const server = createServer((req, res) => {
   res.writeHead(200, { 'content-type': MIME[extname(f)] ?? 'application/octet-stream' })
   res.end(readFileSync(f))
 })
-await new Promise(r => server.listen(PORT, '127.0.0.1', r))
+if (!LIVE) await new Promise(r => server.listen(PORT, '127.0.0.1', r))
 
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=metal'] })
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } })
@@ -60,8 +64,8 @@ page.on('console', m => {
 page.on('pageerror', e => noise.push(`[pageerror] ${String(e).slice(0, 200)}`))
 page.on('requestfailed', r => failed.push(`${r.failure()?.errorText}  ${r.url().slice(0, 140)}`))
 
-const url = `http://127.0.0.1:${PORT}${PREFIX}/`
-console.log(`배포 검증 — ${url}  (산출물 ${DIST.replace(ROOT + '/', '')})`)
+const url = LIVE ?? `http://127.0.0.1:${PORT}${PREFIX}/`
+console.log(`배포 검증 — ${url}  (${LIVE ? '실배포' : '산출물 ' + DIST.replace(ROOT + '/', '')})`)
 
 let booted = false
 try {
@@ -90,5 +94,5 @@ for (const n of noise.slice(0, 12)) console.log(`      ${n}`)
 console.log(`\n  ${ok ? 'PASS' : 'FAIL'} — 링크 한 번으로 ${ok ? '실행된다' : '실행되지 않는다'}`)
 
 await browser.close()
-server.close()
+if (!LIVE) server.close()
 process.exit(ok ? 0 : 1)

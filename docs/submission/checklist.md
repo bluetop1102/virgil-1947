@@ -12,10 +12,12 @@ node tools/lint-contract.mjs           # 계약 린트 5종 — 위반 0        
 node tools/playthrough.mjs --fast      # 완주 봇 — 도달성·이벤트 성립          (T-P1-06 이후)
 npm run build:pages                    # 상대 경로 빌드 — 에러 0
 node tools/serve-check.mjs                              # 루트 배포 PASS
-node tools/serve-check.mjs --prefix /<저장소이름>        # 서브패스 배포 PASS
+node tools/serve-check.mjs --prefix /virgil-1947         # 서브패스 배포 PASS
+node tools/serve-check.mjs --url https://bluetop1102.github.io/virgil-1947/   # 실배포 PASS
 ```
 
-- [ ] 위 7개 전건 통과. `npm run build`(base=`/`)가 아니라 **`build:pages`** 로 빌드했는가
+- [x] 배포 3종 통과 (2026-08-06 실측: 루트·서브패스·실배포 전부 부팅 성립·요청 실패 0·콘솔 0).
+- [ ] 위 8개 전건 통과. `npm run build`(base=`/`)가 아니라 **`build:pages`** 로 빌드했는가
       — 기본 빌드는 서브패스에서 404 5건으로 깨진다.
 
 ## B. 심사자 재현 — 시크릿 창 완주
@@ -44,13 +46,13 @@ node tools/serve-check.mjs --prefix /<저장소이름>        # 서브패스 배
 
 ## D. 저장소
 
-- [ ] 전 이력 시크릿 스캔 통과 — 검출 0 · 위험 경로(`.env`·키파일) 0.
-- [ ] **이력 재작성 하지 않았다** (squash·filter-repo·force push 없음). 요건은 "커밋 기록 유지"다.
-- [ ] `.git` 이 2.0GB 이므로 **구간 분할 push** 로 올렸다 —
-      `git push origin <중간커밋>:refs/heads/main` 시기순 2~3회 → 최종 push.
-- [ ] public 이거나, 비공개라면 심사계정 `dl_gameai_reviewer@nhn.com` 을 **초대하고 수락 여부를 확인**했다.
-- [ ] GitHub Pages 가 켜져 있고 배포 브랜치·경로가 맞다. 실제 공개 URL 을 시크릿 창에서 열어봤다.
-- [ ] `scratchpad/`·`shots/`·`dist/` 가 추적되지 않는다(`.gitignore`).
+- [x] 전 이력 시크릿 스캔 통과 — 고유 텍스트 blob 748개/31.8MB, 검출 0 · 위험 경로 0.
+- [x] **이력 재작성 하지 않았다** (squash·filter-repo 없음). `gh-pages` 만 산출물 전용 강제 갱신.
+- [x] 구간 분할 push 완료 — 1구간(첫 커밋 1.78GB) 101초, 2구간(나머지) 즉시.
+- [x] public 저장소 `bluetop1102/virgil-1947` — 심사계정 초대 불요.
+- [x] GitHub Pages 가동(`gh-pages` 브랜치, 경로 `/`). 실제 공개 URL 검증 PASS.
+- [ ] 마감 직전 **시크릿 창에서 사람이 직접** 한 번 더 연다 (자동 검증과 별개).
+- [x] `scratchpad/`·`shots/`·`dist/` 추적되지 않는다(`.gitignore`).
 
 ## E. 제출물 5종 — 누락 하나가 심사 제외
 

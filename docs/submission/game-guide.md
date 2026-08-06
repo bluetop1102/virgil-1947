@@ -76,8 +76,8 @@ npm run dev      # http://127.0.0.1:5173
 
 ## 6. 링크
 
-- 플레이: `[GitHub Pages URL — 배포 후 기입]`
-- 소스: `[GitHub 저장소 URL — 생성 후 기입]`
+- 플레이: https://bluetop1102.github.io/virgil-1947/
+- 소스: https://github.com/bluetop1102/virgil-1947
 - 영상: `[YouTube URL — 촬영 후 기입]`
 
 *링크는 심사 종료까지 유지한다(요강 유의사항). 마감 후 변경 불가.*
