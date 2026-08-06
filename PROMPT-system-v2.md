@@ -8,10 +8,11 @@
 
 | 산출물 | 상태 | 근거 |
 |---|---|---|
-| A 매니페스트 + 검증기 | **완료** | 티켓 15장 · `manifest-check` 8규칙 중 7 PASS · 변이 12종 12/12 검출 |
-| B 패킷 생성기 | **완료** | 패킷 15장 · `packet-gen --audit` 잔여 좌표 **0** |
-| C 캘리브레이션 | **절반** — Codex 1회 통과, Grok 0회 | `tools/calibration/report.md` |
+| A 매니페스트 + 검증기 | **완료** | 티켓 **16장** · `manifest-check` **8규칙 전건 PASS · 발견 0** · 변이 12종 12/12 검출 |
+| B 패킷 생성기 | **완료** | 패킷 16장 · `packet-gen --audit` 잔여 좌표 **0** |
+| C 캘리브레이션 | 진행 — 2에이전트 대조 실행분 | `tools/calibration/report.md` |
 | D 제출 인프라 | **완료** | public 배포 가동 · 실배포 검증 PASS |
+| 계약 공백 | **닫힘** | Fable `27010a1` 5건 반영 → 매니페스트 재전사 `6776218` |
 
 - 배포: https://bluetop1102.github.io/virgil-1947/ (소스 https://github.com/bluetop1102/virgil-1947)
 - 검증 명령: `node tools/serve-check.mjs --url https://bluetop1102.github.io/virgil-1947/`
@@ -70,18 +71,22 @@ grok --cwd $W/cal-grok-P0-01 --permission-mode acceptEdits --output-format plain
 회수·판정은 `protocol.md` §3(동일성 4축)·§4(회수 명령)·§6(판정 조건) 그대로.
 리포트 §1 통과표를 **명령 출력으로** 채운다 — "통과함"으로 갈음 금지.
 
-### 4.2 Fable 반영분 재전사 (계약이 닫히면)
+### 4.2 ~~Fable 반영분 재전사~~ — **완료** (`6776218`)
 
-`docs/HANDOFF.md` 5건이 반영되면 매니페스트는 **전사본이므로 다시 맞춘다**:
+5건 전부 닫혔고 매니페스트를 재전사했다. 결과: `manifest-check` **8규칙 전건 PASS · 발견 0**
+(세션 시작 이래 처음 — 직전까지 R1 CONTRACT 1건이 정본 결함으로 남아 있었다).
 
-1. E9 §2 린트 판별 규칙 3줄 → `T-P0-01.json` 의 forbidden/acceptance 갱신
-2. E10 P0 표 props.js 충돌 해소 → `T-P0-02`·`T-P0-04` 의 depends 또는 owner_files
-   → `node tools/manifest-check.mjs` 가 **발견 0** 이 되어야 한다 (지금 CONTRACT 1건)
-3. E10 T-P0-03 범위에 표출명 3건 편입 → `T-P0-03.json` owner_files
-4. low 프리셋 티켓 신설 → 매니페스트에 티켓 1장 추가(스키마는 그대로)
-5. 전부 반영 후 `node tools/packet-gen.mjs --all` + `--audit` 잔여 0
+| 계약 변경 | 매니페스트 반영 |
+|---|---|
+| E9 §2 린트 판별 규칙 3줄(범위·표출 판별·훅 공존) | `T-P0-01` forbidden 을 "판별 규칙 준수"로 교체 — 추측 여지 소멸 |
+| E10 P0 표 의존 정정 | `T-P0-02.depends += T-P0-04` — 위상 `T-P0-04 → T-P0-02` 확정 |
+| T-P0-03 범위에 표출명 2건 | `casebook.js`·`deduction.js` 구역 소유 + grep 수용 기준 |
+| T-P0-06 신설 (core 예외) | 매니페스트 16장째 |
+| 병렬 커밋 규약(AGENTS) | §2 에 이미 반영 |
 
-**계약 문서를 고치지 마라.** 매니페스트가 정본을 따라간다, 반대가 아니다.
+**계약 문서를 고치지 마라.** 매니페스트가 정본을 따라간다, 반대가 아니다 — 이 원칙이
+이번에 실제로 작동했다. 계약이 바뀌자 검증기가 R2 5건으로 드리프트를 잡았고, 손으로
+패킷을 고치지 않고 재전사 + 재생성으로 닫았다.
 
 ### 4.3 파일럿 ② 창작형 (①·②가 끝난 뒤)
 
