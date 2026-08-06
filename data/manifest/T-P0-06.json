@@ -1,0 +1,81 @@
+{
+  "id": "T-P0-06",
+  "type": "tool",
+  "title": "QUALITY.low 프리셋 신설 — 저사양 경로",
+  "owner_files": [
+    {
+      "path": "src/core/config.js",
+      "scope": "section",
+      "section": "QUALITY.low 신설 + pickQuality 폴백 경고",
+      "state": "existing"
+    }
+  ],
+  "consumes": [
+    {
+      "label": "E10 §2 P0 표",
+      "doc": "docs/design/E10-production.md",
+      "heading": "P0 — 정지작업 (T-P0-02→T-P0-04 의존 · T-P0-03만 E3 산출 의존 · 나머지 상호 독립)",
+      "why": "이 티켓의 정본 행. 프리셋 값·수용 기준·core 예외 범위의 원천이며, 패킷과 어긋나면 이 표가 이긴다."
+    },
+    {
+      "label": "E9 §2 기계 게이트 총목록",
+      "doc": "docs/design/E9-gates.md",
+      "heading": "2. 기계 게이트 총목록 (goal 루프가 소비하는 통과 조건 은행)",
+      "why": "프레임 예산 행에 low 30fps @ CPU 4× 스로틀링 기준이 있다 — 이 프리셋이 통과해야 하는 선."
+    },
+    {
+      "label": "E8 §2 설정",
+      "doc": "docs/design/E8-ui.md",
+      "heading": "2. 설정 (`ui/settings.js` 신규 — order 80, 자동 등록)",
+      "why": "설정 UI가 소비하는 프리셋 선택지 3종(high/medium/low). ?q= 리로드 계약도 여기가 정본."
+    },
+    {
+      "label": "ARCH §2 디렉터리 소유권",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "2. 디렉터리 소유권",
+      "why": "core 는 잠김이고 이 티켓만 config.js 예외를 받는다 — 예외 범위 밖은 건드리지 않는다."
+    },
+    {
+      "label": "ARCH §11 코드 스타일",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "11. 코드 스타일",
+      "why": "ESM·세미콜론 없음·2스페이스·작은따옴표·콘솔 0."
+    }
+  ],
+  "inputs": [],
+  "events": {
+    "emit": [],
+    "listen": []
+  },
+  "acceptance": [
+    {
+      "cmd": "SHOT_PORT=5906 node tools/shoot.mjs --out shots/p0-06 --url-suffix \"?q=low\" atmo-corridor-night",
+      "expect": "샷 성공 · 콘솔 에러·경고 0 · 볼류메트릭·GTAO·SSR 이 실제로 비활성(활성 프리셋 로그 또는 렌더 타깃 부재로 확인)"
+    },
+    {
+      "cmd": "node tools/serve-check.mjs --port 8131",
+      "expect": "기본 경로 무회귀 — ?q= 무지정 시 기존 high 경로 그대로 부팅·콘솔 0"
+    },
+    {
+      "cmd": "node tools/pix.mjs diff shots/_baseline/corridor.png shots/p0-06/atmo-corridor-night.png",
+      "expect": "**기본 경로**의 픽셀 변화 0.0% — low 신설이 high/medium 렌더를 바꾸면 회귀다(low 샷 자체는 당연히 다르다)"
+    }
+  ],
+  "shots": [
+    {
+      "name": "atmo-corridor-night",
+      "state": "existing",
+      "note": "low 프리셋 실동작 확인 + 기본 경로 회귀 대조"
+    }
+  ],
+  "forbidden": [
+    "config.js 의 QUALITY.low 신설·pickQuality 폴백 경고 밖 편집 — core 는 잠김이고 이 티켓의 예외는 그 두 지점뿐이다(ARCH §2).",
+    "기존 프리셋(cinematic·high·medium) 값 변경 — 신설만 한다. 기존 값을 건드리면 픽셀 회귀 게이트가 떨어진다.",
+    "폴백 경고를 무조건 출력하는 것 — 미지 값이 실제로 들어왔을 때만이다. 상시 경고는 콘솔 0 게이트를 깬다.",
+    "low 에서 bloom 을 끄는 것 — 느와르 룩의 최소선으로 유지한다(E10 표 명시).",
+    "설정 UI 구현 — ui/settings.js 는 T-P1-05 소유다. 이 티켓은 프리셋 데이터와 선택 함수까지다."
+  ],
+  "model": "codex",
+  "depends": [],
+  "status": "todo"
+}

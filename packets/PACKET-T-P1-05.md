@@ -74,7 +74,9 @@ src/
     engine.js      Engine 클래스, 모듈 레지스트리, 렌더 루프
     bus.js         이벤트 버스
     state.js       게임 상태 저장소 (직렬화. 역직렬화는 gameplay/save.js 소유 — core 무수정)
-    config.js      품질 프리셋·튜너블
+    config.js      품질 프리셋·튜너블. 잠금 예외: QUALITY.low 신설 + pickQuality 미지 값
+                   콘솔 경고는 T-P0-06 범위로 허용 (E8 §2·E9 §2 소비 — main.js 부트 훅
+                   예외와 같은 형식) *(v2.1)*
     shotlist.js    QA 스크린샷 카메라 위치 목록 (추가만 허용)
     util.js        공통 수학·랜덤(시드 고정)
   render/
@@ -226,7 +228,7 @@ engine.bus.emit('interrogation:start', {npc: 'deitch'})
 | `deduction:sign` | `{}` | ui(board) — 조서 서명 = 지목 종결 선언. deduction이 성립 링크 수로 엔딩 분기(E5 §5) *(v2)* |
 | `deduction:end` | `{ending, links, flags}` | deduction — 지목 종결 확정 통지(ending ∈ full/partial/cold). cinematics(cin-end-* 개시)·save(**엔딩을 비가역 레코드에 기록, 회차 종결 — "이어서" 소멸, E8 §4**)가 소비 *(v2)* |
 | `boot:progress` | `{done, total}` | main.js — 부트 진행(모듈 init 계수+첫 프레임). 로딩 화면(E8 §3)이 구독 *(v2)* |
-| `title:proceed` | `{mode}` | ui(title) — 타이틀 통과 신호. mode `new`(첫 입력/처음부터) → cinematics가 cin-intro 개시. mode `resume` → title.js 자신이 `?resume=1` 재작성+리로드(E8 §4 프로토콜 — 수신자 없음, 로그 목적 발화) *(v2)* |
+| `title:proceed` | `{mode}` | ui(title) — 타이틀·재입장 통과 신호. mode `new`(첫 입력/처음부터) → cinematics가 cin-intro 개시. mode `resume` → title.js 자신이 `?resume=1` 재작성+리로드(수신자 없음, 로그 목적). mode `wake`(재제스처 화면 첫 입력 — E8 §4) → 각 모듈이 제스처 후 재개(audio 컨텍스트 활성·입력 홀드 해제·복원 지점 플레이 개시) *(v2)* |
 | `game:pause` | `{on}` | ui(settings 카드) — 일시정지 전파. **구독·정지 대상: physics·chars(perf)·cinematics·interrogation·audio(디제틱 감쇠) — 각 모듈이 자기 update를 스킵한다(core 무수정, engine.time은 계속 흐른다). 렌더·pipeline은 지속** — FOV·감도 즉시 반영을 카드 뒤 화면으로 확인하는 것이 목적이다. 시네마틱 재생 중 pause = 재생 정지(스킵 아님) *(v2)* |
 | `perf:state` | `{npc, state}` | interrogation — 연기 상태 idle/anxious/lying/breaking. perf.js는 이것만 구독하며 진위를 모른다. 산출 규칙(기계): 진술 제시 중 `truth:false`→lying, `anxiousTell:true`→anxious, 그 외→idle. **breaking은 case-graph `breakingOn:true` 진술의 lieCorrect 판정 직후에만**(현행 3건: deitch.S4·ruiz.S4·pryce.S3) *(v2)* |
 | `deduction:link` | `{id, ok}` | deduction — 지목판 링크 성립/실패. perf(도일 반응)·cinematics(광각화)가 구독 *(v2)* |
@@ -260,9 +262,22 @@ T-P0-03 정합 라운드에서 이 어휘로 수렴한다. `elevator`는 이동 
 | 완주 봇 3경로 | `tools/playthrough.mjs` (신설) — 판정용 시퀀스 캡처(`--capture`)도 이 도구가 소유 | 게임플레이 변경마다 | P1 티켓 |
 | 텔 상관 (P5) | factcheck 확장 — script v2의 텔 발화 상관 | 스크립트 변경마다 | P1 티켓 |
 | 콘솔 에러·경고 0 | 샷 하네스 기존 | 전 라운드 | 가동 중 |
-| 계약 린트 | 커밋 훅 grep 5종: materials 밖 `Mesh*Material` · atmosphere 밖 `*Light` · `Math.random(`/`Date.now(`/`performance.now(` · 500줄 초과 · 화면 표출 "세실" | 커밋마다 | P0 티켓 |
-| 프레임 예산 | `?stats=1` 통계 오버레이(frametime p50/p95·드로우콜·메모리 — QA 전용·플레이어 비노출·D7 면제) + 샷 하네스 게이트: high 60fps / medium 30fps. 구현 티켓 T-P1-05 (E8 §5에서 이관) | 레벨 라운드마다 | P1 티켓 |
+| 계약 린트 | 커밋 훅 grep 5종: materials 밖 `Mesh*Material` · atmosphere 밖 `*Light` · `Math.random(`/`Date.now(`/`performance.now(` · 500줄 초과 · 화면 표출 "세실" — 검사 범위·판별법·훅 공존은 표 아래 판별 규칙이 정본 | 커밋마다 | P0 티켓 |
+| 프레임 예산 | `?stats=1` 통계 오버레이(frametime p50/p95·드로우콜·메모리 — QA 전용·플레이어 비노출·D7 면제) + 샷 하네스 게이트: high 60fps / medium 30fps / **low 30fps @ CPU 4× 스로틀링**(저사양 리허설 기준 — 프리셋 신설은 T-P0-06). 구현 티켓 T-P1-05 (E8 §5에서 이관) | 레벨 라운드마다 | P1 티켓 |
 | 판정 배터리 (2단) | 정답/오답/무관 60건 오판 0 | 커널 스왑 머지 조건 | P4 티켓 |
+
+**계약 린트 판별 규칙 (T-P0-01 정본 — 규칙 5종의 적용 범위·판별법. 이 세 줄이 없으면
+에이전트마다 다른 판정이 난다):**
+
+- **검사 범위**: `src/**` · `tools/**` · `index.html` 의 `.js`/`.mjs`/`.html`.
+  500줄 초과 규칙만 `.js`/`.mjs` 로 한정.
+- **화면 표출 "세실" 판별**: 표출 sink 추적은 정적으로 결정 불가 — 검사 범위 내
+  **문자열 리터럴·HTML 텍스트 전수 검사**가 정본이다. 표출이 아닌 잔존 허용분
+  (코드 식별자·`cecil*` 접두 재질명 등 — ARCH §0)은 해당 행의
+  `// lint-allow: display-name` 주석(HTML은 `<!-- lint-allow: display-name -->`)
+  화이트리스트로 제외한다.
+- **pre-commit 훅 공존**: 기존 훅이 이 설치기의 산출이면 멱등 갱신, 아니면
+  덮어쓰지 않고 exit 1.
 
 ### 4.8 E8 §2 설정
 
@@ -289,7 +304,7 @@ cinematics·interrogation·audio가 구독해 자기 update를 스킵하고, **�
 
 | 항목 | 방식 | 반영 |
 |---|---|---|
-| 품질 프리셋 | `?q=` URL 재작성 + 리로드 (감사 결론 승계 — 무리로드 전환은 비경제) | 리로드 시 |
+| 품질 프리셋 | **선택지 3종 `high`/`medium`/`low`**(`cinematic`은 QA 전용 — UI 비노출. low 신설은 T-P0-06, 정본 `core/config.js` QUALITY) — `?q=` URL 재작성 + 리로드 (감사 결론 승계 — 무리로드 전환은 비경제) | 리로드 시 |
 | FOV | 60~80, `camera.fov`+`updateProjectionMatrix()` | 즉시 |
 | 마우스 감도 | `player.js` SENS 인스턴스 필드 | 즉시 |
 | 자막 | `subtitles.js` 플래그 | 즉시 |
@@ -363,7 +378,7 @@ ARCHITECTURE §5 표의 해당 행 (payload·발신자 정본):
 | `settings:changed` | `{key, value}` | ui/settings *(v2)* |
 | `game:pause` | `{on}` | ui(settings 카드) — 일시정지 전파. **구독·정지 대상: physics·chars(perf)·cinematics·interrogation·audio(디제틱 감쇠) — 각 모듈이 자기 update를 스킵한다(core 무수정, engine.time은 계속 흐른다). 렌더·pipeline은 지속** — FOV·감도 즉시 반영을 카드 뒤 화면으로 확인하는 것이 목적이다. 시네마틱 재생 중 pause = 재생 정지(스킵 아님) *(v2)* |
 | `boot:progress` | `{done, total}` | main.js — 부트 진행(모듈 init 계수+첫 프레임). 로딩 화면(E8 §3)이 구독 *(v2)* |
-| `title:proceed` | `{mode}` | ui(title) — 타이틀 통과 신호. mode `new`(첫 입력/처음부터) → cinematics가 cin-intro 개시. mode `resume` → title.js 자신이 `?resume=1` 재작성+리로드(E8 §4 프로토콜 — 수신자 없음, 로그 목적 발화) *(v2)* |
+| `title:proceed` | `{mode}` | ui(title) — 타이틀·재입장 통과 신호. mode `new`(첫 입력/처음부터) → cinematics가 cin-intro 개시. mode `resume` → title.js 자신이 `?resume=1` 재작성+리로드(수신자 없음, 로그 목적). mode `wake`(재제스처 화면 첫 입력 — E8 §4) → 각 모듈이 제스처 후 재개(audio 컨텍스트 활성·입력 홀드 해제·복원 지점 플레이 개시) *(v2)* |
 
 표에 없는 이벤트 이름을 새로 만들지 않는다. 발신 방향(누가 쏘는가)도 표가 정본이다.
 
@@ -427,7 +442,12 @@ node tools/playthrough.mjs --fast --stats
 - 남이 소유한 파일을 편집하지 않는다. **다른 소유자의 파일을 고쳐야 하면 `docs/HANDOFF.md` 큐에 항목을
   추가**하고 자기 소유분만 진행한다. "그 에이전트가 지금 안 보인다"는 안전 신호가 아니다 — 여러 워크플로가
   동시에 돌고 소유자는 라운드 사이에 다시 살아난다.
-- `src/core/*`는 잠김. `core/shotlist.js`에 엔트리 추가만 허용.
+- `src/core/*`는 잠김. 예외 2건만 허용 — `core/shotlist.js` 엔트리 추가 ·
+  `core/config.js` QUALITY.low 신설(T-P0-06 담당 한정, ARCH §2).
+- **병렬 세션 커밋 규약**: `git commit -a` 와 무인자 `git add -A` 금지.
+  **자기 소유 경로를 명시해 스테이지한다** — 예: `git add docs/design docs/ROUNDS.md`.
+  커밋 이력이 제출물(AI 활용 기술 문서)의 재료라, 한 커밋에 두 세션의 작업이 섞이면
+  라운드↔변경 대응이 깨지고 이력 재작성은 요건 위반이라 되돌릴 수 없다.
 - 외부 에셋 다운로드 금지. 모든 텍스처·지오메트리·오디오는 절차 생성.
 - `Math.random()` / `Date.now()` 직접 호출 금지 (`core/util.js`의 `rng`, `engine.time` 사용).
 - 실제 사건 피해자를 재현하지 않는다. 인물·사건은 전부 허구.
@@ -575,7 +595,8 @@ ROUNDS.md에 인수인계를 남긴다.
 - **재개 부트의 재제스처(정본)**: 리로드는 브라우저 사용자 활성화를 소멸시키므로,
   `?resume=1` 부트는 로딩 후 **타이틀을 재표시하지 않고**(선택은 이미 끝났다) 최소
   재입장 제스처 화면 한 장을 띄운다 — 타자기 한 줄 "돌아오셨습니까 — 벨을 누르십시오"
-  (§3 벨 도상 재사용). 첫 입력 = AudioContext·포인터록 재활성 → 복원 지점 재개.
+  (§3 벨 도상 재사용). 첫 입력 = `title:proceed {mode:'wake'}` 발화(ARCH §5) —
+  AudioContext·포인터록 재활성과 입력 홀드 해제는 각 모듈이 이 신호를 구독해 수행한다.
   이 화면은 P6 정지샷 판정 대상에 포함된다(title.js 소유).
 - **이중 레이어 영속 규칙**: 소각·플래그 같은 **비가역 데이터는 발생 즉시 write-through
   영속**하고, 위치·막·점수는 막 경계 스냅샷에만 담는다. 복원 = 막 경계 스냅샷 + 비가역
@@ -983,6 +1004,24 @@ NAN 요건 교훈의 습관화).
   STORY §7)를 따른다. 이번 회차의 실패가 라디오 소문 형식으로 세계에 기록된다 —
   플레이의 결과가 lore 층으로 내려앉는 것이 U2의 규칙 본체다.
 - 오답 조합 페널티 없음 — 지목판은 심문이 아니다. 긴장은 "무엇이 없는가"에서 나온다.
+
+### ARCH §0 — 0. 작품 정의
+
+<!-- 원문: docs/ARCHITECTURE.md § 0. 작품 정의 ⊂ VIRGIL — 아키텍처 계약 v2 (모든 에이전트 필독) -->
+**VIRGIL(가제 확정) — 1947 · Room 942**
+1947년 로스앤젤레스. LAPD 강력계 형사가 버질 애비뉴의 호텔 버질에서 9일간 실종된 투숙객 아이리스 밴스(Iris Vance, 22)를 수사한다.
+투숙객들의 수도에서 검은 물이 나오고, 압력이 떨어진다. 답은 옥상 물탱크에 있다.
+
+- 인물·사건·호텔은 전부 허구다. 실제 사건·실존 업체를 지목하는 조합은 해체됐다(재허구화 계약: MASTER-PLAN §1, 명칭 검증: docs/design/E0-index.md §0). 시작 화면에 허구 고지문 필수.
+- 톤: 필름 느와르 + 조용한 공포. 점프 스케어 금지. 초자연은 괴담(대기·발화)으로만 — 증거 그래프 침투 0 (factcheck F4).
+- 플레이 타임 목표 40~60분, 3막. 코어 선언: docs/design/E1-core.md (비가역 대면).
+
+**막 구성**
+| 막 | 공간 | 핵심 |
+|---|---|---|
+| I | 로비 · 프런트데스크 · 엘리베이터 | 숙박부 확인, 야간 프런트 마를로 다이치 심문, 하우스 디텍티브가 찍은 엘리베이터 사진 4장 입수 |
+| II | 9층 복도 · 942호 · 944호 | 현장 수색, 하우스키퍼 콘수엘라 루이즈 / 944호 투숙객 월터 프라이스 심문 |
+| III | 옥상 · 물탱크 | 발견, 증거판 최종 지목 |
 
 ### MASTER-PLAN §1 — 1. 재허구화 — 배포 리스크 결박
 

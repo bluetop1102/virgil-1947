@@ -1,14 +1,14 @@
-# 패킷 T-P0-01 — 계약 린트 커밋 훅 — grep 5종
+# 패킷 T-P0-06 — QUALITY.low 프리셋 신설 — 저사양 경로
 
 > 이 문서 하나로 완결된다. **패킷 밖 문서를 열지 마라** — 필요한 계약 원문·데이터·규약은
 > 전부 아래에 인라인돼 있다. 그래도 질문이 생기면 그건 이 패킷의 결함이니,
 > 추측해서 진행하지 말고 §10 반환 형식의 `CONTRACT_CHANGE_REQUEST` 로 되돌려라.
-> 자동 생성물 — 손으로 고치지 않는다. 원천: `data/manifest/T-P0-01.json` · 생성기: `tools/packet-gen.mjs`
+> 자동 생성물 — 손으로 고치지 않는다. 원천: `data/manifest/T-P0-06.json` · 생성기: `tools/packet-gen.mjs`
 
 ## 1. goal 계약
 
 ```
-/goal 계약 린트 커밋 훅 — grep 5종 — T-P0-01
+/goal QUALITY.low 프리셋 신설 — 저사양 경로 — T-P0-06
 통과 조건: §8 수용 기준 3건 전건 통과 · 콘솔 에러·경고 0 · §9 금지 사항 위반 0
 중단 조건: 라운드 상한 2회 · 서브에이전트 토큰 상한 100만
            (PROMPT-build-p0.md 의 P0 전체 상한 10회·500만을 티켓 5장으로 나눈 몫)
@@ -24,8 +24,7 @@
 이 목록 밖의 파일은 **읽기만** 한다. 남의 파일을 고쳐야 하면 §10.1 형식으로 반환한다 —
 "그 담당이 지금 안 보인다"는 안전 신호가 아니다.
 
-- `tools/lint-contract.mjs` — 파일 전체 · 신설
-- `tools/install-hooks.mjs` — 파일 전체 · 신설
+- `src/core/config.js` — **구역 한정** — QUALITY.low 신설 + pickQuality 폴백 경고 (이 구역 밖은 남의 것이다)
 
 ## 3. 선행 의존
 
@@ -35,7 +34,7 @@
 
 ### 4.1 E10 §2 P0 표
 
-*왜 읽는가: 이 티켓의 정본 행. 내용·소유 파일·수용 기준·모델 배정의 원천이며, 패킷과 어긋나면 이 표가 이긴다.*
+*왜 읽는가: 이 티켓의 정본 행. 프리셋 값·수용 기준·core 예외 범위의 원천이며, 패킷과 어긋나면 이 표가 이긴다.*
 
 <!-- 원문: docs/design/E10-production.md § P0 — 정지작업 (T-P0-02→T-P0-04 의존 · T-P0-03만 E3 산출 의존 · 나머지 상호 독립) ⊂ E10 — 제작·위임 ⊂ 2. 티켓 보드 (의존 순서 — 위상 정렬 가능, 순환 0) -->
 | 티켓 | 내용 | 소유 파일(배타) | 수용 기준(기계) | 모델 |
@@ -49,7 +48,7 @@
 
 ### 4.2 E9 §2 기계 게이트 총목록
 
-*왜 읽는가: 이 티켓이 만들거나 통과해야 하는 게이트의 정의 원문.*
+*왜 읽는가: 프레임 예산 행에 low 30fps @ CPU 4× 스로틀링 기준이 있다 — 이 프리셋이 통과해야 하는 선.*
 
 <!-- 원문: docs/design/E9-gates.md § 2. 기계 게이트 총목록 (goal 루프가 소비하는 통과 조건 은행) ⊂ E9 — 게이트·루브릭 -->
 | 게이트 | 도구 | 실행 시점 | 상태 |
@@ -76,88 +75,127 @@
 - **pre-commit 훅 공존**: 기존 훅이 이 설치기의 산출이면 멱등 갱신, 아니면
   덮어쓰지 않고 exit 1.
 
-### 4.3 ARCH §6 재질 계약
+### 4.3 E8 §2 설정
 
-*왜 읽는가: 재질은 mat() 경유만. 등록명 밖 이름은 마젠타로 드러난다.*
+*왜 읽는가: 설정 UI가 소비하는 프리셋 선택지 3종(high/medium/low). ?q= 리로드 계약도 여기가 정본.*
 
-<!-- 원문: docs/ARCHITECTURE.md § 6. 재질 계약 (MATERIALS 소유, 전원 소비) ⊂ VIRGIL — 아키텍처 계약 v2 (모든 에이전트 필독) -->
-world/chars는 **직접 `new THREE.MeshStandardMaterial`을 만들지 않는다.** 반드시:
+<!-- 원문: docs/design/E8-ui.md § 2. 설정 (`ui/settings.js` 신규 — order 80, 자동 등록) ⊂ E8 — UI·부수 기능 -->
+물성: 프런트 서류함 카드 + 객실 안내판 스타일 — 항목은 타자된 카드, 값 변경은 카드를
+넘기거나 놋쇠 다이얼을 돌리는 상호작용.
 
-```js
-import { mat } from '../materials/library.js'
-const m = mat('marble.lobby.floor')   // 캐시된 THREE.MeshPhysicalMaterial 반환
+**진입 트리거(정본)**: 인게임 **Esc 1회** = 포인터록 해제 + 게임 일시정지 + 설정 서류함
+카드 오버레이(기존 "Esc 해제" 동작을 흡수 — 해제와 설정은 같은 순간이다). Esc 재차 또는
+카드 닫기 = 잠금 복귀·재개. FOV·감도의 "즉시 반영"은 카드가 열린 상태에서 뒤 화면에
+실시간 적용되는 것으로 확인한다. 타이틀 화면에서는 동일 카드를 재사용(별도 메뉴 없음).
+수사노트(Tab)와는 무관 — 노트는 게임 내 소품, 설정은 게임 밖 카드다.
+
+**일시정지 전파(정본)**: 카드 개폐 시 `game:pause {on}` 발화(ARCH §5) — physics·chars·
+cinematics·interrogation·audio가 구독해 자기 update를 스킵하고, **렌더·pipeline은
+지속**(즉시 반영 확인의 전제). core는 무수정 — engine.time은 계속 흐르고 정지는 모듈
+측 스킵으로 구현한다. 시네마틱 재생 중 Esc = 재생 정지(스킵 아님), 카드 닫으면 이어서
+재생. **이 절의 코어 기여**: Esc가 해제·정지·설정을 한 순간에 묶는 것은 심문 중 오조작
+(잠금 해제 상태의 의도치 않은 클릭 → 원치 않은 선택 제출)을 차단하는 안전장치다 —
+비가역 시스템에서 오입력 방지는 U1의 공정성 조건이다. 물성(P6·D7 실격 방어)은 코어
+대면의 무대 신뢰를 지키는 게이트 이행 절이다(E9 경유).
+
+| 항목 | 방식 | 반영 |
+|---|---|---|
+| 품질 프리셋 | **선택지 3종 `high`/`medium`/`low`**(`cinematic`은 QA 전용 — UI 비노출. low 신설은 T-P0-06, 정본 `core/config.js` QUALITY) — `?q=` URL 재작성 + 리로드 (감사 결론 승계 — 무리로드 전환은 비경제) | 리로드 시 |
+| FOV | 60~80, `camera.fov`+`updateProjectionMatrix()` | 즉시 |
+| 마우스 감도 | `player.js` SENS 인스턴스 필드 | 즉시 |
+| 자막 | `subtitles.js` 플래그 | 즉시 |
+| 볼륨 | 기존 마스터 게인 노드 | 즉시 |
+| 키바인드 | **범위 외** (키맵 테이블 부재 — 백로그 명시, P 계획 불포함) | — |
+
+`settings:changed` 버스 발신 · localStorage 키 `virgil.settings`(자체 키, state와 분리).
+
+### 4.4 ARCH §2 디렉터리 소유권
+
+*왜 읽는가: core 는 잠김이고 이 티켓만 config.js 예외를 받는다 — 예외 범위 밖은 건드리지 않는다.*
+
+<!-- 원문: docs/ARCHITECTURE.md § 2. 디렉터리 소유권 ⊂ VIRGIL — 아키텍처 계약 v2 (모든 에이전트 필독) -->
+각 파일은 **정확히 한 에이전트**가 소유한다. 남의 파일을 편집하지 않는다.
+
+```
+src/
+  main.js          [CORE] 부트스트랩·씬 모드 진입로 (?scene= 경로 보존 — AGENTS.md).
+                   잠금 대상은 core/ 디렉터리만 — main.js의 부트 훅(boot:progress 발화) 추가는
+                   T-P1-05 범위로 허용 *(v2)*
+  core/            [CORE — 잠김. 읽기 전용. 절대 수정 금지]
+    engine.js      Engine 클래스, 모듈 레지스트리, 렌더 루프
+    bus.js         이벤트 버스
+    state.js       게임 상태 저장소 (직렬화. 역직렬화는 gameplay/save.js 소유 — core 무수정)
+    config.js      품질 프리셋·튜너블. 잠금 예외: QUALITY.low 신설 + pickQuality 미지 값
+                   콘솔 경고는 T-P0-06 범위로 허용 (E8 §2·E9 §2 소비 — main.js 부트 훅
+                   예외와 같은 형식) *(v2.1)*
+    shotlist.js    QA 스크린샷 카메라 위치 목록 (추가만 허용)
+    util.js        공통 수학·랜덤(시드 고정)
+  render/
+    pipeline.js    [PIPELINE-CORE] 포스트프로세스 그래프
+    exposure.js    [PIPELINE-CORE] 오토노출
+    bluenoise.js   [PIPELINE-CORE] 블루노이즈 텍스처
+    pcss.js        [PIPELINE-CORE] 소프트 섀도 공유 유틸
+    contact.js     [PIPELINE-CORE] 컨택트 섀도
+    passes/prepass.js taa.js composite.js          [PIPELINE-CORE]
+    passes/gtao.js ssr.js volumetric.js volmarch.js volnoise.js bloom.js dof.js motionblur.js  [PIPELINE-EFFECTS]
+  materials/
+    procedural.js  [MATERIALS] GPU 텍스처 생성기
+    library.js     [MATERIALS] 명명된 PBR 재질 레지스트리
+    glsl.js        [MATERIALS] 공유 셰이더 청크
+    recipes.a.js   [MATERIALS] 재질 레시피 1권 (500줄 초과 — P0 분할 대상)
+    recipes.b.js   [MATERIALS] 재질 레시피 2권
+  world/
+    kit.js         [PROPS] 공유 지오메트리 키트(몰딩·베벨·가구)
+    kit-mat.js     [PROPS] 재질 클론 게이트 — 재질 복제는 반드시 cloneMat() 경유 (RESUME §3.0)
+    props.js       [PROPS] 소품 팩토리 (500줄 초과 — P0 분할 대상)
+    props-corridor.js props-detail.js props-fixtures.js  [PROPS] 소품 분권
+    testbed.js     [PROPS] 재질·소품 쇼케이스 룸
+    atmosphere.js  [ATMOSPHERE] IBL 환경·안개·볼류메트릭·실광원 팩토리 (500줄 초과 — P0 분할 대상)
+    atmo/          [ATMOSPHERE] 분권: moods.js ibl.js rain.js particles.js shell.js roof.js
+                   fixtures.js(500줄 초과 — P0 분할 대상) corridor-detail.js corridor-finish.js
+                   probe.js spaces.js(QA 프로브 6종 — 정식 레벨 완성까지 병존)
+    lobby.js       [LEVEL-LOBBY]    ※ P1 신설 예정 — 현재 없음
+    corridor.js    [LEVEL-CORRIDOR] ※ P2 신설 예정 — 현재 없음
+    room942.js     [LEVEL-ROOM]     ※ P2 신설 예정 — 현재 없음 (942·욕실·944 포함, E6 §0)
+    rooftop.js     [LEVEL-ROOFTOP]  ※ P2 신설 예정 — 현재 없음
+  chars/           ※ P1~P2 신설 예정 — 현재 디렉터리 없음
+    rig.js         [CHARACTERS] 절차적 휴머노이드 + 스키닝
+    perf.js        [CHARACTERS] 미세신호(tell) 연기 시스템 (E4 §3 계약)
+  gameplay/
+    player.js      [GAMEPLAY] 컨트롤러·카메라·상호작용 레이캐스트
+    evidence.js    [GAMEPLAY] 증거 모델·수집
+    save.js        [GAMEPLAY] ※ P2 신설 예정 — 체크포인트 역직렬화 (E8 §4)
+  narrative/
+    script.js      [NARRATIVE] 전체 대사·스토리 데이터 (코드 없음, 데이터만. id는 case-graph.json과 1:1)
+    interrogation.js [INTERROGATION] 심문 상태기계 (규칙: docs/design/E5-interrogation.md)
+    deduction.js   [INTERROGATION] 증거판
+    cinematics.js  [CINEMATICS] ※ P1 신설 예정(T-P1-07·08) — 카메라 시퀀스·타임라인·심문 카메라 (E7 §1·§2)
+    case-graph-loader.js [NARRATIVE] ※ P0 신설 허용(T-P0-03) — case-graph.json 관계 데이터 로더
+  audio/
+    engine.js      [AUDIO] WebAudio 그래프·공간 리버브·발소리
+    dsp.js graph.js ir.js  [AUDIO] 분권
+  ui/
+    hud.js         [UI] 크로스헤어·프롬프트
+    notebook.js    [UI] 수사노트 (+ board.js casebook.js casefile.js paper.js photos.js sketch.js type.js wall.js 분권)
+    subtitles.js   [UI] 자막
+    settings.js    [UI] ※ P1 신설 예정 — 설정 (order 80, E8 §2)
+  physics/
+    world.js       [PHYSICS] rapier3d 통합
+    shapes.js      [PHYSICS] 콜라이더 셰이프
 ```
 
-`library.js`가 제공해야 하는 최소 이름 목록 (MATERIALS 에이전트 책임):
+재질·조명 계약 예외(kit-mat 폴백·`glow()`, props 광원 3건, testbed 1건)의 청소 또는 §6/§6.5
+예외 명문화는 P0 코드 라운드 소관(MASTER-PLAN §7.4.2) — 이 표는 소유권만 확정한다.
 
-```
-marble.lobby.floor      brass.polished        brass.tarnished
-wood.varnished.dark     wood.painted.white    wallpaper.damask.green
-plaster.cracked         tile.hex.bathroom     tile.subway.white
-concrete.rooftop        steel.rusted          steel.galvanized
-glass.clear             glass.frosted         mirror.aged
-fabric.velvet.red       fabric.wool.suit      leather.worn.brown
-paper.aged              water.dark            grime.overlay
-carpet.corridor.red     ceramic.sink          bakelite.black
-```
+### 4.5 ARCH §11 코드 스타일
 
-이름이 없으면 `library.js`가 **눈에 띄는 마젠타 재질**을 반환하고 콘솔에 경고한다 (실수 은닉 금지).
-
-### 4.4 ARCH §6.5 조명 계약
-
-*왜 읽는가: 광원은 practical()/ambientRig() 경유만. 색온도 2종 이상 공존 의무.*
-
-<!-- 원문: docs/ARCHITECTURE.md § 6.5 조명 계약 (ATMOSPHERE 소유, 레벨이 소비) ⊂ VIRGIL — 아키텍처 계약 v2 (모든 에이전트 필독) -->
-레벨은 `new THREE.PointLight` 등을 직접 만들지 않는다. 반드시:
-
-```js
-import { practical, ambientRig, setMood } from './atmosphere.js'
-const l = practical('sconce', { pos:[x,y,z], kelvin:2700, lumens:420, radius:4.5, flicker:0.06 })
-setMood('corridor-night')   // 안개 밀도·볼류메트릭 세기·IBL을 한 번에 전환
-```
-
-- 모든 광원은 켈빈으로 지정한다. 한 공간 안에 **최소 2가지 이상 색온도**가 공존해야 한다 (루브릭 G1).
-- `atmosphere.js`는 `engine.scene.environment`에 절차 생성 IBL(PMREM)을 세팅한다. HDR 파일 로드 금지.
-- 무드 프리셋: `lobby-night`, `corridor-night`, `room-dusk`, `bathroom`, `rooftop-rain`, `interrogation`.
-
-### 4.5 ARCH §10 결정론
-
-*왜 읽는가: Math.random()·Date.now() 금지. rng(seed)·engine.time 만 쓴다.*
-
-<!-- 원문: docs/ARCHITECTURE.md § 10. 결정론 ⊂ VIRGIL — 아키텍처 계약 v2 (모든 에이전트 필독) -->
-- `Math.random()` 직접 호출 금지. `core/util.js`의 `rng(seed)` 사용.
-- `Date.now()` / `performance.now()` 직접 호출 금지. `engine.time` 사용.
-- QA 모드(`?qa=1`)에서 시간은 하네스가 고정 스텝으로 전진시킨다.
-
-### 4.6 ARCH §11 코드 스타일
-
-*왜 읽는가: ESM·세미콜론 없음·2스페이스·작은따옴표·파일당 500줄·콘솔 0.*
+*왜 읽는가: ESM·세미콜론 없음·2스페이스·작은따옴표·콘솔 0.*
 
 <!-- 원문: docs/ARCHITECTURE.md § 11. 코드 스타일 ⊂ VIRGIL — 아키텍처 계약 v2 (모든 에이전트 필독) -->
 - ESM, 세미콜론 없음, 2스페이스, 작은따옴표.
 - 파일당 500줄 이하. 넘으면 같은 소유 디렉터리 안에서 분할.
 - 주석은 "왜"만. "무엇"은 코드로.
 - 콘솔 에러/경고 0 — QA가 콘솔을 읽고 실격 처리한다.
-
-### 4.7 ARCH §0 작품 정의
-
-*왜 읽는가: 화면 표출 텍스트 "세실" 0 — 코드 식별자 잔존은 허용, 표출만 금지.*
-
-<!-- 원문: docs/ARCHITECTURE.md § 0. 작품 정의 ⊂ VIRGIL — 아키텍처 계약 v2 (모든 에이전트 필독) -->
-**VIRGIL(가제 확정) — 1947 · Room 942**
-1947년 로스앤젤레스. LAPD 강력계 형사가 버질 애비뉴의 호텔 버질에서 9일간 실종된 투숙객 아이리스 밴스(Iris Vance, 22)를 수사한다.
-투숙객들의 수도에서 검은 물이 나오고, 압력이 떨어진다. 답은 옥상 물탱크에 있다.
-
-- 인물·사건·호텔은 전부 허구다. 실제 사건·실존 업체를 지목하는 조합은 해체됐다(재허구화 계약: MASTER-PLAN §1, 명칭 검증: docs/design/E0-index.md §0). 시작 화면에 허구 고지문 필수.
-- 톤: 필름 느와르 + 조용한 공포. 점프 스케어 금지. 초자연은 괴담(대기·발화)으로만 — 증거 그래프 침투 0 (factcheck F4).
-- 플레이 타임 목표 40~60분, 3막. 코어 선언: docs/design/E1-core.md (비가역 대면).
-
-**막 구성**
-| 막 | 공간 | 핵심 |
-|---|---|---|
-| I | 로비 · 프런트데스크 · 엘리베이터 | 숙박부 확인, 야간 프런트 마를로 다이치 심문, 하우스 디텍티브가 찍은 엘리베이터 사진 4장 입수 |
-| II | 9층 복도 · 942호 · 944호 | 현장 수색, 하우스키퍼 콘수엘라 루이즈 / 944호 투숙객 월터 프라이스 심문 |
-| III | 옥상 · 물탱크 | 발견, 증거판 최종 지목 |
 
 ## 5. 입력 데이터
 
@@ -170,7 +208,13 @@ setMood('corridor-night')   // 안개 밀도·볼류메트릭 세기·IBL을 한
 
 ## 7. 샷
 
-이 티켓은 샷 엔트리를 쓰지 않는다(로그·배터리로 판정). `core/shotlist.js` 를 건드리지 마라.
+- `atmo-corridor-night` — **기존 엔트리, 수정 금지. 촬영만 한다.** low 프리셋 실동작 확인 + 기본 경로 회귀 대조
+  ```js
+  'atmo-corridor-night': {
+  ```
+
+촬영은 반드시 `--out shots/<자기이름>` 로 분리한다 — 기본 출력은 공유라 report.json 이 서로 덮인다.
+`SHOT_PORT=<고유번호>` 로 포트 충돌을 피한다. GPU 락 대기 로그는 정상이니 죽이지 말고 기다린다.
 
 ## 8. 수용 기준 (기계 판정 — 전건 통과가 완료 조건)
 
@@ -179,32 +223,33 @@ setMood('corridor-night')   // 안개 밀도·볼류메트릭 세기·IBL을 한
 **A1.**
 
 ```bash
-node tools/lint-contract.mjs --self-test
+SHOT_PORT=5906 node tools/shoot.mjs --out shots/p0-06 --url-suffix "?q=low" atmo-corridor-night
 ```
-→ 위반 5종(materials 밖 Mesh*Material 생성 · atmosphere 밖 *Light 생성 · Math.random(/Date.now(/performance.now( 직호출 · 500줄 초과 · 화면 표출 "세실") 각각의 주입 픽스처에서 exit 1 + 위반 규칙명·파일·줄번호 출력, 청정 픽스처에서 exit 0
+→ 샷 성공 · 콘솔 에러·경고 0 · 볼류메트릭·GTAO·SSR 이 실제로 비활성(활성 프리셋 로그 또는 렌더 타깃 부재로 확인)
 
 **A2.**
 
 ```bash
-node tools/install-hooks.mjs && test -x .git/hooks/pre-commit
+node tools/serve-check.mjs --port 8131
 ```
-→ exit 0 — pre-commit 훅이 설치되고 실행 권한이 붙는다
+→ 기본 경로 무회귀 — ?q= 무지정 시 기존 high 경로 그대로 부팅·콘솔 0
 
 **A3.**
 
 ```bash
-node tools/lint-contract.mjs --staged
+node tools/pix.mjs diff shots/_baseline/corridor.png shots/p0-06/atmo-corridor-night.png
 ```
-→ 깨끗한 인덱스에서 exit 0. **차단 경로 재현 필수** — 위반 1건(예: src/ 임시 파일에 Math.random( 직호출)을 git add 로 스테이지한 뒤 재실행하면 exit 1 + 위반 규칙명 출력, 그 파일을 git reset 으로 되돌리면 다시 exit 0. 깨끗한 인덱스 단독 실행은 차단 경로를 검증하지 못하므로 통과 근거가 아니다.
+→ **기본 경로**의 픽셀 변화 0.0% — low 신설이 high/medium 렌더를 바꾸면 회귀다(low 샷 자체는 당연히 다르다)
 
 ## 9. 금지 사항
 
 ### 9.1 이 티켓 고유
 
-- src/** 편집 — 이 티켓은 검사기만 만든다. 현재 트리의 위반 코드 수정은 T-P0-02·T-P0-04 소관이다.
-- 규칙 완화·파일 화이트리스트 하드코딩으로 현재 트리를 통과시키는 것 — 예외는 ARCH §6/§6.5 예외 절 등재로만 인정된다.
-- .git/hooks 산출물 커밋 — git이 추적하지 않는 경로다. 설치 스크립트만 커밋한다.
-- E9 §2 판별 규칙과 다른 검사 범위·판별법을 쓰는 것 — 범위(src/**·tools/**·index.html 의 .js/.mjs/.html, 500줄은 .js/.mjs 한정) · 표출 판별(문자열 리터럴·HTML 텍스트 전수 + `// lint-allow: display-name` 화이트리스트) · 훅 공존(자기 산출이면 멱등 갱신, 아니면 exit 1)이 전부 계약에 정해져 있다. 추측으로 메우지 마라.
+- config.js 의 QUALITY.low 신설·pickQuality 폴백 경고 밖 편집 — core 는 잠김이고 이 티켓의 예외는 그 두 지점뿐이다(ARCH §2).
+- 기존 프리셋(cinematic·high·medium) 값 변경 — 신설만 한다. 기존 값을 건드리면 픽셀 회귀 게이트가 떨어진다.
+- 폴백 경고를 무조건 출력하는 것 — 미지 값이 실제로 들어왔을 때만이다. 상시 경고는 콘솔 0 게이트를 깬다.
+- low 에서 bloom 을 끄는 것 — 느와르 룩의 최소선으로 유지한다(E10 표 명시).
+- 설정 UI 구현 — ui/settings.js 는 T-P1-05 소유다. 이 티켓은 프리셋 데이터와 선택 함수까지다.
 
 ### 9.2 전역 (프로젝트 전체 불변)
 
@@ -302,7 +347,14 @@ http://127.0.0.1:5173/?scene=corridor-night
 - 샷 도중 vite는 HMR·파일 워처가 꺼진 채로 뜬다(`SHOT=1`). 그래서 다른 에이전트가 파일을 저장해도
   페이지가 리로드되지 않는다. 이 동작에 의존하지 말고, 자기 샷은 자기 수정이 끝난 뒤에 찍어라.
 
-### 11.3 docs/design/E9-gates.md § 3. goal 계약 형식 (전 구현 Phase 공통 — 중단 조건 없는 goal 루프 금지)
+### 11.3 docs/ARCHITECTURE.md § 10. 결정론
+
+<!-- 원문: docs/ARCHITECTURE.md § 10. 결정론 ⊂ VIRGIL — 아키텍처 계약 v2 (모든 에이전트 필독) -->
+- `Math.random()` 직접 호출 금지. `core/util.js`의 `rng(seed)` 사용.
+- `Date.now()` / `performance.now()` 직접 호출 금지. `engine.time` 사용.
+- QA 모드(`?qa=1`)에서 시간은 하네스가 고정 스텝으로 전진시킨다.
+
+### 11.4 docs/design/E9-gates.md § 3. goal 계약 형식 (전 구현 Phase 공통 — 중단 조건 없는 goal 루프 금지)
 
 <!-- 원문: docs/design/E9-gates.md § 3. goal 계약 형식 (전 구현 Phase 공통 — 중단 조건 없는 goal 루프 금지) ⊂ E9 — 게이트·루브릭 -->
 ```
@@ -319,7 +371,7 @@ ROUNDS.md에 인수인계를 남긴다.
 라운드 규율(승계): 라운드 = 단일 담당 · 단일 목표 · 사전 기준선 → 사후 기계 게이트.
 커밋은 라운드 단위 세분. 회귀면 롤백 — 판 갱신은 개선일 때만.
 
-### 11.4 docs/HANDOFF.md § 형식
+### 11.5 docs/HANDOFF.md § 형식
 
 <!-- 원문: docs/HANDOFF.md § 형식 ⊂ 소유권 교차 요청 (CONTRACT_CHANGE_REQUEST 큐) -->
 ```
@@ -336,82 +388,6 @@ ROUNDS.md에 인수인계를 남긴다.
 ## 12. 부록 A — 본문이 직접 가리키는 계약 절
 
 §1~§11 이 가리키는 절이다. **이 티켓과 직접 관계가 있다.**
-
-### ARCH §2 — 2. 디렉터리 소유권
-
-<!-- 원문: docs/ARCHITECTURE.md § 2. 디렉터리 소유권 ⊂ VIRGIL — 아키텍처 계약 v2 (모든 에이전트 필독) -->
-각 파일은 **정확히 한 에이전트**가 소유한다. 남의 파일을 편집하지 않는다.
-
-```
-src/
-  main.js          [CORE] 부트스트랩·씬 모드 진입로 (?scene= 경로 보존 — AGENTS.md).
-                   잠금 대상은 core/ 디렉터리만 — main.js의 부트 훅(boot:progress 발화) 추가는
-                   T-P1-05 범위로 허용 *(v2)*
-  core/            [CORE — 잠김. 읽기 전용. 절대 수정 금지]
-    engine.js      Engine 클래스, 모듈 레지스트리, 렌더 루프
-    bus.js         이벤트 버스
-    state.js       게임 상태 저장소 (직렬화. 역직렬화는 gameplay/save.js 소유 — core 무수정)
-    config.js      품질 프리셋·튜너블. 잠금 예외: QUALITY.low 신설 + pickQuality 미지 값
-                   콘솔 경고는 T-P0-06 범위로 허용 (E8 §2·E9 §2 소비 — main.js 부트 훅
-                   예외와 같은 형식) *(v2.1)*
-    shotlist.js    QA 스크린샷 카메라 위치 목록 (추가만 허용)
-    util.js        공통 수학·랜덤(시드 고정)
-  render/
-    pipeline.js    [PIPELINE-CORE] 포스트프로세스 그래프
-    exposure.js    [PIPELINE-CORE] 오토노출
-    bluenoise.js   [PIPELINE-CORE] 블루노이즈 텍스처
-    pcss.js        [PIPELINE-CORE] 소프트 섀도 공유 유틸
-    contact.js     [PIPELINE-CORE] 컨택트 섀도
-    passes/prepass.js taa.js composite.js          [PIPELINE-CORE]
-    passes/gtao.js ssr.js volumetric.js volmarch.js volnoise.js bloom.js dof.js motionblur.js  [PIPELINE-EFFECTS]
-  materials/
-    procedural.js  [MATERIALS] GPU 텍스처 생성기
-    library.js     [MATERIALS] 명명된 PBR 재질 레지스트리
-    glsl.js        [MATERIALS] 공유 셰이더 청크
-    recipes.a.js   [MATERIALS] 재질 레시피 1권 (500줄 초과 — P0 분할 대상)
-    recipes.b.js   [MATERIALS] 재질 레시피 2권
-  world/
-    kit.js         [PROPS] 공유 지오메트리 키트(몰딩·베벨·가구)
-    kit-mat.js     [PROPS] 재질 클론 게이트 — 재질 복제는 반드시 cloneMat() 경유 (RESUME §3.0)
-    props.js       [PROPS] 소품 팩토리 (500줄 초과 — P0 분할 대상)
-    props-corridor.js props-detail.js props-fixtures.js  [PROPS] 소품 분권
-    testbed.js     [PROPS] 재질·소품 쇼케이스 룸
-    atmosphere.js  [ATMOSPHERE] IBL 환경·안개·볼류메트릭·실광원 팩토리 (500줄 초과 — P0 분할 대상)
-    atmo/          [ATMOSPHERE] 분권: moods.js ibl.js rain.js particles.js shell.js roof.js
-                   fixtures.js(500줄 초과 — P0 분할 대상) corridor-detail.js corridor-finish.js
-                   probe.js spaces.js(QA 프로브 6종 — 정식 레벨 완성까지 병존)
-    lobby.js       [LEVEL-LOBBY]    ※ P1 신설 예정 — 현재 없음
-    corridor.js    [LEVEL-CORRIDOR] ※ P2 신설 예정 — 현재 없음
-    room942.js     [LEVEL-ROOM]     ※ P2 신설 예정 — 현재 없음 (942·욕실·944 포함, E6 §0)
-    rooftop.js     [LEVEL-ROOFTOP]  ※ P2 신설 예정 — 현재 없음
-  chars/           ※ P1~P2 신설 예정 — 현재 디렉터리 없음
-    rig.js         [CHARACTERS] 절차적 휴머노이드 + 스키닝
-    perf.js        [CHARACTERS] 미세신호(tell) 연기 시스템 (E4 §3 계약)
-  gameplay/
-    player.js      [GAMEPLAY] 컨트롤러·카메라·상호작용 레이캐스트
-    evidence.js    [GAMEPLAY] 증거 모델·수집
-    save.js        [GAMEPLAY] ※ P2 신설 예정 — 체크포인트 역직렬화 (E8 §4)
-  narrative/
-    script.js      [NARRATIVE] 전체 대사·스토리 데이터 (코드 없음, 데이터만. id는 case-graph.json과 1:1)
-    interrogation.js [INTERROGATION] 심문 상태기계 (규칙: docs/design/E5-interrogation.md)
-    deduction.js   [INTERROGATION] 증거판
-    cinematics.js  [CINEMATICS] ※ P1 신설 예정(T-P1-07·08) — 카메라 시퀀스·타임라인·심문 카메라 (E7 §1·§2)
-    case-graph-loader.js [NARRATIVE] ※ P0 신설 허용(T-P0-03) — case-graph.json 관계 데이터 로더
-  audio/
-    engine.js      [AUDIO] WebAudio 그래프·공간 리버브·발소리
-    dsp.js graph.js ir.js  [AUDIO] 분권
-  ui/
-    hud.js         [UI] 크로스헤어·프롬프트
-    notebook.js    [UI] 수사노트 (+ board.js casebook.js casefile.js paper.js photos.js sketch.js type.js wall.js 분권)
-    subtitles.js   [UI] 자막
-    settings.js    [UI] ※ P1 신설 예정 — 설정 (order 80, E8 §2)
-  physics/
-    world.js       [PHYSICS] rapier3d 통합
-    shapes.js      [PHYSICS] 콜라이더 셰이프
-```
-
-재질·조명 계약 예외(kit-mat 폴백·`glow()`, props 광원 3건, testbed 1건)의 청소 또는 §6/§6.5
-예외 명문화는 P0 코드 라운드 소관(MASTER-PLAN §7.4.2) — 이 표는 소유권만 확정한다.
 
 ### ARCH §5 — 5. 이벤트 버스 계약
 
@@ -463,37 +439,30 @@ engine.bus.emit('interrogation:start', {npc: 'deitch'})
 T-P0-03 정합 라운드에서 이 어휘로 수렴한다. `elevator`는 이동 공간이라 case-graph 셀이
 아니며, `boiler`는 진입 불가 공간이라 room 값으로 발화되지 않는다(소리 원점 전용, E6 §0).
 
-### E8 §2 — 2. 설정 (`ui/settings.js` 신규 — order 80, 자동 등록)
+### ARCH §6 — 6. 재질 계약 (MATERIALS 소유, 전원 소비)
 
-<!-- 원문: docs/design/E8-ui.md § 2. 설정 (`ui/settings.js` 신규 — order 80, 자동 등록) ⊂ E8 — UI·부수 기능 -->
-물성: 프런트 서류함 카드 + 객실 안내판 스타일 — 항목은 타자된 카드, 값 변경은 카드를
-넘기거나 놋쇠 다이얼을 돌리는 상호작용.
+<!-- 원문: docs/ARCHITECTURE.md § 6. 재질 계약 (MATERIALS 소유, 전원 소비) ⊂ VIRGIL — 아키텍처 계약 v2 (모든 에이전트 필독) -->
+world/chars는 **직접 `new THREE.MeshStandardMaterial`을 만들지 않는다.** 반드시:
 
-**진입 트리거(정본)**: 인게임 **Esc 1회** = 포인터록 해제 + 게임 일시정지 + 설정 서류함
-카드 오버레이(기존 "Esc 해제" 동작을 흡수 — 해제와 설정은 같은 순간이다). Esc 재차 또는
-카드 닫기 = 잠금 복귀·재개. FOV·감도의 "즉시 반영"은 카드가 열린 상태에서 뒤 화면에
-실시간 적용되는 것으로 확인한다. 타이틀 화면에서는 동일 카드를 재사용(별도 메뉴 없음).
-수사노트(Tab)와는 무관 — 노트는 게임 내 소품, 설정은 게임 밖 카드다.
+```js
+import { mat } from '../materials/library.js'
+const m = mat('marble.lobby.floor')   // 캐시된 THREE.MeshPhysicalMaterial 반환
+```
 
-**일시정지 전파(정본)**: 카드 개폐 시 `game:pause {on}` 발화(ARCH §5) — physics·chars·
-cinematics·interrogation·audio가 구독해 자기 update를 스킵하고, **렌더·pipeline은
-지속**(즉시 반영 확인의 전제). core는 무수정 — engine.time은 계속 흐르고 정지는 모듈
-측 스킵으로 구현한다. 시네마틱 재생 중 Esc = 재생 정지(스킵 아님), 카드 닫으면 이어서
-재생. **이 절의 코어 기여**: Esc가 해제·정지·설정을 한 순간에 묶는 것은 심문 중 오조작
-(잠금 해제 상태의 의도치 않은 클릭 → 원치 않은 선택 제출)을 차단하는 안전장치다 —
-비가역 시스템에서 오입력 방지는 U1의 공정성 조건이다. 물성(P6·D7 실격 방어)은 코어
-대면의 무대 신뢰를 지키는 게이트 이행 절이다(E9 경유).
+`library.js`가 제공해야 하는 최소 이름 목록 (MATERIALS 에이전트 책임):
 
-| 항목 | 방식 | 반영 |
-|---|---|---|
-| 품질 프리셋 | **선택지 3종 `high`/`medium`/`low`**(`cinematic`은 QA 전용 — UI 비노출. low 신설은 T-P0-06, 정본 `core/config.js` QUALITY) — `?q=` URL 재작성 + 리로드 (감사 결론 승계 — 무리로드 전환은 비경제) | 리로드 시 |
-| FOV | 60~80, `camera.fov`+`updateProjectionMatrix()` | 즉시 |
-| 마우스 감도 | `player.js` SENS 인스턴스 필드 | 즉시 |
-| 자막 | `subtitles.js` 플래그 | 즉시 |
-| 볼륨 | 기존 마스터 게인 노드 | 즉시 |
-| 키바인드 | **범위 외** (키맵 테이블 부재 — 백로그 명시, P 계획 불포함) | — |
+```
+marble.lobby.floor      brass.polished        brass.tarnished
+wood.varnished.dark     wood.painted.white    wallpaper.damask.green
+plaster.cracked         tile.hex.bathroom     tile.subway.white
+concrete.rooftop        steel.rusted          steel.galvanized
+glass.clear             glass.frosted         mirror.aged
+fabric.velvet.red       fabric.wool.suit      leather.worn.brown
+paper.aged              water.dark            grime.overlay
+carpet.corridor.red     ceramic.sink          bakelite.black
+```
 
-`settings:changed` 버스 발신 · localStorage 키 `virgil.settings`(자체 키, state와 분리).
+이름이 없으면 `library.js`가 **눈에 띄는 마젠타 재질**을 반환하고 콘솔에 경고한다 (실수 은닉 금지).
 
 ### E8 §5 — 5. (이관) 프레임타임 계측
 
@@ -503,105 +472,23 @@ cinematics·interrogation·audio가 구독해 자기 update를 스킵하고, **�
 
 ---
 
-### MASTER-PLAN §1 — 1. 재허구화 — 배포 리스크 결박
+### ARCH §0 — 0. 작품 정의
 
-<!-- 원문: docs/MASTER-PLAN.md § 1. 재허구화 — 배포 리스크 결박 ⊂ VIRGIL(가제) — 종합 기획 v1 (구 CECIL 확장) -->
-**원칙: "언젠가 공개 배포한다"를 전제로, 실제 사건·실존 업체를 지목하는 요소를 조합 단위로 해체한다.**
-개별 모티프(물탱크·수압)는 장르 공유 자산이지만, 조합(세실이라는 이름 + 옥상 물탱크 + 투숙객 수도의
-검은 물 + 엘리베이터 영상 등가물)은 특정 실제 사건을 지목한다. 조합을 끊으면 개별 요소는 안전하다.
+<!-- 원문: docs/ARCHITECTURE.md § 0. 작품 정의 ⊂ VIRGIL — 아키텍처 계약 v2 (모든 에이전트 필독) -->
+**VIRGIL(가제 확정) — 1947 · Room 942**
+1947년 로스앤젤레스. LAPD 강력계 형사가 버질 애비뉴의 호텔 버질에서 9일간 실종된 투숙객 아이리스 밴스(Iris Vance, 22)를 수사한다.
+투숙객들의 수도에서 검은 물이 나오고, 압력이 떨어진다. 답은 옥상 물탱크에 있다.
 
-| 요소 | 처리 | 근거 |
+- 인물·사건·호텔은 전부 허구다. 실제 사건·실존 업체를 지목하는 조합은 해체됐다(재허구화 계약: MASTER-PLAN §1, 명칭 검증: docs/design/E0-index.md §0). 시작 화면에 허구 고지문 필수.
+- 톤: 필름 느와르 + 조용한 공포. 점프 스케어 금지. 초자연은 괴담(대기·발화)으로만 — 증거 그래프 침투 0 (factcheck F4).
+- 플레이 타임 목표 40~60분, 3막. 코어 선언: docs/design/E1-core.md (비가역 대면).
+
+**막 구성**
+| 막 | 공간 | 핵심 |
 |---|---|---|
-| 호텔명 "세실" | **치환** → 호텔 버질(Hotel Virgil, 가제) | 실존 업체·실제 사건의 제1 식별자. 가제 확정 전 실존 호텔·상표 검색 검증 필수(§10) |
-| 무대 "메인 스트리트" | **치환** → 버질 애비뉴(LA 실존 도로명, 호텔은 가공) | 실제 호텔 소재지 지목 차단 |
-| 엘리베이터 사진 4장 | **치환** → 옥상 계단참 사진 4장(스피드그래픽·스크럽 메커닉·4번째 장 유리 반사의 두 번째 형체 전부 유지) | 실제 사건의 바이럴 영상 등가물이 가장 강한 잔존 연상. 메커닉은 피사체와 무관 |
-| 옥상 물탱크·수압 하락·검은 물 | **유지** | 사건 로직(수압→시점 특정→오염 입증)과 공포 문법(물·압력·냄새·소리)의 하중 벽. 시대 66년 전치 + 완전 허구 인물 + 살인 서사(실사건은 사인 미상)로 연상 절단 |
-| 1947 LA·느와르 톤 | **유지** | 기존 결정(planning.md) 그대로 — 시대 전치 자체가 안전장치 |
-| 엔딩 자막 "세실은 계속 영업했다" | **치환** → "버질은 계속 영업했다. 9층 이야기가 하나 늘었다." (§2 괴담 연결) | 명칭 잔존 제거 + 괴담 레이어 회수 |
-| 실존 피해자 재현 금지 | **유지·강화** — 시작 화면에 허구 고지문 추가 | 기존 안전 규칙 승계 |
-
-**검증(기계+절차)**: ① 가제 확정 전 실존 호텔·상표 웹 검색 ② 전 저장소 `grep -ri "cecil\|세실"` 0건
-(코드 식별자·저장소 폴더명은 코드네임으로 잔존 허용, 화면·문서 표출 텍스트만 0) ③ 위 표를
-체크리스트로 조합 재감사. 상업 선례(세실 모티프의 허구화 앤솔로지 호러물 등)는 명칭 확정 시 재확인.
-
----
-
-## 13. 부록 B — 부록 A 가 다시 가리키는 절 (참고)
-
-자기완결을 닫기 위한 2차 인라인이다. 대부분 이 티켓과 직접 관계가 없다 —
-**읽을 필요는 없고, 본문에서 좌표를 만났을 때 여기서 찾으면 된다.**
-
-### E8 §4 — 4. 저장 (체크포인트 — 비가역 코어의 지지대)
-
-<!-- 원문: docs/design/E8-ui.md § 4. 저장 (체크포인트 — 비가역 코어의 지지대) ⊂ E8 — UI·부수 기능 -->
-- **자동 저장만. 수동 저장·로드 없음. 슬롯 1개.** 저장 트리거는 정확히 4건 —
-  **회차 개시**(cin-intro 종료·조작권 이양 직후, `act:enter {act:1}` 발화와 함께 —
-  1막 도중 종료해도 소각이 남으려면 개시 스냅샷이 있어야 한다, U1) · **1→2 경계** ·
-  **2→3 경계** · **엔딩 종결**(비가역 레코드 기록). 수동 세이브/로드는 소각 회피
-  루트가 되어 U1(비가역)을 무너뜨린다 — 이 제한은 편의 기능 누락이 아니라 코어 설계다.
-  타이틀 화면 선택지: "이어서"(마지막 체크포인트) / "처음부터"(슬롯 덮어쓰기 경고 1회).
-- 구현: `state.js` 직렬화 활용 + **역직렬화 신설** — core 잠금 회피를 위해 역직렬화는
-  gameplay 측 모듈이 소유(`gameplay/save.js` 신설, `checkpoint:saved {act}` 발화).
-- **"이어서" 복원 재개 프로토콜(정본)**: 품질 프리셋의 `?q=` 전례를 준용해 **리로드
-  방식** — 타이틀에서 "이어서" 선택 = URL `?resume=1` 재작성 + 리로드. 부트 시 save.js가
-  init 단계에서 스냅샷+비가역 레코드를 로드해 state를 복원하고, 이후의 부트 파이프라인
-  (레벨 활성화·`act:enter` 발화·무드 전환)은 **신규 이벤트 없이 정상 초기화 경로를
-  그대로 탄다** — interrogation.js가 복원된 막으로 act:enter를 발화하고, 해당 막의 첫
-  레벨이 `spawn/act#` 앵커에 플레이어를 놓는다. 복원 직후 체크포인트 재저장은 하지
-  않는다(동일 상태 중복 기록 방지).
-- **재개 부트의 재제스처(정본)**: 리로드는 브라우저 사용자 활성화를 소멸시키므로,
-  `?resume=1` 부트는 로딩 후 **타이틀을 재표시하지 않고**(선택은 이미 끝났다) 최소
-  재입장 제스처 화면 한 장을 띄운다 — 타자기 한 줄 "돌아오셨습니까 — 벨을 누르십시오"
-  (§3 벨 도상 재사용). 첫 입력 = `title:proceed {mode:'wake'}` 발화(ARCH §5) —
-  AudioContext·포인터록 재활성과 입력 홀드 해제는 각 모듈이 이 신호를 구독해 수행한다.
-  이 화면은 P6 정지샷 판정 대상에 포함된다(title.js 소유).
-- **이중 레이어 영속 규칙**: 소각·플래그 같은 **비가역 데이터는 발생 즉시 write-through
-  영속**하고, 위치·막·점수는 막 경계 스냅샷에만 담는다. 복원 = 막 경계 스냅샷 + 비가역
-  레코드 병합. **복원 시작 위치 = 해당 막의 `spawn/act#` 앵커**(ARCH §8 — 각 막 첫 레벨이
-  배치, save.js는 앵커를 조회만 한다). 막 중간 소각 후 종료→"이어서"를 해도 소각은 남는다 — 막 재플레이를 비용으로
-  한 소각 회피조차 불가능해야 E1 코어("복원해도 소각은 유지된다")가 저장 층에서 성립한다.
-- 직렬화 범위: 증거 소지·소각 상태·플래그·**괴담 접촉 기록(`lore:heard` 누적 — 비가역
-  레코드로 write-through, 복원 시 괴담 면 재구축. 노트는 지워지지 않는 소품이다)**·막·
-  심문 점수.
-- **증거판 서명(E5 §5)**: 지목 종결의 물성은 조서 말미의 서명란 — 만년필 서명 상호작용
-  (`deduction:sign` 발신, board 소유). 서명 전 경고·잔여 링크 표시 없음(무힌트).
-- **엔딩 = 회차 종결(정본)**: save는 `deduction:end {ending}`을 소비해 엔딩을 **비가역
-  레코드에 기록**하고 회차를 종결한다 — 서명이라는 종결 선언은 재플레이로 되돌릴 수
-  없다(U1의 저장 층 완결). 크레딧 종료 후 타이틀 복귀. 종결된 슬롯의 타이틀은
-  "처음부터" 명패 하나만 남고, 금박 각인 아래 지난 회차의 기록 한 줄이 새겨진다
-  ("지난 투숙: 미제" — 엔딩 id의 표출명은 STORY §5.4). "이어서"는 소멸 — 3막 재입장으로
-  서명을 다시 쓸 수 있는 경로는 존재하지 않는다.
-
-### E6 §0 — 0. 소유권 분할 (ARCHITECTURE v2 §2에 반영)
-
-<!-- 원문: docs/design/E6-spaces.md § 0. 소유권 분할 (ARCHITECTURE v2 §2에 반영) ⊂ E6 — 공간·레벨 -->
-| 레벨 모듈 | 포함 공간 | 막 |
-|---|---|---|
-| `world/lobby.js` [LEVEL-LOBBY] | 로비 · 프런트데스크 · 엘리베이터 | 1 |
-| `world/corridor.js` [LEVEL-CORRIDOR] | 9층 복도 · 린넨실 · 채광정 앞 | 2 |
-| `world/room942.js` [LEVEL-ROOM] | 942호 · 욕실 · 944호 | 2 |
-| `world/rooftop.js` [LEVEL-ROOFTOP] | 옥상 계단·계단참 · 옥상 · 탱크 캣워크 | 3 |
-
-보일러실은 **공간이 아니라 소리 원점이다** — 진입 불가, 2막 페이즈에서 corridor.js가
-`sfx`(배관 진동)만 발화한다. 문은 존재하고 잠겨 있다(상호작용 시 "잠김" — 정보 없음).
-
-### E7 §1 — 1. 카메라 문법 (N5 — 심문·지목)
-
-<!-- 원문: docs/design/E7-presentation.md § 1. 카메라 문법 (N5 — 심문·지목) ⊂ E7 — 연출·오디오·괴담 -->
-기본 상태: 어깨 너머 40mm 상당, 손각도 미세 흔들림(진폭 0.15°, 주파수 0.4Hz — 삼각대가
-아니라 사람이 서 있다).
-
-| 트리거 | 카메라 | 의도 |
-|---|---|---|
-| TRUTH 선택 | 뒤로 물러나며 40→50mm — 화각이 넓어지고 상대가 공간 안에 놓인다 | 신뢰 = 거리의 회복 |
-| DOUBT 선택 | 옆으로 미끄러진다(트래킹 0.4m, 등속) — 정면을 비껴 본다 | 압박의 유보 |
-| LIE 선택(증거 선택 중) | 앞으로 밀고 들어가며 조리개 개방 — 배경 보케 붕괴, 상대 얼굴만 | 되돌릴 수 없는 순간의 좁아진 시야 |
-| 정답 판정 | 푸시인 유지 + 상대의 텔 원샷이 프레임 중앙에 | 후퇴를 목격시킨다 |
-| 오답 판정(소각) | 상대에게서 **반 발짝 물러나고** 룸톤이 조용해진다(§3) — 컷 없음 | 관계가 닫히는 물리감 |
-| 붕괴(breaking) | 렌즈 유지, 카메라 높이가 8cm 내려간다 — 앉는 루이즈, 안경 벗는 다이치를 올려다보지 않고 같이 가라앉는다 | 연민의 각도 |
-| 지목판 링크 성립 | 도일 미디엄 → 링크당 6mm씩 광각화(48→42→36) — 마지막 링크에서 옥상 전체와 비가 프레임에 들어온다 | 개인의 거짓에서 구조의 사건으로 |
-
-컷 대신 모션(N5 원칙). 심문 중 컷은 0회 — 전부 이동·렌즈 변화로.
+| I | 로비 · 프런트데스크 · 엘리베이터 | 숙박부 확인, 야간 프런트 마를로 다이치 심문, 하우스 디텍티브가 찍은 엘리베이터 사진 4장 입수 |
+| II | 9층 복도 · 942호 · 944호 | 현장 수색, 하우스키퍼 콘수엘라 루이즈 / 944호 투숙객 월터 프라이스 심문 |
+| III | 옥상 · 물탱크 | 발견, 증거판 최종 지목 |
 
 ### RESUME §3 — 3. 기각된 가설 — 다시 파지 마라
 
@@ -673,6 +560,19 @@ pipeline.composite.mat.uniforms.uHalation.value = 0
 `enabled=false`로 끄기만 하면 직전 프레임 타깃이 계속 합성된다. `tools/shoot.mjs`의 `--off`는
 엔트리를 **삭제**하도록 이미 고쳐져 있다.
 
+### E6 §0 — 0. 소유권 분할 (ARCHITECTURE v2 §2에 반영)
+
+<!-- 원문: docs/design/E6-spaces.md § 0. 소유권 분할 (ARCHITECTURE v2 §2에 반영) ⊂ E6 — 공간·레벨 -->
+| 레벨 모듈 | 포함 공간 | 막 |
+|---|---|---|
+| `world/lobby.js` [LEVEL-LOBBY] | 로비 · 프런트데스크 · 엘리베이터 | 1 |
+| `world/corridor.js` [LEVEL-CORRIDOR] | 9층 복도 · 린넨실 · 채광정 앞 | 2 |
+| `world/room942.js` [LEVEL-ROOM] | 942호 · 욕실 · 944호 | 2 |
+| `world/rooftop.js` [LEVEL-ROOFTOP] | 옥상 계단·계단참 · 옥상 · 탱크 캣워크 | 3 |
+
+보일러실은 **공간이 아니라 소리 원점이다** — 진입 불가, 2막 페이즈에서 corridor.js가
+`sfx`(배관 진동)만 발화한다. 문은 존재하고 잠겨 있다(상호작용 시 "잠김" — 정보 없음).
+
 ### E4 §3 — 3. 리그·연기 구현 계약
 
 <!-- 원문: docs/design/E4-characters.md § 3. 리그·연기 구현 계약 ⊂ E4 — 인물 (페르소나 카드 4장) -->
@@ -686,6 +586,65 @@ pipeline.composite.mat.uniforms.uHalation.value = 0
 - 프리젠스 이벤트: `npc:sighted {npc, kind}` (ARCHITECTURE v2 §5 추가분).
 
 ---
+
+### E8 §4 — 4. 저장 (체크포인트 — 비가역 코어의 지지대)
+
+<!-- 원문: docs/design/E8-ui.md § 4. 저장 (체크포인트 — 비가역 코어의 지지대) ⊂ E8 — UI·부수 기능 -->
+- **자동 저장만. 수동 저장·로드 없음. 슬롯 1개.** 저장 트리거는 정확히 4건 —
+  **회차 개시**(cin-intro 종료·조작권 이양 직후, `act:enter {act:1}` 발화와 함께 —
+  1막 도중 종료해도 소각이 남으려면 개시 스냅샷이 있어야 한다, U1) · **1→2 경계** ·
+  **2→3 경계** · **엔딩 종결**(비가역 레코드 기록). 수동 세이브/로드는 소각 회피
+  루트가 되어 U1(비가역)을 무너뜨린다 — 이 제한은 편의 기능 누락이 아니라 코어 설계다.
+  타이틀 화면 선택지: "이어서"(마지막 체크포인트) / "처음부터"(슬롯 덮어쓰기 경고 1회).
+- 구현: `state.js` 직렬화 활용 + **역직렬화 신설** — core 잠금 회피를 위해 역직렬화는
+  gameplay 측 모듈이 소유(`gameplay/save.js` 신설, `checkpoint:saved {act}` 발화).
+- **"이어서" 복원 재개 프로토콜(정본)**: 품질 프리셋의 `?q=` 전례를 준용해 **리로드
+  방식** — 타이틀에서 "이어서" 선택 = URL `?resume=1` 재작성 + 리로드. 부트 시 save.js가
+  init 단계에서 스냅샷+비가역 레코드를 로드해 state를 복원하고, 이후의 부트 파이프라인
+  (레벨 활성화·`act:enter` 발화·무드 전환)은 **신규 이벤트 없이 정상 초기화 경로를
+  그대로 탄다** — interrogation.js가 복원된 막으로 act:enter를 발화하고, 해당 막의 첫
+  레벨이 `spawn/act#` 앵커에 플레이어를 놓는다. 복원 직후 체크포인트 재저장은 하지
+  않는다(동일 상태 중복 기록 방지).
+- **재개 부트의 재제스처(정본)**: 리로드는 브라우저 사용자 활성화를 소멸시키므로,
+  `?resume=1` 부트는 로딩 후 **타이틀을 재표시하지 않고**(선택은 이미 끝났다) 최소
+  재입장 제스처 화면 한 장을 띄운다 — 타자기 한 줄 "돌아오셨습니까 — 벨을 누르십시오"
+  (§3 벨 도상 재사용). 첫 입력 = `title:proceed {mode:'wake'}` 발화(ARCH §5) —
+  AudioContext·포인터록 재활성과 입력 홀드 해제는 각 모듈이 이 신호를 구독해 수행한다.
+  이 화면은 P6 정지샷 판정 대상에 포함된다(title.js 소유).
+- **이중 레이어 영속 규칙**: 소각·플래그 같은 **비가역 데이터는 발생 즉시 write-through
+  영속**하고, 위치·막·점수는 막 경계 스냅샷에만 담는다. 복원 = 막 경계 스냅샷 + 비가역
+  레코드 병합. **복원 시작 위치 = 해당 막의 `spawn/act#` 앵커**(ARCH §8 — 각 막 첫 레벨이
+  배치, save.js는 앵커를 조회만 한다). 막 중간 소각 후 종료→"이어서"를 해도 소각은 남는다 — 막 재플레이를 비용으로
+  한 소각 회피조차 불가능해야 E1 코어("복원해도 소각은 유지된다")가 저장 층에서 성립한다.
+- 직렬화 범위: 증거 소지·소각 상태·플래그·**괴담 접촉 기록(`lore:heard` 누적 — 비가역
+  레코드로 write-through, 복원 시 괴담 면 재구축. 노트는 지워지지 않는 소품이다)**·막·
+  심문 점수.
+- **증거판 서명(E5 §5)**: 지목 종결의 물성은 조서 말미의 서명란 — 만년필 서명 상호작용
+  (`deduction:sign` 발신, board 소유). 서명 전 경고·잔여 링크 표시 없음(무힌트).
+- **엔딩 = 회차 종결(정본)**: save는 `deduction:end {ending}`을 소비해 엔딩을 **비가역
+  레코드에 기록**하고 회차를 종결한다 — 서명이라는 종결 선언은 재플레이로 되돌릴 수
+  없다(U1의 저장 층 완결). 크레딧 종료 후 타이틀 복귀. 종결된 슬롯의 타이틀은
+  "처음부터" 명패 하나만 남고, 금박 각인 아래 지난 회차의 기록 한 줄이 새겨진다
+  ("지난 투숙: 미제" — 엔딩 id의 표출명은 STORY §5.4). "이어서"는 소멸 — 3막 재입장으로
+  서명을 다시 쓸 수 있는 경로는 존재하지 않는다.
+
+### E7 §1 — 1. 카메라 문법 (N5 — 심문·지목)
+
+<!-- 원문: docs/design/E7-presentation.md § 1. 카메라 문법 (N5 — 심문·지목) ⊂ E7 — 연출·오디오·괴담 -->
+기본 상태: 어깨 너머 40mm 상당, 손각도 미세 흔들림(진폭 0.15°, 주파수 0.4Hz — 삼각대가
+아니라 사람이 서 있다).
+
+| 트리거 | 카메라 | 의도 |
+|---|---|---|
+| TRUTH 선택 | 뒤로 물러나며 40→50mm — 화각이 넓어지고 상대가 공간 안에 놓인다 | 신뢰 = 거리의 회복 |
+| DOUBT 선택 | 옆으로 미끄러진다(트래킹 0.4m, 등속) — 정면을 비껴 본다 | 압박의 유보 |
+| LIE 선택(증거 선택 중) | 앞으로 밀고 들어가며 조리개 개방 — 배경 보케 붕괴, 상대 얼굴만 | 되돌릴 수 없는 순간의 좁아진 시야 |
+| 정답 판정 | 푸시인 유지 + 상대의 텔 원샷이 프레임 중앙에 | 후퇴를 목격시킨다 |
+| 오답 판정(소각) | 상대에게서 **반 발짝 물러나고** 룸톤이 조용해진다(§3) — 컷 없음 | 관계가 닫히는 물리감 |
+| 붕괴(breaking) | 렌즈 유지, 카메라 높이가 8cm 내려간다 — 앉는 루이즈, 안경 벗는 다이치를 올려다보지 않고 같이 가라앉는다 | 연민의 각도 |
+| 지목판 링크 성립 | 도일 미디엄 → 링크당 6mm씩 광각화(48→42→36) — 마지막 링크에서 옥상 전체와 비가 프레임에 들어온다 | 개인의 거짓에서 구조의 사건으로 |
+
+컷 대신 모션(N5 원칙). 심문 중 컷은 0회 — 전부 이동·렌즈 변화로.
 
 ### MASTER-PLAN §7 — 7. 제작 공정 — 진단의 이행
 
@@ -739,6 +698,28 @@ NAN 요건 교훈의 습관화).
    텍스트의 "세실" — 각 grep 규칙, 위반 시 커밋 차단.
 
 ---
+
+## 13. 부록 B — 부록 A 가 다시 가리키는 절 (참고)
+
+자기완결을 닫기 위한 2차 인라인이다. 대부분 이 티켓과 직접 관계가 없다 —
+**읽을 필요는 없고, 본문에서 좌표를 만났을 때 여기서 찾으면 된다.**
+
+### E5 §5 — 5. 지목 (3막 증거판)
+
+<!-- 원문: docs/design/E5-interrogation.md § 5. 지목 (3막 증거판) ⊂ E5 — 심문·판정 시스템 -->
+- 3링크 L1~L3 ([case-graph.json](case-graph.json) `links`): 링크당 증거 2개를 판에 놓아
+  성립시킨다. **실획득 증거만** 판에 올라온다(N4 결박).
+- 링크 성립마다 도일의 반응 대사(STORY §5.4) + 카메라 반응(E7). 성립 순서는 자유.
+- **지목 종결 규칙**: 판을 닫는 것은 플레이어의 명시적 **서명 상호작용**(조서에 서명 —
+  `deduction:sign`, UI 물성은 E8 §1)이다. 자동 판정 금지 — "성립 가능한 링크가 남아
+  있는지"의 감지·경고·표시는 전부 무힌트 불변(§1) 위반이다. 예외 하나: L1~L3 셋째 링크가
+  성립하는 순간은 서명 없이 자동 종결(완전 엔딩 즉시 개시 — E2 44:00 정합). 서명 시점의
+  성립 링크 수가 엔딩을 정한다.
+- 엔딩: 3링크=완전 · 2링크=부분 · ≤1링크=미제(정식 엔딩 — 괴담 흡수 자막, STORY §5.4).
+- **미제의 괴담 흡수 규칙**: 미제 에필로그는 괴담 유닛 스키마(소문·매체·물질 진상 —
+  STORY §7)를 따른다. 이번 회차의 실패가 라디오 소문 형식으로 세계에 기록된다 —
+  플레이의 결과가 lore 층으로 내려앉는 것이 U2의 규칙 본체다.
+- 오답 조합 페널티 없음 — 지목판은 심문이 아니다. 긴장은 "무엇이 없는가"에서 나온다.
 
 ### E5 §4 — 4. 막 전환 (progression — case-graph `progression`과 1:1)
 
@@ -825,23 +806,6 @@ NAN 요건 교훈의 습관화).
   변한다 → L3에서 웃음을 멈추지 않는 채로 끝난다 — 붕괴 없는 범인. 그의 대사는 전부
   받아치기이고, 무너지는 것은 표정이 아니라 전화선 너머의 뒷배다.
 
-### E5 §5 — 5. 지목 (3막 증거판)
-
-<!-- 원문: docs/design/E5-interrogation.md § 5. 지목 (3막 증거판) ⊂ E5 — 심문·판정 시스템 -->
-- 3링크 L1~L3 ([case-graph.json](case-graph.json) `links`): 링크당 증거 2개를 판에 놓아
-  성립시킨다. **실획득 증거만** 판에 올라온다(N4 결박).
-- 링크 성립마다 도일의 반응 대사(STORY §5.4) + 카메라 반응(E7). 성립 순서는 자유.
-- **지목 종결 규칙**: 판을 닫는 것은 플레이어의 명시적 **서명 상호작용**(조서에 서명 —
-  `deduction:sign`, UI 물성은 E8 §1)이다. 자동 판정 금지 — "성립 가능한 링크가 남아
-  있는지"의 감지·경고·표시는 전부 무힌트 불변(§1) 위반이다. 예외 하나: L1~L3 셋째 링크가
-  성립하는 순간은 서명 없이 자동 종결(완전 엔딩 즉시 개시 — E2 44:00 정합). 서명 시점의
-  성립 링크 수가 엔딩을 정한다.
-- 엔딩: 3링크=완전 · 2링크=부분 · ≤1링크=미제(정식 엔딩 — 괴담 흡수 자막, STORY §5.4).
-- **미제의 괴담 흡수 규칙**: 미제 에필로그는 괴담 유닛 스키마(소문·매체·물질 진상 —
-  STORY §7)를 따른다. 이번 회차의 실패가 라디오 소문 형식으로 세계에 기록된다 —
-  플레이의 결과가 lore 층으로 내려앉는 것이 U2의 규칙 본체다.
-- 오답 조합 페널티 없음 — 지목판은 심문이 아니다. 긴장은 "무엇이 없는가"에서 나온다.
-
 ### E8 §3 — 3. 로딩 화면 (P1 필수 — 베이크·컴파일 수 초의 블랙스크린 제거)
 
 <!-- 원문: docs/design/E8-ui.md § 3. 로딩 화면 (P1 필수 — 베이크·컴파일 수 초의 블랙스크린 제거) ⊂ E8 — UI·부수 기능 -->
@@ -887,6 +851,75 @@ NAN 요건 교훈의 습관화).
 - **물의 리트모티프**: 수압 파열음(첫 30초) → 보일러실 진동(2막 페이즈) → 탱크 해치의
   둔탁한 공명(3막) — 같은 저주파 모티프의 세 변주. 괴담(lore.pipes)이 말하는 "그 소리"를
   플레이어가 세 번 직접 듣는다.
+
+### MASTER-PLAN §1 — 1. 재허구화 — 배포 리스크 결박
+
+<!-- 원문: docs/MASTER-PLAN.md § 1. 재허구화 — 배포 리스크 결박 ⊂ VIRGIL(가제) — 종합 기획 v1 (구 CECIL 확장) -->
+**원칙: "언젠가 공개 배포한다"를 전제로, 실제 사건·실존 업체를 지목하는 요소를 조합 단위로 해체한다.**
+개별 모티프(물탱크·수압)는 장르 공유 자산이지만, 조합(세실이라는 이름 + 옥상 물탱크 + 투숙객 수도의
+검은 물 + 엘리베이터 영상 등가물)은 특정 실제 사건을 지목한다. 조합을 끊으면 개별 요소는 안전하다.
+
+| 요소 | 처리 | 근거 |
+|---|---|---|
+| 호텔명 "세실" | **치환** → 호텔 버질(Hotel Virgil, 가제) | 실존 업체·실제 사건의 제1 식별자. 가제 확정 전 실존 호텔·상표 검색 검증 필수(§10) |
+| 무대 "메인 스트리트" | **치환** → 버질 애비뉴(LA 실존 도로명, 호텔은 가공) | 실제 호텔 소재지 지목 차단 |
+| 엘리베이터 사진 4장 | **치환** → 옥상 계단참 사진 4장(스피드그래픽·스크럽 메커닉·4번째 장 유리 반사의 두 번째 형체 전부 유지) | 실제 사건의 바이럴 영상 등가물이 가장 강한 잔존 연상. 메커닉은 피사체와 무관 |
+| 옥상 물탱크·수압 하락·검은 물 | **유지** | 사건 로직(수압→시점 특정→오염 입증)과 공포 문법(물·압력·냄새·소리)의 하중 벽. 시대 66년 전치 + 완전 허구 인물 + 살인 서사(실사건은 사인 미상)로 연상 절단 |
+| 1947 LA·느와르 톤 | **유지** | 기존 결정(planning.md) 그대로 — 시대 전치 자체가 안전장치 |
+| 엔딩 자막 "세실은 계속 영업했다" | **치환** → "버질은 계속 영업했다. 9층 이야기가 하나 늘었다." (§2 괴담 연결) | 명칭 잔존 제거 + 괴담 레이어 회수 |
+| 실존 피해자 재현 금지 | **유지·강화** — 시작 화면에 허구 고지문 추가 | 기존 안전 규칙 승계 |
+
+**검증(기계+절차)**: ① 가제 확정 전 실존 호텔·상표 웹 검색 ② 전 저장소 `grep -ri "cecil\|세실"` 0건
+(코드 식별자·저장소 폴더명은 코드네임으로 잔존 허용, 화면·문서 표출 텍스트만 0) ③ 위 표를
+체크리스트로 조합 재감사. 상업 선례(세실 모티프의 허구화 앤솔로지 호러물 등)는 명칭 확정 시 재확인.
+
+---
+
+### STORY §2 — 2. 인물
+
+<!-- 원문: docs/STORY.md § 2. 인물 ⊂ VIRGIL — 사건 성서 v2 (NARRATIVE / INTERROGATION 구현 명세) -->
+| ID | 이름 | 나이 | 역할 | 숨기는 것 | 거짓말 동기 |
+|---|---|---|---|---|---|
+| `deitch` | 마를로 다이치 | 51 | 야간 프런트, 16년차 | 옥상 열쇠를 20달러에 팔았다 | 해고 공포. 살인과 무관 |
+| `ruiz` | 콘수엘라 루이즈 | 44 | 하우스키퍼 | 942호에서 두 사람 목소리를 들었다 | 체류 신분. 경찰이 무섭다 |
+| `pryce` | 월터 프라이스 | 58 | 944호 장기투숙, 전 하우스 디텍티브 | 아이리스를 옥상으로 보낸 게 자신이다 | 죄책감. 그리고 도일이 무섭다 |
+| `doyle` | 에멧 도일 | 39 | 시설관리인, 소유주의 조카 | 전부 | 범인 |
+
+### 인물별 텔(tell) — CHARACTERS의 perf.js가 구현할 미세신호
+
+| 인물 | 거짓 시 | 진실이나 불안할 때 | 무너질 때 |
+|---|---|---|---|
+| `deitch` | 오른손이 데스크 아래로 내려간다(플라스크). 문장 끝 음량이 떨어진다. "제 기억으론"을 붙인다 | 숙박부 모서리를 반복해서 맞춘다 | 안경을 벗고 눈두덩을 누른다 |
+| `ruiz` | 말이 빨라지고 스페인어가 섞인다. 시선이 형사가 아니라 문을 본다 | 손에 쥔 천을 비틀어 짠다 | 앉는다. 그전까지 서 있었다 |
+| `pryce` | 시각을 지나치게 정확히 말한다("10시 41분"). 대답 전 반박자 늦다 | 피우지도 않으면서 재떨이를 만진다 | 사진을 뒤집어 놓는다 |
+| `doyle` | 웃는다. 질문을 되묻는다 | 렌치를 손에서 놓지 않는다 | 웃음을 멈추지 않는다 |
+
+**텔 규칙**: 텔은 아이콘·색·UI로 표시하지 않는다. 오직 애니메이션과 카메라로만 관찰된다.
+그리고 **불안 시 텔과 거짓 시 텔이 겹치도록** 설계한다 — 확정 판별을 주지 않는 것이 이 시스템의 핵심이다.
+
+### ARCH §8 — 8. 지오메트리 규약
+
+<!-- 원문: docs/ARCHITECTURE.md § 8. 지오메트리 규약 ⊂ VIRGIL — 아키텍처 계약 v2 (모든 에이전트 필독) -->
+- **모든 모서리에 베벨** — 순수 `BoxGeometry` 노출 금지 (루브릭 D4). `world/kit.js`의 `bevelBox()`를 사용한다.
+- 반복 배치되는 요소(문, 조명, 액자)는 반드시 회전·위치·마모도에 시드 기반 변주를 준다.
+- 모든 오브젝트는 `castShadow`/`receiveShadow` 명시.
+- 그라운딩: 바닥에 놓이는 오브젝트는 `kit.groundContact(obj)` 호출로 컨택트 섀도 데칼을 받는다 (루브릭 D5).
+- **정식 레벨 충돌 규약 *(v2)***: 레벨 모듈은 걷기 가능 바닥·벽을 physics 모듈의 정적 등록
+  API 경유로 등록한다(시그니처는 [PHYSICS]가 P1 착수 시 이 절에 공표 — 그 전까지 레벨
+  발주는 "physics 정적 등록 의무"만 전제). QA 프로브의 레이캐스트 폴백(`player.body=null`)은
+  씬 모드 전용 경로다 — 정식 레벨이 이 폴백에 의존하는 것을 금지한다(AGENTS.md 보존 규칙).
+- **앵커 규약 *(v2)***: NPC·시네마틱의 시각 실체는 레벨이 만들지 않는다. 레벨은 빈
+  Object3D 앵커만 배치한다 — `userData.anchor` 정본 값: `npc/deitch`·`npc/ruiz`·
+  `npc/pryce`·`npc/doyle`(심문 위치, 동일 문자열이 qaId 겸용) · `presence/doyle-lobby`·
+  `presence/doyle-corridor-1`·`presence/doyle-corridor-2`(프리젠스 실루엣 위치) ·
+  `presence/ruiz-lobby`(1막 원경 — 린넨 카트 통과 경로 기점)·`presence/pryce-lobby`
+  (1막 원경 — 소파, 닳은 팔걸이 쪽) · `cin/act2-elevator`·`cin/act3-window`(시네마틱 기준점) ·
+  `spawn/act1`·`spawn/act2`·`spawn/act3`(막 문턱 시작 위치 — 각 막의 첫 레벨이 배치:
+  lobby/corridor/rooftop. 부트 초기 배치와 save.js "이어서" 복원이 소비).
+  원경 2종(ruiz·pryce)은 배치만 하고 `npc:sighted`를 발화하지 않는다 — sighted는 목격
+  연출이 있는 도일 프리젠스 전용이다(E4 §1). chars 모듈이 `room:changed`
+  구독 후 현재 공간의 앵커를 검색해 리그·실루엣을 자기 배치하고, `npc:sighted` 발화는
+  프리젠스 앵커 활성 시 chars가 아니라 **레벨이** 한다(§5 발신자 유지).
 
 ### STORY §5 — 5. 심문 스크립트
 
@@ -1077,83 +1110,6 @@ deitch → ruiz → pryce 순으로 덧붙는다)**
   (해고 14개월 전 정합 — FA9. 과잉 정밀 텔 유지)
 - `deduction.js` 내장 미제 자막 "세실은 계속 영업했다." → 위 §5.4 정본으로 교체.
 
-### ARCH §8 — 8. 지오메트리 규약
-
-<!-- 원문: docs/ARCHITECTURE.md § 8. 지오메트리 규약 ⊂ VIRGIL — 아키텍처 계약 v2 (모든 에이전트 필독) -->
-- **모든 모서리에 베벨** — 순수 `BoxGeometry` 노출 금지 (루브릭 D4). `world/kit.js`의 `bevelBox()`를 사용한다.
-- 반복 배치되는 요소(문, 조명, 액자)는 반드시 회전·위치·마모도에 시드 기반 변주를 준다.
-- 모든 오브젝트는 `castShadow`/`receiveShadow` 명시.
-- 그라운딩: 바닥에 놓이는 오브젝트는 `kit.groundContact(obj)` 호출로 컨택트 섀도 데칼을 받는다 (루브릭 D5).
-- **정식 레벨 충돌 규약 *(v2)***: 레벨 모듈은 걷기 가능 바닥·벽을 physics 모듈의 정적 등록
-  API 경유로 등록한다(시그니처는 [PHYSICS]가 P1 착수 시 이 절에 공표 — 그 전까지 레벨
-  발주는 "physics 정적 등록 의무"만 전제). QA 프로브의 레이캐스트 폴백(`player.body=null`)은
-  씬 모드 전용 경로다 — 정식 레벨이 이 폴백에 의존하는 것을 금지한다(AGENTS.md 보존 규칙).
-- **앵커 규약 *(v2)***: NPC·시네마틱의 시각 실체는 레벨이 만들지 않는다. 레벨은 빈
-  Object3D 앵커만 배치한다 — `userData.anchor` 정본 값: `npc/deitch`·`npc/ruiz`·
-  `npc/pryce`·`npc/doyle`(심문 위치, 동일 문자열이 qaId 겸용) · `presence/doyle-lobby`·
-  `presence/doyle-corridor-1`·`presence/doyle-corridor-2`(프리젠스 실루엣 위치) ·
-  `presence/ruiz-lobby`(1막 원경 — 린넨 카트 통과 경로 기점)·`presence/pryce-lobby`
-  (1막 원경 — 소파, 닳은 팔걸이 쪽) · `cin/act2-elevator`·`cin/act3-window`(시네마틱 기준점) ·
-  `spawn/act1`·`spawn/act2`·`spawn/act3`(막 문턱 시작 위치 — 각 막의 첫 레벨이 배치:
-  lobby/corridor/rooftop. 부트 초기 배치와 save.js "이어서" 복원이 소비).
-  원경 2종(ruiz·pryce)은 배치만 하고 `npc:sighted`를 발화하지 않는다 — sighted는 목격
-  연출이 있는 도일 프리젠스 전용이다(E4 §1). chars 모듈이 `room:changed`
-  구독 후 현재 공간의 앵커를 검색해 리그·실루엣을 자기 배치하고, `npc:sighted` 발화는
-  프리젠스 앵커 활성 시 chars가 아니라 **레벨이** 한다(§5 발신자 유지).
-
-### STORY §2 — 2. 인물
-
-<!-- 원문: docs/STORY.md § 2. 인물 ⊂ VIRGIL — 사건 성서 v2 (NARRATIVE / INTERROGATION 구현 명세) -->
-| ID | 이름 | 나이 | 역할 | 숨기는 것 | 거짓말 동기 |
-|---|---|---|---|---|---|
-| `deitch` | 마를로 다이치 | 51 | 야간 프런트, 16년차 | 옥상 열쇠를 20달러에 팔았다 | 해고 공포. 살인과 무관 |
-| `ruiz` | 콘수엘라 루이즈 | 44 | 하우스키퍼 | 942호에서 두 사람 목소리를 들었다 | 체류 신분. 경찰이 무섭다 |
-| `pryce` | 월터 프라이스 | 58 | 944호 장기투숙, 전 하우스 디텍티브 | 아이리스를 옥상으로 보낸 게 자신이다 | 죄책감. 그리고 도일이 무섭다 |
-| `doyle` | 에멧 도일 | 39 | 시설관리인, 소유주의 조카 | 전부 | 범인 |
-
-### 인물별 텔(tell) — CHARACTERS의 perf.js가 구현할 미세신호
-
-| 인물 | 거짓 시 | 진실이나 불안할 때 | 무너질 때 |
-|---|---|---|---|
-| `deitch` | 오른손이 데스크 아래로 내려간다(플라스크). 문장 끝 음량이 떨어진다. "제 기억으론"을 붙인다 | 숙박부 모서리를 반복해서 맞춘다 | 안경을 벗고 눈두덩을 누른다 |
-| `ruiz` | 말이 빨라지고 스페인어가 섞인다. 시선이 형사가 아니라 문을 본다 | 손에 쥔 천을 비틀어 짠다 | 앉는다. 그전까지 서 있었다 |
-| `pryce` | 시각을 지나치게 정확히 말한다("10시 41분"). 대답 전 반박자 늦다 | 피우지도 않으면서 재떨이를 만진다 | 사진을 뒤집어 놓는다 |
-| `doyle` | 웃는다. 질문을 되묻는다 | 렌치를 손에서 놓지 않는다 | 웃음을 멈추지 않는다 |
-
-**텔 규칙**: 텔은 아이콘·색·UI로 표시하지 않는다. 오직 애니메이션과 카메라로만 관찰된다.
-그리고 **불안 시 텔과 거짓 시 텔이 겹치도록** 설계한다 — 확정 판별을 주지 않는 것이 이 시스템의 핵심이다.
-
-### E3 §3 — 3. 소각 경제의 데이터 기반 — 단일/이중 경로 배분 (E5가 소비)
-
-<!-- 원문: docs/design/E3-case-graph.md § 3. 소각 경제의 데이터 기반 — 단일/이중 경로 배분 (E5가 소비) ⊂ E3 — 사건·사실 그래프 (지휘 문서) -->
-| 증거 | 획득 경로 | 소각 시 연쇄 |
-|---|---|---|
-| `pressure-log` | **단일** — 다이치 S3 (TRUTH/DOUBT) | 잃으면 루이즈 S2 반박 불가 → `two-voices` 소실 → `footprints` 소실 → 루이즈 S4 반박 불가. **최대 연쇄** |
-| `photos` | **단일** — 프라이스 S1 정답 | 잃으면 S3 자백 불가 → L3 불성립. "게임 최대의 손실" |
-| `footprints` | **단일** — `two-voices` 플래그 출현 | 상류(pressure-log) 의존 |
-| `water-log` | **이중** — 944호 수색 또는 S4 정답 | 심문을 망쳐도 수색으로 회수 가능 |
-| 나머지 10종 | 수색/관찰 — 소각 무관 | 없음 |
-
-설계 의도: 단일 경로 3종이 전부 **심문 성과**에 걸려 있어 "심문이 수사의 무게중심"이라는
-코어(E1 U1)를 데이터가 강제한다. 최악 소각 시에도 L1은 성립(수색·관찰만으로) → 미제 엔딩
-도달(F3 PASS). 배분 변경은 이 표가 아니라 case-graph.json을 고치고 factcheck로 재검증한다.
-
-### E3 §2 — 2. 설계 원칙 — 이 사건이 아귀가 맞는 이유
-
-<!-- 원문: docs/design/E3-case-graph.md § 2. 설계 원칙 — 이 사건이 아귀가 맞는 이유 ⊂ E3 — 사건·사실 그래프 (지휘 문서) -->
-- **범행의 반복 구조** — 14개월 전(넬)과 10월 9일(아이리스)은 같은 수법의 두 실행이다:
-  유인/추적 → 탱크 → 연출. 반복이 루이즈의 패턴 증언("작년에도 그랬어요")과 L3(같은 사람,
-  같은 자리)를 성립시킨다. 동기는 셀 FA1(접근 거부·민원 예고 — `motive` 태그, R2 결박).
-- **조잡한 연출자** — 도일의 은폐는 매번 한 곳씩 어긋난다: 구두는 가지런한데 해치는 밖에서
-  잠겼고(L1 자기모순), 심어 둔 열쇠엔 다이치의 필적 태그가 남았고(FB10, R3 결박), 일지는
-  지우는 대신 써 넣어서 위조 자체가 서명이 됐다(FB11 → L2). **모든 지목 링크는 도일의 실수가
-  아니라 도일의 "연출 습관"에서 나온다** — 증거가 우연히 남은 게 아니라 성격이 남긴 것.
-- **물의 경로 = 사건의 경로** — 수압 하락(시점 특정) → 검은 물(발견) → 젖은 발자국(동선) →
-  트랩 침전(오염 입증). 감각 레이어(E7)가 아니라 그래프의 골격이다.
-- **결함 3건 수정 (MASTER-PLAN §3.3)** — ①프라이스 해고=14개월 전, 거주 4년 공존(FA9) ②도일
-  동기=상습 접근·거부·민원 위협(FA1) ③roofkey=도일이 사후 침입 때 심음(FB10). 각각 factcheck
-  R1·R2·R3가 회귀 감시한다.
-
 ### E8 §1 — 1. 수사노트 (`ui/notebook.js` — 기존 목표 달성분 승계 + v2 확장)
 
 <!-- 원문: docs/design/E8-ui.md § 1. 수사노트 (`ui/notebook.js` — 기존 목표 달성분 승계 + v2 확장) ⊂ E8 — UI·부수 기능 -->
@@ -1205,6 +1161,81 @@ deitch → ruiz → pryce 순으로 덧붙는다)**
 - **전달 매체**: 린넨실 벽 낙서(2막, 루이즈 심문 공간의 배경).
 - **물질적 진상**: 옥상 배관의 결로가 린넨실 천장으로 스민다. 루이즈는 진상을 알면서도
   성호를 긋는다 — 아는 것과 믿는 것은 다른 문제다. **사건 접점: 없음.**
+
+### E3 §3 — 3. 소각 경제의 데이터 기반 — 단일/이중 경로 배분 (E5가 소비)
+
+<!-- 원문: docs/design/E3-case-graph.md § 3. 소각 경제의 데이터 기반 — 단일/이중 경로 배분 (E5가 소비) ⊂ E3 — 사건·사실 그래프 (지휘 문서) -->
+| 증거 | 획득 경로 | 소각 시 연쇄 |
+|---|---|---|
+| `pressure-log` | **단일** — 다이치 S3 (TRUTH/DOUBT) | 잃으면 루이즈 S2 반박 불가 → `two-voices` 소실 → `footprints` 소실 → 루이즈 S4 반박 불가. **최대 연쇄** |
+| `photos` | **단일** — 프라이스 S1 정답 | 잃으면 S3 자백 불가 → L3 불성립. "게임 최대의 손실" |
+| `footprints` | **단일** — `two-voices` 플래그 출현 | 상류(pressure-log) 의존 |
+| `water-log` | **이중** — 944호 수색 또는 S4 정답 | 심문을 망쳐도 수색으로 회수 가능 |
+| 나머지 10종 | 수색/관찰 — 소각 무관 | 없음 |
+
+설계 의도: 단일 경로 3종이 전부 **심문 성과**에 걸려 있어 "심문이 수사의 무게중심"이라는
+코어(E1 U1)를 데이터가 강제한다. 최악 소각 시에도 L1은 성립(수색·관찰만으로) → 미제 엔딩
+도달(F3 PASS). 배분 변경은 이 표가 아니라 case-graph.json을 고치고 factcheck로 재검증한다.
+
+### E3 §2 — 2. 설계 원칙 — 이 사건이 아귀가 맞는 이유
+
+<!-- 원문: docs/design/E3-case-graph.md § 2. 설계 원칙 — 이 사건이 아귀가 맞는 이유 ⊂ E3 — 사건·사실 그래프 (지휘 문서) -->
+- **범행의 반복 구조** — 14개월 전(넬)과 10월 9일(아이리스)은 같은 수법의 두 실행이다:
+  유인/추적 → 탱크 → 연출. 반복이 루이즈의 패턴 증언("작년에도 그랬어요")과 L3(같은 사람,
+  같은 자리)를 성립시킨다. 동기는 셀 FA1(접근 거부·민원 예고 — `motive` 태그, R2 결박).
+- **조잡한 연출자** — 도일의 은폐는 매번 한 곳씩 어긋난다: 구두는 가지런한데 해치는 밖에서
+  잠겼고(L1 자기모순), 심어 둔 열쇠엔 다이치의 필적 태그가 남았고(FB10, R3 결박), 일지는
+  지우는 대신 써 넣어서 위조 자체가 서명이 됐다(FB11 → L2). **모든 지목 링크는 도일의 실수가
+  아니라 도일의 "연출 습관"에서 나온다** — 증거가 우연히 남은 게 아니라 성격이 남긴 것.
+- **물의 경로 = 사건의 경로** — 수압 하락(시점 특정) → 검은 물(발견) → 젖은 발자국(동선) →
+  트랩 침전(오염 입증). 감각 레이어(E7)가 아니라 그래프의 골격이다.
+- **결함 3건 수정 (MASTER-PLAN §3.3)** — ①프라이스 해고=14개월 전, 거주 4년 공존(FA9) ②도일
+  동기=상습 접근·거부·민원 위협(FA1) ③roofkey=도일이 사후 침입 때 심음(FB10). 각각 factcheck
+  R1·R2·R3가 회귀 감시한다.
+
+### E5 §1 — 1. 3선택 판정표
+
+<!-- 원문: docs/design/E5-interrogation.md § 1. 3선택 판정표 ⊂ E5 — 심문·판정 시스템 -->
+NPC 진술이 순서대로 나온다. 각 진술 후 플레이어는 셋 중 하나를 고른다 —
+**진실(TRUTH)** 믿는다 · **의심(DOUBT)** 증거 없이 압박한다 · **거짓(LIE)** 수사노트에서
+증거 하나를 지목한다.
+
+| 실제 | 선택 | 결과 |
+|---|---|---|
+| 진실 | TRUTH | +1. 신뢰. 보너스 정보 |
+| 진실 | DOUBT | -1. 상대가 방어적으로. 다음 진술이 짧아짐 |
+| 진실 | LIE | -2. **소각(burn)**. 그 진술의 정보 영구 소실 |
+| 거짓 | TRUTH | 0. 그냥 넘어감. 정보 없음 |
+| 거짓 | DOUBT | +0.5. 상대가 흔들리지만 인정 안 함. 재질문 1회 가능 |
+| 거짓 | LIE + 정답 증거 | +2. **자백 또는 결정적 정보 개방** |
+| 거짓 | LIE + 오답 증거 | -2. **소각**. 상대가 닫힘 |
+
+**재질문 규칙 (DOUBT의 기계 의미)**: DOUBT 선택 시 **진위 불문** 그 진술에 한해 후속
+선택 1회가 열린다 — 후속 선택지는 TRUTH(수용하고 넘어감) 또는 LIE뿐, DOUBT 재선택 불가.
+점수는 **대체 규칙**: 후속 LIE의 판정 점수가 DOUBT 점수를 대체한다(누적 아님 — 거짓에
+DOUBT→LIE정답은 +2이지 +2.5가 아니다. DOUBT 선제시가 점수 이득이 되면 공짜 탐침이 된다).
+후속 TRUTH 수용 시엔 DOUBT 판정 점수가 유지된다. 재질문 기회 자체는 진위와 무관하게
+항상 열리므로 판별 신호가 아니다 — DOUBT의 가치는 반응 대사 한 줄(그 뉘앙스 읽기가
+텔 게임의 일부)이고, 비용은 진실에 썼을 때의 -1이다. 후속 LIE+정답의 자백 도달은 정상
+허용, 후속 LIE+오답은 정상 소각.
+
+**힌트 금지(불변)**: UI에 정답 힌트를 절대 표시하지 않는다 — 남은 증거 개수, 정답률,
+체크 표시 전부 금지. 카메라·연기만이 신호다(E4 §2, E7 §1).
+
+### E7 §4 — 4. 괴담 연출 — 매체 구현 (본문: STORY §7, 데이터: case-graph `lore`)
+
+<!-- 원문: docs/design/E7-presentation.md § 4. 괴담 연출 — 매체 구현 (본문: STORY §7, 데이터: case-graph `lore`) ⊂ E7 — 연출·오디오·괴담 -->
+| 매체 | 구현 | 이벤트 |
+|---|---|---|
+| `radio-lobby` | 디제틱 라디오 루프 — 첫 30초에 반 문장 선노출, 상호작용 시 전문. 다이치가 주파수를 돌리는 반응(E4) | `lore:heard {id:'lore.pipes', medium:'radio-lobby'}` |
+| `register-margin` | register 관찰 클로즈업의 여백 낙서 — 증거 검사와 같은 뷰어, 다른 레이어 | `lore:heard` (lore.lightwell) |
+| `linen-wall` | 린넨실 벽 데칼(긁어 쓴 글씨) 관찰 | `lore:heard` (lore.linen·lightwell) |
+| `lobby-frame` | 로비 개업 연혁 판 관찰 — 마지막 줄만 다른 손글씨 | `lore:heard` (lore.1912) |
+
+수집된 괴담은 수사노트 괴담 면(E8 §2)에 축적 — 증거 면과 **물리적으로 구분된 지면**
+(괴담은 증거가 아니라는 시스템 발화). 괴담 유닛은 지목판에 올라올 수 없다(N4·F4 이중 차단).
+
+---
 
 ### MASTER-PLAN §3 — 3. 인물 기획 — 페르소나 × 타임라인 × 위치
 
@@ -1263,50 +1294,6 @@ deitch → ruiz → pryce 순으로 덧붙는다)**
 3. **roofkey 위치 모순** — 아이리스가 열쇠를 갖고 올라갔다면 매트리스 밑에 있을 수 없다.
    **통일안**: 도일이 사후 침입 시 자살 연출로 심었다(표 B 00:30). 태그의 다이치 필적을 못 본 것이
    연출의 결함이 되어, 조잡한 연출자라는 인물상(L1의 구두 배치)과 일관된다.
-
----
-
-### E5 §1 — 1. 3선택 판정표
-
-<!-- 원문: docs/design/E5-interrogation.md § 1. 3선택 판정표 ⊂ E5 — 심문·판정 시스템 -->
-NPC 진술이 순서대로 나온다. 각 진술 후 플레이어는 셋 중 하나를 고른다 —
-**진실(TRUTH)** 믿는다 · **의심(DOUBT)** 증거 없이 압박한다 · **거짓(LIE)** 수사노트에서
-증거 하나를 지목한다.
-
-| 실제 | 선택 | 결과 |
-|---|---|---|
-| 진실 | TRUTH | +1. 신뢰. 보너스 정보 |
-| 진실 | DOUBT | -1. 상대가 방어적으로. 다음 진술이 짧아짐 |
-| 진실 | LIE | -2. **소각(burn)**. 그 진술의 정보 영구 소실 |
-| 거짓 | TRUTH | 0. 그냥 넘어감. 정보 없음 |
-| 거짓 | DOUBT | +0.5. 상대가 흔들리지만 인정 안 함. 재질문 1회 가능 |
-| 거짓 | LIE + 정답 증거 | +2. **자백 또는 결정적 정보 개방** |
-| 거짓 | LIE + 오답 증거 | -2. **소각**. 상대가 닫힘 |
-
-**재질문 규칙 (DOUBT의 기계 의미)**: DOUBT 선택 시 **진위 불문** 그 진술에 한해 후속
-선택 1회가 열린다 — 후속 선택지는 TRUTH(수용하고 넘어감) 또는 LIE뿐, DOUBT 재선택 불가.
-점수는 **대체 규칙**: 후속 LIE의 판정 점수가 DOUBT 점수를 대체한다(누적 아님 — 거짓에
-DOUBT→LIE정답은 +2이지 +2.5가 아니다. DOUBT 선제시가 점수 이득이 되면 공짜 탐침이 된다).
-후속 TRUTH 수용 시엔 DOUBT 판정 점수가 유지된다. 재질문 기회 자체는 진위와 무관하게
-항상 열리므로 판별 신호가 아니다 — DOUBT의 가치는 반응 대사 한 줄(그 뉘앙스 읽기가
-텔 게임의 일부)이고, 비용은 진실에 썼을 때의 -1이다. 후속 LIE+정답의 자백 도달은 정상
-허용, 후속 LIE+오답은 정상 소각.
-
-**힌트 금지(불변)**: UI에 정답 힌트를 절대 표시하지 않는다 — 남은 증거 개수, 정답률,
-체크 표시 전부 금지. 카메라·연기만이 신호다(E4 §2, E7 §1).
-
-### E7 §4 — 4. 괴담 연출 — 매체 구현 (본문: STORY §7, 데이터: case-graph `lore`)
-
-<!-- 원문: docs/design/E7-presentation.md § 4. 괴담 연출 — 매체 구현 (본문: STORY §7, 데이터: case-graph `lore`) ⊂ E7 — 연출·오디오·괴담 -->
-| 매체 | 구현 | 이벤트 |
-|---|---|---|
-| `radio-lobby` | 디제틱 라디오 루프 — 첫 30초에 반 문장 선노출, 상호작용 시 전문. 다이치가 주파수를 돌리는 반응(E4) | `lore:heard {id:'lore.pipes', medium:'radio-lobby'}` |
-| `register-margin` | register 관찰 클로즈업의 여백 낙서 — 증거 검사와 같은 뷰어, 다른 레이어 | `lore:heard` (lore.lightwell) |
-| `linen-wall` | 린넨실 벽 데칼(긁어 쓴 글씨) 관찰 | `lore:heard` (lore.linen·lightwell) |
-| `lobby-frame` | 로비 개업 연혁 판 관찰 — 마지막 줄만 다른 손글씨 | `lore:heard` (lore.1912) |
-
-수집된 괴담은 수사노트 괴담 면(E8 §2)에 축적 — 증거 면과 **물리적으로 구분된 지면**
-(괴담은 증거가 아니라는 시스템 발화). 괴담 유닛은 지목판에 올라올 수 없다(N4·F4 이중 차단).
 
 ---
 

@@ -22,7 +22,13 @@
     {
       "path": "src/narrative/deduction.js",
       "scope": "section",
-      "section": "데이터 접근층 — 관계 필드 참조",
+      "section": "데이터 접근층 — 관계 필드 참조 · 표출 문자열 1건",
+      "state": "existing"
+    },
+    {
+      "path": "src/ui/casebook.js",
+      "scope": "section",
+      "section": "표출 문자열 — 노트 표지 1건",
       "state": "existing"
     }
   ],
@@ -30,7 +36,7 @@
     {
       "label": "E10 §2 P0 표",
       "doc": "docs/design/E10-production.md",
-      "heading": "P0 — 정지작업 (전 티켓 상호 독립, T-P0-03만 E3 산출 의존)",
+      "heading": "P0 — 정지작업 (T-P0-02→T-P0-04 의존 · T-P0-03만 E3 산출 의존 · 나머지 상호 독립)",
       "why": "이 티켓의 정본 행. 내용·소유 파일·수용 기준·모델 배정의 원천이며, 패킷과 어긋나면 이 표가 이긴다."
     },
     {
@@ -68,6 +74,12 @@
       "doc": "docs/ARCHITECTURE.md",
       "heading": "5. 이벤트 버스 계약",
       "why": "기존 코드의 corridor 등 이형 표기를 corridor9 등 정본 어휘로 수렴시킨다."
+    },
+    {
+      "label": "ARCH §0 작품 정의 — 재허구화",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "0. 작품 정의",
+      "why": "표출 문자열의 정본 명칭. 화면에 나오는 \"세실\"은 0이어야 하고, 코드 식별자 잔존은 허용된다."
     }
   ],
   "inputs": [
@@ -100,6 +112,10 @@
       "expect": "기존 배터리 전건 통과 — 데이터 접근층 전환이 판정 동작을 바꾸지 않았다"
     },
     {
+      "cmd": "grep -n '세실' src/ui/casebook.js src/narrative/deduction.js src/narrative/script.js",
+      "expect": "0건 — 노트 표지 \"실종 · 호텔 버질 942호\" · 미제 엔딩 캡션·자막 \"버질은 계속 영업했다\"(E2 부록 A 원문 그대로). 문자열만 교체하고 로직은 건드리지 않는다"
+    },
+    {
       "cmd": "grep -rn '세실' src/ --include=*.js",
       "expect": "화면 표출 문자열에서 0건 (코드 식별자 __CECIL__ 등은 잔존 허용)"
     },
@@ -113,7 +129,8 @@
     "STORY §5 대사 원문의 각색·요약·재창작 — 진실원은 STORY이고 script.js는 전사(轉寫)다.",
     "interrogation.js·deduction.js의 판정 로직·이벤트 발화 절 편집 — 승인 범위는 데이터 접근층뿐이다(E5 [위임]).",
     "case-graph.json 수정 — 그래프는 E3 소유다. 그래프가 틀렸다면 CONTRACT_CHANGE_REQUEST로 반환한다.",
-    "script.js에 원산지·반박 관계를 다시 적는 것 — 관계는 그래프에만 산다."
+    "script.js에 원산지·반박 관계를 다시 적는 것 — 관계는 그래프에만 산다.",
+    "표출 문자열 교체를 빌미로 주변 로직·서식을 손보는 것 — 구역 소유는 그 문자열 1건씩이다."
   ],
   "model": "codex",
   "depends": [],
