@@ -173,6 +173,73 @@ const worst = solve(new Set(g.statements.filter(s => s.burnable).map(s => s.id))
     `불안 텔 진술 ${anxious} / 텔 발화 진술 ${lying + anxious} = ${(ratio * 100).toFixed(0)}% (기준 ≥30%)`)
 }
 
+// ── P5 텔 상관 본검사 (E4 §2) ──────────────────────────────────────
+{
+  const mutateAt = process.argv.indexOf('--mutate')
+  const mutation = mutateAt === -1 ? null : process.argv[mutateAt + 1]
+  let sample = g.statements.map(s => ({ ...s }))
+
+  if (mutation === 'p5-perfect') {
+    sample = sample.map(s => ({ ...s, anxiousTell: false }))
+  }
+  if (mutation === 'p5-breaking') {
+    const breakingNpcs = new Set(sample.filter(s => s.breakingOn === true).map(s => s.npc))
+    const additions = new Set()
+    for (const npc of breakingNpcs) {
+      const existing = sample.filter(s => s.npc === npc && s.breakingOn === true).length
+      const candidates = sample.filter(s => s.npc === npc && s.breakingOn !== true)
+      for (const s of candidates.slice(0, Math.max(0, 2 - existing))) additions.add(s.id)
+    }
+    sample = sample.map(s => additions.has(s.id) ? { ...s, breakingOn: true } : s)
+  }
+
+  const fails = []
+  const lies = sample.filter(s => s.truth === false)
+  const anxiousTruths = sample.filter(s => s.truth === true && s.anxiousTell === true)
+  const invalidAnxious = sample.filter(s => s.anxiousTell === true && s.truth !== true)
+  const tells = sample.filter(s => s.truth === false || s.anxiousTell === true)
+  const anxiousRatio = tells.length ? anxiousTruths.length / tells.length : 0
+
+  const n11 = lies.length
+  const n10 = 0
+  const n01 = anxiousTruths.length
+  const n00 = sample.length - n11 - n01
+  const denominator = Math.sqrt((n11 + n10) * (n01 + n00) * (n11 + n01) * (n10 + n00))
+  const correlation = denominator ? ((n11 * n00) - (n10 * n01)) / denominator : null
+
+  if (invalidAnxious.length) {
+    fails.push(`anxiousTell이 진실 진술이 아님: ${invalidAnxious.map(s => s.id).join(', ')}`)
+  }
+  if (correlation === null || Math.abs(correlation - 1) < Number.EPSILON) {
+    fails.push(`거짓·텔 상관 ${correlation === null ? '측정 불가' : correlation.toFixed(3)} (완전판별기)`)
+  }
+  if (anxiousRatio < 0.30) {
+    fails.push(`불안 텔 진실 진술 ${anxiousTruths.length} / 텔 발화 진술 ${tells.length} = ${(anxiousRatio * 100).toFixed(0)}% (기준 ≥30%)`)
+  }
+
+  const expectedBreaking = new Map([
+    ['deitch', 'deitch.S4'],
+    ['ruiz', 'ruiz.S4'],
+    ['pryce', 'pryce.S3']
+  ])
+  const breaking = sample.filter(s => s.breakingOn === true)
+  for (const [npc, expectedId] of expectedBreaking) {
+    const assigned = breaking.filter(s => s.npc === npc)
+    if (assigned.length !== 1 || assigned[0]?.id !== expectedId) {
+      fails.push(`${npc}: breakingOn ${assigned.map(s => s.id).join(', ') || '0건'} (기준 ${expectedId} 1건)`)
+    }
+  }
+  for (const s of breaking) {
+    if (!expectedBreaking.has(s.npc)) fails.push(`${s.npc}: 미등록 breakingOn ${s.id}`)
+    if (s.truth !== false || !s.unlocks?.lieCorrect) {
+      fails.push(`${s.id}: breakingOn은 lieCorrect가 있는 거짓 진술에만 허용`)
+    }
+  }
+
+  check('P5', fails.length === 0, fails.length ? fails
+    : `불안 텔 진실 진술 ${anxiousTruths.length} / 텔 발화 진술 ${tells.length} = ${(anxiousRatio * 100).toFixed(0)}% · 거짓·텔 상관 ${correlation.toFixed(3)} · 붕괴 ${breaking.length}건 인물당 1회`)
+}
+
 // ── R1~R3 개연성 결함 회귀 (MASTER-PLAN §3.3) ───────────────────────────────
 {
   const fa9 = facts.get('FA9')
