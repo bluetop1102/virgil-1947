@@ -104,8 +104,8 @@
   },
   "acceptance": [
     {
-      "cmd": "SHOT_PORT=5925 node tools/shoot.mjs --out shots/p1-05 ui-loading ui-title ui-settings",
-      "expect": "3샷 성공 · 콘솔 0 · P6 정지샷 판정에서 D7(2026년 웹 UI 냄새) 무발생 — 시스템 폰트·기본 버튼·라운드 코너 카드·이모지 0"
+      "cmd": "SHOT_PORT=5925 node tools/shoot.mjs --out shots/p1-05 ui-loading ui-title ui-settings ui-resume",
+      "expect": "4샷 성공 · 콘솔 0 · P6 정지샷 판정에서 D7(2026년 웹 UI 냄새) 무발생 — 시스템 폰트·기본 버튼·라운드 코너 카드·이모지 0"
     },
     {
       "cmd": "node tools/playthrough.mjs --fast --assert-boot",
@@ -135,6 +135,11 @@
       "name": "ui-settings",
       "state": "new",
       "note": "설정 서류함 카드 오버레이"
+    },
+    {
+      "name": "ui-resume",
+      "state": "new",
+      "note": "재입장 제스처 화면 — ?resume=1 부트, 타자기 한 줄 + 벨 도상 (E8 §4 재제스처 정본, P6 정지샷 대상)"
     }
   ],
   "forbidden": [

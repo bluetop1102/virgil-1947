@@ -372,6 +372,7 @@ ARCHITECTURE §5 표의 해당 행 (payload·발신자 정본):
 - `ui-loading` — **신설**. `core/shotlist.js` 에 엔트리를 **추가**한다(기존 엔트리 수정 금지). 로딩 화면 — 허구 고지문 타건 중, 열쇠 고리 진행률
 - `ui-title` — **신설**. `core/shotlist.js` 에 엔트리를 **추가**한다(기존 엔트리 수정 금지). 타이틀 — 정문 유리 금박 각인 + 놋쇠 명패 2개
 - `ui-settings` — **신설**. `core/shotlist.js` 에 엔트리를 **추가**한다(기존 엔트리 수정 금지). 설정 서류함 카드 오버레이
+- `ui-resume` — **신설**. `core/shotlist.js` 에 엔트리를 **추가**한다(기존 엔트리 수정 금지). 재입장 제스처 화면 — ?resume=1 부트, 타자기 한 줄 + 벨 도상 (E8 §4 재제스처 정본, P6 정지샷 대상)
 
 촬영은 반드시 `--out shots/<자기이름>` 로 분리한다 — 기본 출력은 공유라 report.json 이 서로 덮인다.
 `SHOT_PORT=<고유번호>` 로 포트 충돌을 피한다. GPU 락 대기 로그는 정상이니 죽이지 말고 기다린다.
@@ -383,9 +384,9 @@ ARCHITECTURE §5 표의 해당 행 (payload·발신자 정본):
 **A1.**
 
 ```bash
-SHOT_PORT=5925 node tools/shoot.mjs --out shots/p1-05 ui-loading ui-title ui-settings
+SHOT_PORT=5925 node tools/shoot.mjs --out shots/p1-05 ui-loading ui-title ui-settings ui-resume
 ```
-→ 3샷 성공 · 콘솔 0 · P6 정지샷 판정에서 D7(2026년 웹 UI 냄새) 무발생 — 시스템 폰트·기본 버튼·라운드 코너 카드·이모지 0
+→ 4샷 성공 · 콘솔 0 · P6 정지샷 판정에서 D7(2026년 웹 UI 냄새) 무발생 — 시스템 폰트·기본 버튼·라운드 코너 카드·이모지 0
 
 **A2.**
 
