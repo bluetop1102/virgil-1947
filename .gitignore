@@ -3,3 +3,5 @@ shots/
 .shot-lock/
 dist/
 .gstack/
+
+.claude/
