@@ -248,7 +248,7 @@ setMood('corridor-night')   // 안개 밀도·볼류메트릭 세기·IBL을 한
 ```bash
 node tools/lint-contract.mjs
 ```
-→ materials 밖 Mesh*Material · atmosphere 밖 *Light 두 규칙의 위반 0 (kit-mat 폴백·glow, props 3건, testbed 1건이 팩토리 경유로 전환됐거나 ARCH §6/§6.5 예외 절에 등재됨)
+→ src/** 에서 materials 밖 Mesh*Material · atmosphere 밖 *Light 두 규칙의 위반 0 (kit-mat 폴백·glow, props 3건, testbed 1건이 팩토리 경유로 전환됐거나 ARCH §6/§6.5 예외 절에 등재됨). tools/** 의 두 규칙 잔존(셀프테스트 픽스처 8건)은 검사 범위 계약 재획정 소관(docs/HANDOFF.md)이라 이 티켓의 판정 대상이 아니다
 
 **A2.**
 
