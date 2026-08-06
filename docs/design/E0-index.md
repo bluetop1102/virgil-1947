@@ -51,6 +51,7 @@ C의 강점은 E2(골든 패스)가 단일 문서로 흡수한다.
 | E10 | `E10-production.md` | Phase 계획·티켓 보드·모델 배정·발사문 2종 | — |
 
 채점기(요소 문서가 아니라 판정 도구): `graders/grader-M.md`(M1~M7 블라인드 채점 프롬프트) ·
+`graders/grader-X.md`(체험 축 X1~X6 — 기획 대리 판정+블라인드 채점, 본 판정은 AAA-RUBRIC §체험 채점) ·
 `graders/fresh-test.md`(신선 에이전트 무질문 테스트 프로토콜) · `../../tools/factcheck.mjs`(F1~F4+R1~R3).
 라운드 로그: `ROUNDS-PLAN.md`.
 
