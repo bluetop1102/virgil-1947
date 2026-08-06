@@ -231,7 +231,7 @@ SHOT_PORT=5912 node tools/shoot.mjs --out shots/p0-04 atmo-corridor-night atmo-l
 ```bash
 node tools/pix.mjs diff shots/_baseline/corridor.png shots/p0-04/atmo-corridor-night.png
 ```
-→ 기준선 대비 변화 0.0% — 분할은 픽셀을 바꾸지 않는다
+→ 기준선 대비 변화 0.0% — 분할은 픽셀을 바꾸지 않는다. 동결 기준선 shots/_baseline/ 은 gitignore 라 클론에 없다 — 이 검사는 기준선을 보유한 본체에서 머지 시점에 실행한다
 
 ## 9. 금지 사항
 

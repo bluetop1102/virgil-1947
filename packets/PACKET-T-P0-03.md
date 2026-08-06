@@ -783,7 +783,7 @@ grep -rn '세실' src/ --include=*.js
 ```bash
 node tools/lint-contract.mjs
 ```
-→ 위반 0 — 특히 500줄 초과·표출 "세실" 규칙
+→ display-name 규칙 위반 0(화면 표출 "세실" 소멸) · 자기 소유 파일의 max-500-lines 위반 0. 다른 규칙의 기존 위반(재질·조명·분할·tools 범위)은 T-P0-02/04와 계약 재획정 소관이라 이 티켓의 판정 대상이 아니다
 
 ## 9. 금지 사항
 
