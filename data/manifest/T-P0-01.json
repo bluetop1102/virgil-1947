@@ -1,0 +1,89 @@
+{
+  "id": "T-P0-01",
+  "type": "tool",
+  "title": "계약 린트 커밋 훅 — grep 5종",
+  "owner_files": [
+    {
+      "path": "tools/lint-contract.mjs",
+      "scope": "file",
+      "state": "new"
+    },
+    {
+      "path": "tools/install-hooks.mjs",
+      "scope": "file",
+      "state": "new"
+    }
+  ],
+  "consumes": [
+    {
+      "label": "E10 §2 P0 표",
+      "doc": "docs/design/E10-production.md",
+      "heading": "P0 — 정지작업 (전 티켓 상호 독립, T-P0-03만 E3 산출 의존)",
+      "why": "이 티켓의 정본 행. 내용·소유 파일·수용 기준·모델 배정의 원천이며, 패킷과 어긋나면 이 표가 이긴다."
+    },
+    {
+      "label": "E9 §2 기계 게이트 총목록",
+      "doc": "docs/design/E9-gates.md",
+      "heading": "2. 기계 게이트 총목록 (goal 루프가 소비하는 통과 조건 은행)",
+      "why": "이 티켓이 만들거나 통과해야 하는 게이트의 정의 원문."
+    },
+    {
+      "label": "ARCH §6 재질 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "6. 재질 계약 (MATERIALS 소유, 전원 소비)",
+      "why": "재질은 mat() 경유만. 등록명 밖 이름은 마젠타로 드러난다."
+    },
+    {
+      "label": "ARCH §6.5 조명 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "6.5 조명 계약 (ATMOSPHERE 소유, 레벨이 소비)",
+      "why": "광원은 practical()/ambientRig() 경유만. 색온도 2종 이상 공존 의무."
+    },
+    {
+      "label": "ARCH §10 결정론",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "10. 결정론",
+      "why": "Math.random()·Date.now() 금지. rng(seed)·engine.time 만 쓴다."
+    },
+    {
+      "label": "ARCH §11 코드 스타일",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "11. 코드 스타일",
+      "why": "ESM·세미콜론 없음·2스페이스·작은따옴표·파일당 500줄·콘솔 0."
+    },
+    {
+      "label": "ARCH §0 작품 정의",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "0. 작품 정의",
+      "why": "화면 표출 텍스트 \"세실\" 0 — 코드 식별자 잔존은 허용, 표출만 금지."
+    }
+  ],
+  "inputs": [],
+  "events": {
+    "emit": [],
+    "listen": []
+  },
+  "acceptance": [
+    {
+      "cmd": "node tools/lint-contract.mjs --self-test",
+      "expect": "위반 5종(materials 밖 Mesh*Material 생성 · atmosphere 밖 *Light 생성 · Math.random(/Date.now(/performance.now( 직호출 · 500줄 초과 · 화면 표출 \"세실\") 각각의 주입 픽스처에서 exit 1 + 위반 규칙명·파일·줄번호 출력, 청정 픽스처에서 exit 0"
+    },
+    {
+      "cmd": "node tools/install-hooks.mjs && test -x .git/hooks/pre-commit",
+      "expect": "exit 0 — pre-commit 훅이 설치되고 실행 권한이 붙는다"
+    },
+    {
+      "cmd": "node tools/lint-contract.mjs --staged",
+      "expect": "스테이지된 파일만 검사. 위반 0이면 exit 0, 1건이라도 있으면 exit 1로 커밋 차단"
+    }
+  ],
+  "shots": [],
+  "forbidden": [
+    "src/** 편집 — 이 티켓은 검사기만 만든다. 현재 트리의 위반 코드 수정은 T-P0-02·T-P0-04 소관이다.",
+    "규칙 완화·파일 화이트리스트 하드코딩으로 현재 트리를 통과시키는 것 — 예외는 ARCH §6/§6.5 예외 절 등재로만 인정된다.",
+    ".git/hooks 산출물 커밋 — git이 추적하지 않는 경로다. 설치 스크립트만 커밋한다."
+  ],
+  "model": "codex",
+  "depends": [],
+  "status": "todo"
+}

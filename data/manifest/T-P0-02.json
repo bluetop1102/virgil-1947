@@ -1,0 +1,103 @@
+{
+  "id": "T-P0-02",
+  "type": "level",
+  "title": "재질·조명 계약 예외 청소 — 팩토리 경유화",
+  "owner_files": [
+    {
+      "path": "src/world/kit-mat.js",
+      "scope": "file",
+      "state": "existing"
+    },
+    {
+      "path": "src/world/props.js",
+      "scope": "section",
+      "section": "광원 생성 3건",
+      "state": "existing"
+    },
+    {
+      "path": "src/world/testbed.js",
+      "scope": "section",
+      "section": "광원 생성 1건",
+      "state": "existing"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "scope": "section",
+      "section": "§6·§6.5 예외 등재 절",
+      "state": "existing"
+    }
+  ],
+  "consumes": [
+    {
+      "label": "E10 §2 P0 표",
+      "doc": "docs/design/E10-production.md",
+      "heading": "P0 — 정지작업 (전 티켓 상호 독립, T-P0-03만 E3 산출 의존)",
+      "why": "이 티켓의 정본 행. 내용·소유 파일·수용 기준·모델 배정의 원천이며, 패킷과 어긋나면 이 표가 이긴다."
+    },
+    {
+      "label": "ARCH §2 디렉터리 소유권",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "2. 디렉터리 소유권",
+      "why": "자기 소유 파일의 경계 — 표에 없는 파일은 남의 것이다."
+    },
+    {
+      "label": "ARCH §6 재질 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "6. 재질 계약 (MATERIALS 소유, 전원 소비)",
+      "why": "재질은 mat() 경유만. 등록명 밖 이름은 마젠타로 드러난다."
+    },
+    {
+      "label": "ARCH §6.5 조명 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "6.5 조명 계약 (ATMOSPHERE 소유, 레벨이 소비)",
+      "why": "광원은 practical()/ambientRig() 경유만. 색온도 2종 이상 공존 의무."
+    },
+    {
+      "label": "RESUME §3.0 재질 복제 결함",
+      "doc": "docs/RESUME.md",
+      "heading": "3.0 재질 오버레이 스미어의 진짜 원인 (해결됨 · 라운드5)",
+      "why": "Material.copy()가 defines를 안 옮긴다 — 재질 복제는 반드시 kit-mat.cloneMat() 경유. 이 결함의 재발이 프로젝트 전역 스미어였다."
+    },
+    {
+      "label": "E6 §2 공통 계약",
+      "doc": "docs/design/E6-spaces.md",
+      "heading": "2. 공통 계약",
+      "why": "레벨이 소비하는 광원·재질 계약의 소비 측 규약."
+    }
+  ],
+  "inputs": [],
+  "events": {
+    "emit": [],
+    "listen": []
+  },
+  "acceptance": [
+    {
+      "cmd": "node tools/lint-contract.mjs",
+      "expect": "materials 밖 Mesh*Material · atmosphere 밖 *Light 두 규칙의 위반 0 (kit-mat 폴백·glow, props 3건, testbed 1건이 팩토리 경유로 전환됐거나 ARCH §6/§6.5 예외 절에 등재됨)"
+    },
+    {
+      "cmd": "SHOT_PORT=5911 node tools/shoot.mjs --out shots/p0-02 atmo-corridor-night",
+      "expect": "샷 1장 성공 · 콘솔 에러·경고 0"
+    },
+    {
+      "cmd": "node tools/pix.mjs diff shots/_baseline/corridor.png shots/p0-02/atmo-corridor-night.png",
+      "expect": "기준선 대비 변화 0.0% — 청소는 픽셀을 바꾸지 않는다. 0이 아니면 회귀이고 롤백한다."
+    }
+  ],
+  "shots": [
+    {
+      "name": "atmo-corridor-night",
+      "state": "existing",
+      "note": "회귀 기준선 대조용 — 엔트리 수정 금지, 촬영만"
+    }
+  ],
+  "forbidden": [
+    "신규 셰이더·렌더 패스·재질 레시피 추가 — 그래픽 동결 구간이다.",
+    "재질 복제를 kit-mat.cloneMat() 밖 경로로 하는 것 — RESUME §3.0 결함의 재발이다.",
+    "픽셀이 바뀌는 리팩터 — pix diff 0.0%가 수용 기준이지 \"더 나아 보임\"이 아니다.",
+    "props.js·testbed.js의 광원 생성 구역 밖 편집 — 그 파일의 나머지는 T-P0-04와 [PROPS] 소유다."
+  ],
+  "model": "codex",
+  "depends": [],
+  "status": "todo"
+}

@@ -1,0 +1,158 @@
+{
+  "id": "T-P1-05",
+  "type": "ui",
+  "title": "로딩 화면 + 타이틀 + 설정 뼈대 + 프레임 계측",
+  "owner_files": [
+    {
+      "path": "src/ui/settings.js",
+      "scope": "file",
+      "state": "new"
+    },
+    {
+      "path": "src/ui/title.js",
+      "scope": "file",
+      "state": "new"
+    },
+    {
+      "path": "src/main.js",
+      "scope": "section",
+      "section": "부트 훅 — boot:progress 발화",
+      "state": "existing"
+    }
+  ],
+  "consumes": [
+    {
+      "label": "E10 §2 P1 표",
+      "doc": "docs/design/E10-production.md",
+      "heading": "P1 — 수직 슬라이스 (P0 전체 완료 후 착수)",
+      "why": "이 티켓의 정본 행. 내용·소유 파일·의존·수용 기준·모델 배정의 원천이며, 패킷과 어긋나면 이 표가 이긴다."
+    },
+    {
+      "label": "ARCH §2 디렉터리 소유권",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "2. 디렉터리 소유권",
+      "why": "자기 소유 파일의 경계 — 표에 없는 파일은 남의 것이다."
+    },
+    {
+      "label": "ARCH §3 모듈 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "3. 모듈 계약",
+      "why": "default export 인터페이스와 order 배정 — 신규 모듈은 이 형태여야 등록된다."
+    },
+    {
+      "label": "ARCH §4 Engine API",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "4. Engine API (읽기 전용 계약)",
+      "why": "engine.time·bus·state 접근 규약. renderer.render 직접 호출 금지."
+    },
+    {
+      "label": "ARCH §5 이벤트 버스 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "5. 이벤트 버스 계약",
+      "why": "이벤트 이름·payload·발신자 정본. 표에 없는 이름을 만들지 않는다."
+    },
+    {
+      "label": "ARCH §11 코드 스타일",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "11. 코드 스타일",
+      "why": "ESM·세미콜론 없음·2스페이스·작은따옴표·파일당 500줄·콘솔 0."
+    },
+    {
+      "label": "E9 §2 기계 게이트 총목록",
+      "doc": "docs/design/E9-gates.md",
+      "heading": "2. 기계 게이트 총목록 (goal 루프가 소비하는 통과 조건 은행)",
+      "why": "이 티켓이 만들거나 통과해야 하는 게이트의 정의 원문."
+    },
+    {
+      "label": "E8 §2 설정",
+      "doc": "docs/design/E8-ui.md",
+      "heading": "2. 설정 (`ui/settings.js` 신규 — order 80, 자동 등록)",
+      "why": "진입 트리거 Esc 1회 · game:pause 전파 규칙 · 항목 5종과 반영 시점."
+    },
+    {
+      "label": "E8 §3 로딩 화면",
+      "doc": "docs/design/E8-ui.md",
+      "heading": "3. 로딩 화면 (P1 필수 — 베이크·컴파일 수 초의 블랙스크린 제거)",
+      "why": "허구 고지문 전문 · 열쇠 고리 진행률 · 부트 순서 · 제스처 게이트 정본."
+    },
+    {
+      "label": "E8 §5 프레임타임 계측 이관",
+      "doc": "docs/design/E8-ui.md",
+      "heading": "5. (이관) 프레임타임 계측",
+      "why": "계측 사양은 E9 §2로 이관됐고 구현 티켓만 여기 남는다."
+    },
+    {
+      "label": "AAA-RUBRIC D7·P6",
+      "doc": "docs/AAA-RUBRIC.md",
+      "heading": "절대 실격 조건 (하나라도 걸리면 그 항목 점수는 0, 루프 재진입)",
+      "why": "1947 물성 위반은 실격이다 — 시스템 폰트·기본 버튼·라운드 코너·이모지 0."
+    }
+  ],
+  "inputs": [
+    "doc:docs/design/E8-ui.md§3. 로딩 화면 (P1 필수 — 베이크·컴파일 수 초의 블랙스크린 제거)"
+  ],
+  "events": {
+    "emit": [
+      "settings:changed",
+      "game:pause",
+      "boot:progress",
+      "title:proceed"
+    ],
+    "listen": [
+      "boot:progress"
+    ]
+  },
+  "acceptance": [
+    {
+      "cmd": "SHOT_PORT=5925 node tools/shoot.mjs --out shots/p1-05 ui-loading ui-title ui-settings",
+      "expect": "3샷 성공 · 콘솔 0 · P6 정지샷 판정에서 D7(2026년 웹 UI 냄새) 무발생 — 시스템 폰트·기본 버튼·라운드 코너 카드·이모지 0"
+    },
+    {
+      "cmd": "node tools/playthrough.mjs --fast --assert-boot",
+      "expect": "boot:progress{done,total}가 total까지 단조 증가 후 타이틀 · 첫 입력 제스처 뒤에야 AudioContext 활성화·포인터록 요청 · 그 직후가 0:00 기점"
+    },
+    {
+      "cmd": "node tools/playthrough.mjs --fast --assert-settings",
+      "expect": "settings:changed가 5항목(품질·FOV·감도·자막·볼륨) 전건 발화 · Esc 1회로 game:pause{on:true} 발화되고 렌더는 지속"
+    },
+    {
+      "cmd": "node tools/playthrough.mjs --fast --stats",
+      "expect": "?stats=1 오버레이가 frametime p50/p95·드로우콜·메모리를 출력하고 high 60fps / medium 30fps 게이트를 판정한다"
+    }
+  ],
+  "shots": [
+    {
+      "name": "ui-loading",
+      "state": "new",
+      "note": "로딩 화면 — 허구 고지문 타건 중, 열쇠 고리 진행률"
+    },
+    {
+      "name": "ui-title",
+      "state": "new",
+      "note": "타이틀 — 정문 유리 금박 각인 + 놋쇠 명패 2개"
+    },
+    {
+      "name": "ui-settings",
+      "state": "new",
+      "note": "설정 서류함 카드 오버레이"
+    }
+  ],
+  "forbidden": [
+    "src/core/** 수정 — 잠김이다. 부트 진행 신호는 main.js의 훅으로만 낸다.",
+    "수동 저장·로드 슬롯 추가 — 체크포인트는 막 경계 자동 1슬롯뿐이다(E8 §4).",
+    "키바인드 설정 — 명시적 범위 외다(E8 §2 표).",
+    "품질 프리셋의 무리로드 전환 — ?q= URL 재작성 + 리로드가 정본이고 재론 금지다.",
+    "로딩 중 오디오 선재생 — 제스처 게이트 전에는 소리가 없다(E8 §3).",
+    "시스템 폰트·기본 버튼·라운드 코너 카드·이모지 — D7 실격이다.",
+    "cinematics 메서드 직접 호출 — 타이틀 통과는 title:proceed {mode} 발화로만 넘긴다. 발신(이 티켓)과 수신(T-P1-07)이 다른 발주라 접면은 이벤트뿐이다(E8 §3)."
+  ],
+  "model": "codex",
+  "depends": [
+    "T-P0-01",
+    "T-P0-02",
+    "T-P0-03",
+    "T-P0-04",
+    "T-P0-05"
+  ],
+  "status": "todo"
+}

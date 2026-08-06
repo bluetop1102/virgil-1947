@@ -1,0 +1,116 @@
+{
+  "id": "T-P1-02",
+  "type": "rig",
+  "title": "다이치 리그 — 절차 휴머노이드 + 식별 소품",
+  "owner_files": [
+    {
+      "path": "src/chars/rig.js",
+      "scope": "file",
+      "state": "new"
+    }
+  ],
+  "consumes": [
+    {
+      "label": "E10 §2 P1 표",
+      "doc": "docs/design/E10-production.md",
+      "heading": "P1 — 수직 슬라이스 (P0 전체 완료 후 착수)",
+      "why": "이 티켓의 정본 행. 내용·소유 파일·의존·수용 기준·모델 배정의 원천이며, 패킷과 어긋나면 이 표가 이긴다."
+    },
+    {
+      "label": "ARCH §2 디렉터리 소유권",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "2. 디렉터리 소유권",
+      "why": "자기 소유 파일의 경계 — 표에 없는 파일은 남의 것이다."
+    },
+    {
+      "label": "ARCH §3 모듈 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "3. 모듈 계약",
+      "why": "default export 인터페이스와 order 배정 — 신규 모듈은 이 형태여야 등록된다."
+    },
+    {
+      "label": "ARCH §6 재질 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "6. 재질 계약 (MATERIALS 소유, 전원 소비)",
+      "why": "재질은 mat() 경유만. 등록명 밖 이름은 마젠타로 드러난다."
+    },
+    {
+      "label": "ARCH §8 지오메트리 규약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "8. 지오메트리 규약",
+      "why": "베벨·시드 변주·그라운딩·physics 정적 등록·앵커 규약."
+    },
+    {
+      "label": "ARCH §10 결정론",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "10. 결정론",
+      "why": "Math.random()·Date.now() 금지. rng(seed)·engine.time 만 쓴다."
+    },
+    {
+      "label": "ARCH §11 코드 스타일",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "11. 코드 스타일",
+      "why": "ESM·세미콜론 없음·2스페이스·작은따옴표·파일당 500줄·콘솔 0."
+    },
+    {
+      "label": "E4 §1 다이치 카드",
+      "doc": "docs/design/E4-characters.md",
+      "heading": "다이치 (마를로 다이치, 51 — 야간 프런트 16년차)",
+      "why": "실루엣이 말해야 하는 것 — 목소리 지문·공간 앵커·심문 아크."
+    },
+    {
+      "label": "E4 §3 리그·연기 구현 계약",
+      "doc": "docs/design/E4-characters.md",
+      "heading": "3. 리그·연기 구현 계약",
+      "why": "실루엣 우선(G10)·식별 소품(안경+조끼)·페이셜 없음·rng(seed) 결정론."
+    },
+    {
+      "label": "ARCH §8 앵커 규약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "8. 지오메트리 규약",
+      "why": "chars 모듈이 room:changed 구독 후 npc/deitch 앵커를 찾아 자기 배치한다."
+    }
+  ],
+  "inputs": [
+    "doc:docs/design/E4-characters.md§1. 페르소나 카드"
+  ],
+  "events": {
+    "emit": [],
+    "listen": [
+      "room:changed"
+    ]
+  },
+  "acceptance": [
+    {
+      "cmd": "SHOT_PORT=5922 node tools/shoot.mjs --out shots/p1-02 interrogation-deitch",
+      "expect": "샷 1장 성공 · 콘솔 0 · 실루엣만으로 다이치 식별 가능(안경+조끼가 역광 실루엣에서 읽힌다 — G10 판정)"
+    },
+    {
+      "cmd": "node tools/lint-contract.mjs",
+      "expect": "위반 0 — 특히 Math.random( 직호출(리그 변주는 rng(seed))·materials 밖 재질 생성"
+    }
+  ],
+  "shots": [
+    {
+      "name": "interrogation-deitch",
+      "state": "existing",
+      "note": "심문 카메라 위치 — 실루엣 판독 판정용"
+    }
+  ],
+  "forbidden": [
+    "페이셜 리그·표정 블렌드셰이프 — 머리는 자세·시선 방향만이다(E4 §3).",
+    "외부 모델·모션 파일 로드 — 지오메트리·스키닝 전부 절차 생성이다.",
+    "Math.random() 직호출 — 변주는 core/util.js의 rng(seed)로만. 같은 시드에 같은 리그가 나와야 한다.",
+    "연기(perf) 로직 작성 — 상태별 클립은 T-P1-03 소유다. 이 티켓은 리그와 소품까지다.",
+    "npc:sighted 발화 — 프리젠스 발화는 레벨 소유다(ARCH §8)."
+  ],
+  "model": "codex",
+  "depends": [
+    "T-P0-01",
+    "T-P0-02",
+    "T-P0-03",
+    "T-P0-04",
+    "T-P0-05"
+  ],
+  "status": "todo"
+}

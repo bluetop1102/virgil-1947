@@ -1,0 +1,81 @@
+{
+  "id": "T-P0-05",
+  "type": "tool",
+  "title": "P5 텔 상관 검사기 — factcheck 확장",
+  "owner_files": [
+    {
+      "path": "tools/factcheck.mjs",
+      "scope": "section",
+      "section": "§P5 텔 상관 본검사",
+      "state": "existing"
+    }
+  ],
+  "consumes": [
+    {
+      "label": "E10 §2 P0 표",
+      "doc": "docs/design/E10-production.md",
+      "heading": "P0 — 정지작업 (전 티켓 상호 독립, T-P0-03만 E3 산출 의존)",
+      "why": "이 티켓의 정본 행. 내용·소유 파일·수용 기준·모델 배정의 원천이며, 패킷과 어긋나면 이 표가 이긴다."
+    },
+    {
+      "label": "E9 §2 기계 게이트 총목록",
+      "doc": "docs/design/E9-gates.md",
+      "heading": "2. 기계 게이트 총목록 (goal 루프가 소비하는 통과 조건 은행)",
+      "why": "이 티켓이 만들거나 통과해야 하는 게이트의 정의 원문."
+    },
+    {
+      "label": "E4 §2 텔 연기 시스템",
+      "doc": "docs/design/E4-characters.md",
+      "heading": "2. 텔 연기 시스템 — 비확정 원칙 (U4)",
+      "why": "P5 상관 게이트의 정의 — 거짓·텔 상관 1.0이면 FAIL, 불안 시 텔 발화가 전체의 30% 이상이어야 PASS."
+    },
+    {
+      "label": "E3 §4 텔 배정 데이터",
+      "doc": "docs/design/E3-case-graph.md",
+      "heading": "4. 소비 계약",
+      "why": "anxiousTell·key 필드가 진실원. 정적 감시는 P5d, 본검사가 이 티켓이다."
+    },
+    {
+      "label": "STORY §2 인물별 텔",
+      "doc": "docs/STORY.md",
+      "heading": "인물별 텔(tell) — CHARACTERS의 perf.js가 구현할 미세신호",
+      "why": "신호 원문 — 검사기가 세는 대상."
+    }
+  ],
+  "inputs": [
+    "cg:deitch.S1",
+    "cg:deitch.S3",
+    "cg:ruiz.S1",
+    "cg:pryce.S2",
+    "cg:deitch.S4",
+    "cg:ruiz.S4",
+    "cg:pryce.S3"
+  ],
+  "events": {
+    "emit": [],
+    "listen": []
+  },
+  "acceptance": [
+    {
+      "cmd": "node tools/factcheck.mjs",
+      "expect": "P5 절 포함 전건 PASS — 불안 발화 진실 진술 4건(deitch.S1·S3, ruiz.S1, pryce.S2)이 전체 텔 발화의 30% 이상"
+    },
+    {
+      "cmd": "node tools/factcheck.mjs --mutate p5-perfect",
+      "expect": "FAIL 재현 — anxiousTell을 전부 제거해 거짓·텔 상관을 1.0으로 만든 변이에서 P5가 반드시 떨어진다(완전판별기 검출)"
+    },
+    {
+      "cmd": "node tools/factcheck.mjs --mutate p5-breaking",
+      "expect": "FAIL 재현 — breakingOn을 인물당 2건 이상으로 늘린 변이에서 \"붕괴는 인물당 한 번\" 규칙이 검출된다"
+    }
+  ],
+  "shots": [],
+  "forbidden": [
+    "case-graph.json 수정 — 검사기는 데이터를 고치지 않고 읽기만 한다.",
+    "factcheck.mjs의 기존 F1~F4·R1~R3 절 편집 — 소유 범위는 §P5 절 신설분뿐이다.",
+    "임계값을 현재 데이터에 맞춰 사후 조정하는 것 — 30%는 E4 §2가 정한 값이다."
+  ],
+  "model": "codex",
+  "depends": [],
+  "status": "todo"
+}

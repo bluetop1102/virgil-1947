@@ -1,0 +1,122 @@
+{
+  "id": "T-P1-08",
+  "type": "cinematic",
+  "title": "심문 카메라·침묵 연출",
+  "owner_files": [
+    {
+      "path": "src/narrative/cinematics.js",
+      "scope": "section",
+      "section": "심문 카메라 절",
+      "state": "existing"
+    },
+    {
+      "path": "src/audio/engine.js",
+      "scope": "section",
+      "section": "룸톤 -6dB 규칙",
+      "state": "existing"
+    }
+  ],
+  "consumes": [
+    {
+      "label": "E10 §2 P1 표",
+      "doc": "docs/design/E10-production.md",
+      "heading": "P1 — 수직 슬라이스 (P0 전체 완료 후 착수)",
+      "why": "이 티켓의 정본 행. 내용·소유 파일·의존·수용 기준·모델 배정의 원천이며, 패킷과 어긋나면 이 표가 이긴다."
+    },
+    {
+      "label": "ARCH §5 이벤트 버스 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "5. 이벤트 버스 계약",
+      "why": "이벤트 이름·payload·발신자 정본. 표에 없는 이름을 만들지 않는다."
+    },
+    {
+      "label": "ARCH §10 결정론",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "10. 결정론",
+      "why": "Math.random()·Date.now() 금지. rng(seed)·engine.time 만 쓴다."
+    },
+    {
+      "label": "ARCH §11 코드 스타일",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "11. 코드 스타일",
+      "why": "ESM·세미콜론 없음·2스페이스·작은따옴표·파일당 500줄·콘솔 0."
+    },
+    {
+      "label": "E7 §1 카메라 문법",
+      "doc": "docs/design/E7-presentation.md",
+      "heading": "1. 카메라 문법 (N5 — 심문·지목)",
+      "why": "수치 7행 정본 — 렌즈 mm·트래킹 m·높이 cm·진폭. 형용사 사양 금지."
+    },
+    {
+      "label": "E7 §3 오디오·침묵",
+      "doc": "docs/design/E7-presentation.md",
+      "heading": "3. 오디오 — 공간 음향·침묵의 사용",
+      "why": "오답 소각 직후 룸톤 -6dB·3초, 붕괴 중 BGM 0."
+    },
+    {
+      "label": "E2 부록 B 캡처 목록",
+      "doc": "docs/design/E2-golden-path.md",
+      "heading": "부록 B — 게이트 판정 캡처 대상 목록 (P2·P4 판정 입력)",
+      "why": "P4 판정 = C1 오답 변형 시퀀스. 룸톤은 test-audio가 증빙한다."
+    },
+    {
+      "label": "E5 §1 판정표",
+      "doc": "docs/design/E5-interrogation.md",
+      "heading": "1. 3선택 판정표",
+      "why": "카메라가 반응해야 하는 판정 6행."
+    }
+  ],
+  "inputs": [
+    "cg:deitch.S2",
+    "cg:deitch.S4"
+  ],
+  "events": {
+    "emit": [
+      "camera:dof",
+      "cinematic:start",
+      "cinematic:end"
+    ],
+    "listen": [
+      "interrogation:aiming",
+      "interrogation:verdict",
+      "perf:state",
+      "deduction:link",
+      "game:pause"
+    ]
+  },
+  "acceptance": [
+    {
+      "cmd": "node tools/playthrough.mjs --capture c1-wrong --out shots/p1-08",
+      "expect": "C1 오답 시퀀스 캡처가 무설명 판독 통과(P4) — 카메라가 상대에게서 반 발짝 물러나는 것이 프레임만으로 읽힌다"
+    },
+    {
+      "cmd": "node tools/playthrough.mjs --fast --assert-camera",
+      "expect": "판정별 카메라 반응 7행이 전건 발화 · 심문 중 컷 0회(카메라 순간이동 0) · LIE 진입 시 camera:dof{bias,ms} 발화"
+    },
+    {
+      "cmd": "node tools/test-audio.mjs --roomtone",
+      "expect": "오답 소각 직후 룸톤 -6dB·3초 감쇠가 배터리로 측정 확인 · 붕괴 중 비디제틱 BGM 0"
+    }
+  ],
+  "shots": [
+    {
+      "name": "interrogation-deitch",
+      "state": "existing",
+      "note": "심문 기본 카메라 검증용"
+    }
+  ],
+  "forbidden": [
+    "심문 중 컷 — 전부 이동·렌즈 변화로 한다(E7 §1 원칙). 컷 1회가 N5 실격이다.",
+    "\"심리에 따라 변함\" 같은 형용사 구현 — E7 §1의 수치 7행이 사양이다.",
+    "dof 패스 수정 — camera:dof 수신·보간은 [PIPELINE-CORE] 소유이고 HANDOFF 큐 선행 의뢰가 전제다.",
+    "cinematics.js의 cin-intro·타임라인 골격 편집 — T-P1-07 소유다. 심문 카메라 절만 쓴다.",
+    "audio/engine.js의 룸톤 규칙 밖 편집 — 리버브·발소리는 기존 [AUDIO] 소유다.",
+    "판정 결과를 카메라가 미리 알려주는 것 — 힌트 금지 불변(E5 §1)."
+  ],
+  "model": "opus",
+  "depends": [
+    "T-P1-04",
+    "T-P1-07"
+  ],
+  "status": "todo"
+}

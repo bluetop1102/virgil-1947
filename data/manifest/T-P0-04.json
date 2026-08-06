@@ -1,0 +1,102 @@
+{
+  "id": "T-P0-04",
+  "type": "level",
+  "title": "500줄 초과 4파일 분할",
+  "owner_files": [
+    {
+      "path": "src/world/atmosphere.js",
+      "scope": "file",
+      "state": "existing"
+    },
+    {
+      "path": "src/materials/recipes.a.js",
+      "scope": "file",
+      "state": "existing"
+    },
+    {
+      "path": "src/world/atmo/fixtures.js",
+      "scope": "file",
+      "state": "existing"
+    },
+    {
+      "path": "src/world/props.js",
+      "scope": "file",
+      "state": "existing"
+    }
+  ],
+  "consumes": [
+    {
+      "label": "E10 §2 P0 표",
+      "doc": "docs/design/E10-production.md",
+      "heading": "P0 — 정지작업 (전 티켓 상호 독립, T-P0-03만 E3 산출 의존)",
+      "why": "이 티켓의 정본 행. 내용·소유 파일·수용 기준·모델 배정의 원천이며, 패킷과 어긋나면 이 표가 이긴다."
+    },
+    {
+      "label": "ARCH §2 디렉터리 소유권",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "2. 디렉터리 소유권",
+      "why": "자기 소유 파일의 경계 — 표에 없는 파일은 남의 것이다."
+    },
+    {
+      "label": "ARCH §11 코드 스타일",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "11. 코드 스타일",
+      "why": "ESM·세미콜론 없음·2스페이스·작은따옴표·파일당 500줄·콘솔 0."
+    },
+    {
+      "label": "ARCH §6 재질 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "6. 재질 계약 (MATERIALS 소유, 전원 소비)",
+      "why": "재질은 mat() 경유만. 등록명 밖 이름은 마젠타로 드러난다."
+    },
+    {
+      "label": "ARCH §6.5 조명 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "6.5 조명 계약 (ATMOSPHERE 소유, 레벨이 소비)",
+      "why": "광원은 practical()/ambientRig() 경유만. 색온도 2종 이상 공존 의무."
+    }
+  ],
+  "inputs": [],
+  "events": {
+    "emit": [],
+    "listen": []
+  },
+  "acceptance": [
+    {
+      "cmd": "node tools/lint-contract.mjs",
+      "expect": "500줄 초과 규칙 위반 0 — 분할 신규 파일 포함 전 파일 ≤500줄"
+    },
+    {
+      "cmd": "SHOT_PORT=5912 node tools/shoot.mjs --out shots/p0-04 atmo-corridor-night atmo-lobby-night atmo-rooftop-rain",
+      "expect": "3샷 성공 · 콘솔 에러·경고 0"
+    },
+    {
+      "cmd": "node tools/pix.mjs diff shots/_baseline/corridor.png shots/p0-04/atmo-corridor-night.png",
+      "expect": "기준선 대비 변화 0.0% — 분할은 픽셀을 바꾸지 않는다"
+    }
+  ],
+  "shots": [
+    {
+      "name": "atmo-corridor-night",
+      "state": "existing",
+      "note": "회귀 기준선 대조용"
+    },
+    {
+      "name": "atmo-lobby-night",
+      "state": "existing"
+    },
+    {
+      "name": "atmo-rooftop-rain",
+      "state": "existing"
+    }
+  ],
+  "forbidden": [
+    "동작 변경 — 순수 이동만. 리팩터·최적화·이름 개선을 곁들이지 않는다.",
+    "공개 export 시그니처 변경 — 소비자(레벨·프로브·테스트베드)가 전부 깨진다.",
+    "분할 신규 파일을 소유 디렉터리 밖에 만드는 것 — 같은 소유 디렉터리 안에서만 쪼갠다.",
+    "props.js의 광원 생성 3건 구역 손대기 — 그 구역은 T-P0-02 소유다."
+  ],
+  "model": "codex",
+  "depends": [],
+  "status": "todo"
+}

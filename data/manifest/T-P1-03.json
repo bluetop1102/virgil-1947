@@ -1,0 +1,109 @@
+{
+  "id": "T-P1-03",
+  "type": "tell",
+  "title": "다이치 텔 연기 4클립",
+  "owner_files": [
+    {
+      "path": "src/chars/perf.js",
+      "scope": "file",
+      "state": "new"
+    }
+  ],
+  "consumes": [
+    {
+      "label": "E10 §2 P1 표",
+      "doc": "docs/design/E10-production.md",
+      "heading": "P1 — 수직 슬라이스 (P0 전체 완료 후 착수)",
+      "why": "이 티켓의 정본 행. 내용·소유 파일·의존·수용 기준·모델 배정의 원천이며, 패킷과 어긋나면 이 표가 이긴다."
+    },
+    {
+      "label": "ARCH §3 모듈 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "3. 모듈 계약",
+      "why": "default export 인터페이스와 order 배정 — 신규 모듈은 이 형태여야 등록된다."
+    },
+    {
+      "label": "ARCH §5 이벤트 버스 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "5. 이벤트 버스 계약",
+      "why": "이벤트 이름·payload·발신자 정본. 표에 없는 이름을 만들지 않는다."
+    },
+    {
+      "label": "ARCH §10 결정론",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "10. 결정론",
+      "why": "Math.random()·Date.now() 금지. rng(seed)·engine.time 만 쓴다."
+    },
+    {
+      "label": "ARCH §11 코드 스타일",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "11. 코드 스타일",
+      "why": "ESM·세미콜론 없음·2스페이스·작은따옴표·파일당 500줄·콘솔 0."
+    },
+    {
+      "label": "E4 §2 텔 연기 시스템",
+      "doc": "docs/design/E4-characters.md",
+      "heading": "2. 텔 연기 시스템 — 비확정 원칙 (U4)",
+      "why": "상태 4종의 정의와 산출 규칙 — perf는 진위를 모른다."
+    },
+    {
+      "label": "E4 §3 리그·연기 구현 계약",
+      "doc": "docs/design/E4-characters.md",
+      "heading": "3. 리그·연기 구현 계약",
+      "why": "1신호=1클립 · perf:state 구독으로만 트리거 · 인물당 최소 3종 신체 클립."
+    },
+    {
+      "label": "STORY §2 인물별 텔",
+      "doc": "docs/STORY.md",
+      "heading": "인물별 텔(tell) — CHARACTERS의 perf.js가 구현할 미세신호",
+      "why": "신호 원문 — 이 문장이 클립의 사양이다."
+    },
+    {
+      "label": "ARCH §5 perf:state 산출 규칙",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "5. 이벤트 버스 계약",
+      "why": "idle/anxious/lying/breaking 산출 규칙과 breakingOn 3건 제한."
+    }
+  ],
+  "inputs": [
+    "cg:deitch.S1",
+    "cg:deitch.S2",
+    "cg:deitch.S3",
+    "cg:deitch.S4",
+    "cg:deitch.S5"
+  ],
+  "events": {
+    "emit": [],
+    "listen": [
+      "perf:state",
+      "deduction:link"
+    ]
+  },
+  "acceptance": [
+    {
+      "cmd": "node tools/playthrough.mjs --fast --act 1 --assert-perf",
+      "expect": "perf:state 4상태(idle·anxious·lying·breaking)가 전부 최소 1회 발화되고 각각 대응 클립이 재생 — breaking은 deitch.S4의 lieCorrect 직후 정확히 1회"
+    },
+    {
+      "cmd": "node tools/factcheck.mjs",
+      "expect": "P5 상관 검사 PASS 유지 — 텔 구현이 판별기가 되지 않았다"
+    },
+    {
+      "cmd": "node tools/lint-contract.mjs",
+      "expect": "위반 0 — 특히 Date.now()/performance.now() 직호출(클립 타이밍은 engine.time)"
+    }
+  ],
+  "shots": [],
+  "forbidden": [
+    "perf.js가 진술의 진위(truth)를 읽는 것 — perf:state만 받는다. 진위를 알면 텔이 판별기가 된다.",
+    "텔을 아이콘·색·UI로 표시하는 것 — 애니메이션과 카메라로만(E4 §2).",
+    "STORY §2의 음성·대사 신호(문장 끝 음량 하강·\"제 기억으론\"·과잉 정밀)를 클립으로 번안하는 것 — 그 채널은 script.js·오디오 소유다.",
+    "붕괴 클립을 deitch.S4 밖에서 트리거하는 것 — 붕괴는 인물당 한 번이다.",
+    "Date.now()/performance.now() — 타이밍은 engine.time."
+  ],
+  "model": "opus",
+  "depends": [
+    "T-P1-02"
+  ],
+  "status": "todo"
+}

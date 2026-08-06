@@ -1,0 +1,117 @@
+{
+  "id": "T-P1-10",
+  "type": "tool",
+  "title": "gameplay QA 하네스 — qa 구동·관측부",
+  "owner_files": [
+    {
+      "path": "src/gameplay/player.js",
+      "scope": "section",
+      "section": "qa 구동·관측 절",
+      "state": "existing"
+    },
+    {
+      "path": "src/gameplay/evidence.js",
+      "scope": "section",
+      "section": "qa 관측·lore:heard 절",
+      "state": "existing"
+    }
+  ],
+  "consumes": [
+    {
+      "label": "E10 §2 P1 표",
+      "doc": "docs/design/E10-production.md",
+      "heading": "P1 — 수직 슬라이스 (P0 전체 완료 후 착수)",
+      "why": "이 티켓의 정본 행. 내용·소유 파일·의존·수용 기준·모델 배정의 원천이며, 패킷과 어긋나면 이 표가 이긴다."
+    },
+    {
+      "label": "ARCH §4 Engine API",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "4. Engine API (읽기 전용 계약)",
+      "why": "engine.time·bus·state 접근 규약. renderer.render 직접 호출 금지."
+    },
+    {
+      "label": "ARCH §5 이벤트 버스 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "5. 이벤트 버스 계약",
+      "why": "이벤트 이름·payload·발신자 정본. 표에 없는 이름을 만들지 않는다."
+    },
+    {
+      "label": "ARCH §9 스크린샷·QA 하네스 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "9. 스크린샷·QA 하네스 계약",
+      "why": "qaId 슬러그 정본·qa API 시그니처·샷 엔트리 추가 규약."
+    },
+    {
+      "label": "ARCH §10 결정론",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "10. 결정론",
+      "why": "Math.random()·Date.now() 금지. rng(seed)·engine.time 만 쓴다."
+    },
+    {
+      "label": "ARCH §11 코드 스타일",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "11. 코드 스타일",
+      "why": "ESM·세미콜론 없음·2스페이스·작은따옴표·파일당 500줄·콘솔 0."
+    },
+    {
+      "label": "ARCH §9 qa API 정본",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "9. 스크린샷·QA 하네스 계약",
+      "why": "qaId 슬러그 정본 목록 · list/goto/walk/interact/state/events 시그니처 · ?qa=1 게이팅."
+    },
+    {
+      "label": "E7 §4 괴담 매체",
+      "doc": "docs/design/E7-presentation.md",
+      "heading": "4. 괴담 연출 — 매체 구현 (본문: STORY §7, 데이터: case-graph `lore`)",
+      "why": "lore:heard 발화 조건 — 매체 4종과 id 매핑."
+    },
+    {
+      "label": "E6 §2 공통 계약",
+      "doc": "docs/design/E6-spaces.md",
+      "heading": "2. 공통 계약",
+      "why": "qaId = case-graph obtain.where 슬러그. 레벨이 부여하고 gameplay가 소비한다."
+    }
+  ],
+  "inputs": [
+    "cg:register",
+    "cg:keyrack",
+    "cg:flask",
+    "cg:lore.pipes",
+    "cg:lore.lightwell",
+    "cg:lore.1912",
+    "cg:lore.linen"
+  ],
+  "events": {
+    "emit": [
+      "lore:heard"
+    ],
+    "listen": []
+  },
+  "acceptance": [
+    {
+      "cmd": "node tools/playthrough.mjs --fast --act 1",
+      "expect": "봇이 qa API만으로 1막을 구동 성립 — qa.list()/goto()/walk()/interact()/state()/events()가 전건 동작"
+    },
+    {
+      "cmd": "node tools/playthrough.mjs --fast --assert-lore",
+      "expect": "lore:heard 4종(lore.pipes·lore.lightwell·lore.1912·lore.linen)이 골든 패스 도달 지점에서 발화되고 노트 괴담 면에 축적"
+    },
+    {
+      "cmd": "node tools/playthrough.mjs --no-qa --assert-hidden",
+      "expect": "?qa=1 없이 로드했을 때 window.__CECIL__.qa가 undefined — QA API가 출하 빌드에 노출되지 않는다"
+    }
+  ],
+  "shots": [],
+  "forbidden": [
+    "qa API를 ?qa=1 밖에서 노출하는 것 — 출하 빌드에 구동 API가 남으면 안 된다.",
+    "봇이 버스를 직접 만지게 하는 우회로 제공 — 관측은 qa.events() 링버퍼로만.",
+    "player.js·evidence.js의 qa 절 밖 편집 — 컨트롤러·수집 규약 본체는 [GAMEPLAY] 기존 소유다.",
+    "qaId 슬러그 임의 명명 — case-graph obtain.where와 ARCH §9 비증거 목록이 정본이다.",
+    "Date.now()/Math.random() 직호출 — QA 모드 시간은 하네스가 고정 스텝으로 전진시킨다."
+  ],
+  "model": "codex",
+  "depends": [
+    "T-P1-01"
+  ],
+  "status": "todo"
+}
