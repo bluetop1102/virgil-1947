@@ -2667,3 +2667,45 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
 - **문제**: 검사 범위가 `tools/**` 를 포함해 전체 스캔에서 위반 38건 중 23건이 tools 하네스·픽스처의 정당 사용이다 — QA 계측의 Date.now 15건(shoot·mat-shoot·ui-shoot·test-audio: 경과 시간 측정, 브라우저 밖이라 engine.time 사용 불가) · 셀프테스트 픽스처 HTML 의 재질/광원 생성 8건(fx-selftest·mat-selftest: 검증 대상 그 자체). 어느 P0 티켓도 이 23건을 소유하지 않아, 전건 스캔 "위반 0" 게이트(T-P0-02 A1·T-P1-02 A2)가 영구 미달이 된다.
 - **지시**: 판별 규칙의 랜덤/시계·재질·광원 3규칙 검사 범위를 재획정하라. 후보: (a) 패턴 3규칙을 `src/**`(+`index.html`)로 한정하고 500줄·표출 규칙만 tools 유지, (b) lint-allow 주석을 display-name 외 규칙으로 확장. (a)가 단순하고 하네스 코드의 어휘 오염이 없다.
 - **요청자가 처리한 부분**: T-P0-01 산출 머지로 전체 스캔이 처음 가동돼 발견된 사안이다. src 15건은 전부 기존 티켓 소유(03: 표출 3 · 02: 재질·조명 8 · 04: 500줄 4)로 확인했고, 티켓별 수용 기준을 규칙 한정으로 정밀화해 2군 발주는 이 답신과 독립으로 진행한다. 계약 확정 시 매니페스트 재전사는 이쪽 일이다.
+
+### [ ] T-P0-03 → GAMEPLAY
+- **파일**: src/gameplay/evidence.js
+- **루브릭**: ARCH §5 / N4
+- **문제**: 조건부 footprints의 room 값이 구형 `corridor`이고 사진 증거 표출명이 구형 `엘리베이터 사진 4장`이라 정본 `corridor9` 및 옥상 계단참 사진과 어긋난다.
+- **지시**: CONDITIONALS의 footprints room을 `corridor9`로, photos 표출명을 `옥상 계단참 사진 4장`으로 바꾼 뒤 증거 수집 회귀를 실행한다.
+- **요청자가 처리한 부분**: 자기 소유 script.js의 photos 표출·본문과 ruiz 공간 어휘를 v2 정본으로 이행했다.
+
+### [ ] T-P0-03 → AUDIO
+- **파일**: src/audio/ir.js
+- **루브릭**: ARCH §5 / N7
+- **문제**: `room:changed {room:'linen'}` 정본 값이 ROOM_ALIAS에서 해석되지 않아 로비 리버브로 폴백한다.
+- **지시**: `linen`을 9층 복도 리버브로 명시 매핑하고 정본 room 어휘 9종의 roomKey 결과를 회귀 검사한다.
+- **요청자가 처리한 부분**: 자기 소유 script.js에서 루이즈 심문 공간을 정본 `linen`으로 수렴했다.
+
+### [ ] T-P0-03 → ATMOSPHERE
+- **파일**: src/world/atmo/moods.js
+- **루브릭**: ARCH §5 / G2
+- **문제**: ROOM_MOOD가 구형 `corridor`·`bathroom`만 받아 정본 `corridor9`·`linen`·`bathroom942`·`stairs-roof` room 변경에서 무드 전환이 누락된다.
+- **지시**: 정본 room 어휘를 기존 대응 무드에 명시 매핑하고 room:changed 전환 회귀를 실행한다.
+- **요청자가 처리한 부분**: 자기 소유 script.js의 공간 어휘만 정본으로 수렴했고 타 소유 무드 표는 수정하지 않았다.
+
+### [ ] T-P0-03 → PIPELINE-EFFECTS
+- **파일**: src/render/passes/volmarch.js
+- **루브릭**: ARCH §0 / 계약 린트 display-name
+- **문제**: 화면 표출은 아니지만 143행 주석의 `세실의 벽등`이 패킷 A4의 원문 grep에 잡혀 0건 조건과 충돌한다.
+- **지시**: 주석을 허구 명칭 또는 일반 명사로 바꾸고 `grep -rn '세실' src/ --include=*.js` 0건을 확인한다.
+- **요청자가 처리한 부분**: 자기 소유 표출 문자열 3건은 모두 버질 정본으로 교체해 display-name 린트 위반을 제거했다.
+
+### [ ] T-P0-04 → T-P0-03
+- **파일**: src/narrative/deduction.js · src/narrative/script.js · src/ui/casebook.js
+- **루브릭**: T-P0-04 A1
+- **문제**: `node tools/lint-contract.mjs`가 화면 표출 legacy 이름 3건으로 종료 코드 1을 반환해 T-P0-04가 자기 소유 500줄 위반을 모두 제거한 뒤에도 A1 전체 명령을 통과할 수 없다.
+- **지시**: T-P0-03의 정본 치환 문자열을 적용하고 동일 린트 명령의 display-name 위반을 0건으로 만들어라.
+- **요청자가 처리한 부분**: T-P0-04 소유 4파일과 분할 신규 4파일은 모두 500줄 이하이며 max-500-lines 위반은 0건이다.
+
+### [ ] T-P0-04 → T-P0-02
+- **파일**: src/world/kit-mat.js · src/world/kit.js · src/world/props.js · src/world/testbed.js
+- **루브릭**: T-P0-04 A1
+- **문제**: `node tools/lint-contract.mjs`가 재질 직접 생성 4건과 광원 직접 생성 4건으로 종료 코드 1을 반환해 T-P0-04가 자기 소유 500줄 위반을 모두 제거한 뒤에도 A1 전체 명령을 통과할 수 없다.
+- **지시**: T-P0-02 계약에 따라 팩토리 경유화 또는 승인 예외 등재를 완료하고 동일 린트 명령의 해당 위반을 0건으로 만들어라.
+- **요청자가 처리한 부분**: props.js의 광원 생성 3건 구역은 손대지 않았고, potPlant만 props-decor.js로 순수 이동했다.
