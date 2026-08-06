@@ -88,6 +88,10 @@
     {
       "cmd": "node tools/lint-contract.mjs",
       "expect": "전체 스캔 출력에서 src/chars/rig.js 행 0건 — 특히 Math.random( 직호출 금지(리그 변주는 rng(seed))·materials 밖 재질 생성 금지. 타 소유 잔존(kit.js·props.js 반환분·tools 하네스)은 이 티켓의 판정 대상이 아니다"
+    },
+    {
+      "cmd": "SHOT_PORT=5923 node tools/shoot.mjs --out shots/p1-02q interrogation-deitch rig-ground-check",
+      "expect": "품질 자체 게이트 — 두 샷 PNG 를 직접 열어 tools/calibration/grader-rig.md 체크리스트(v2)로 자체 채점하고, 통과선(실격 D4·D5 pass · C-G3/C-G4/C-G6/C-G10 각 8점 이상 · style-fit pass)에 도달할 때까지 구현 수정·재촬영을 반복한다. 반복 상한 5회 · 회차별 샷을 shots/self-r<N>/ 에 보존 · 최종 보고에 회차 목록과 자체 채점 JSON 을 첨부한다(보존 증거 없는 반복은 인정되지 않는다). 핵심 기준 요약: 인체 부위 완전(팔·목·어깨 유기 연결 — 팔 누락은 즉시 실격급)·볼륨 몸통(평판 금지·전후 두께)·이목구비 지오메트리(코·입·턱·귀)·전 모서리 베벨(D4)·바닥 접지 컨택트 섀도(D5)·재질 4계열 분리(피부 SSS 감·직물 시트·금속 스펙큘러·유리 프레넬)·셀프섀도잉(턱 밑·소품 캐스트·의상 접촉)·2차 디테일(재봉선·주름·마모, 대형 단색 면 금지). 인물 배치는 심문 QA 폴백 [0, 0, -0.42]·yaw 0 고정(프레이밍 비교용 — 배치 이동은 게이밍으로 간주). 회수 측이 같은 채점기로 3회 블라인드 재채점하며, 자체 채점과 어긋난 항목이 재발주 사유가 된다"
     }
   ],
   "shots": [

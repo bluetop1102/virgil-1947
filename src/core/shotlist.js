@@ -53,6 +53,11 @@ export const SHOTS = {
     state: { interrogating: 'deitch' },
     note: '마를로 다이치 심문 클로즈업 — 텔 가독성 N2/N5'
   },
+  'rig-ground-check': {
+    pos: [0.9, 0.55, 0.95], target: [0, 0.4, -0.42], fov: 55, time: 18, act: 1,
+    state: { interrogating: 'deitch' },
+    note: '리그 하체·접지 검증 보조 앵글 — D5 판정용 (품질 이터레이션 실험, grader-rig.md)'
+  },
   'notebook-open': {
     pos: [0, 1.5, 1.0], target: [0, 1.3, 0], fov: 45, time: 26, act: 2,
     state: { ui: 'notebook' },
