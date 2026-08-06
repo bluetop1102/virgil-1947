@@ -1,9 +1,0 @@
-[
-  {
-    "tag": "A",
-    "js": "(()=>{const E=window.__ENGINE__,p=E.get('pipeline');p.composite.mat.uniforms.uHalation.value=0;const lk=p.ctx.look.exposure||1;p.expo.measure=()=>45/lk;window.__G={};E.scene.traverse(o=>{if(['stairHead','corridor.endWall','corridor.stairWell'].includes(o.name))window.__G[o.name]=o});Object.values(window.__G).forEach(o=>o.visible=true);return Object.keys(window.__G)})()"
-  },
-  { "tag": "B-noStairHead", "js": "(()=>{Object.values(window.__G).forEach(o=>o.visible=true);window.__G['stairHead'].visible=false;return 'stairHead off'})()" },
-  { "tag": "C-noEndWall", "js": "(()=>{Object.values(window.__G).forEach(o=>o.visible=true);window.__G['corridor.endWall'].visible=false;return 'endWall off'})()" },
-  { "tag": "D-restore", "js": "(()=>{Object.values(window.__G).forEach(o=>o.visible=true);return 'restore'})()" }
-]

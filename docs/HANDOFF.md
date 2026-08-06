@@ -2477,3 +2477,59 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
 - **요청자가 처리한 부분**: 매니페스트에 표를 있는 그대로 전사해 두었고, 검증기가 이 지점을
   기계로 잡도록 R1 을 넣었다. 표가 수정되면 두 JSON 의 `depends`(또는 `owner_files`) 한 줄만
   고치고 `node tools/manifest-check.mjs` 재실행으로 닫힌다.
+
+### [ ] 시스템(제출 인프라) → [CORE] / [UI] / [INTERROGATION] / E10 소유자 — **배포본에 실존 호텔명이 표출된다 (제출 리스크)**
+
+- **파일**: `index.html` (6행 `<title>`, 28행 `.mark`) · `src/ui/casebook.js:101` ·
+  `src/narrative/deduction.js:33` · `src/narrative/script.js:302`
+- **루브릭**: 재허구화 계약(ARCH §0 — 화면 표출 "세실" 0) · NAN 제출 요건(표절·무단 도용 조항)
+- **문제**: 재허구화는 문서 층에서만 끝났고 **배포 산출물에는 남아 있다.** 실측(`dist/` 대상):
+  - `<title>CECIL — 1947 · Room 942`, 부트 화면 대문짝 `<div class="mark">CECIL</div>`
+    → 심사자가 링크를 클릭하면 **가장 먼저 보는 두 글자**가 실존 호텔명이다.
+  - 한글 표출 3건: 수사노트 표지 "실종 · 세실 호텔 942호"(casebook), 미제 엔딩 캡션
+    "세실은 계속 영업했다."(deduction), 같은 문장의 자막(script).
+  재현: `npx vite build --base=./ && grep -roE '(CECIL|세실)' dist/`
+- **소유 공백이 진짜 문제다**: T-P0-03 은 `script.js` 만 덮고(1/3), 계약 린트(T-P0-01)는
+  `src/` 만 grep 하므로 **`index.html` 은 어느 티켓의 소유도 아니다.** P0 를 전부 통과시켜도
+  부트 화면의 `CECIL` 은 그대로 출하된다. 티켓 보드의 구멍이다.
+- **지시**:
+  1. `index.html` 을 T-P0-03 의 소유 파일에 추가하고, 내용에 "부트 화면·`<title>` 표출
+     문자열 재허구화"를 명기한다(E10 §2 P0 표). 대체 문자열은 ARCH §0 의 작품명 —
+     `VIRGIL — 1947 · Room 942` · 대문짝 `VIRGIL`.
+  2. 같은 티켓 범위에 `src/ui/casebook.js`·`src/narrative/deduction.js` 의 **표출 문자열
+     1건씩**을 구역 소유로 추가한다(로직 무수정 — 문자열만). "세실 호텔" → "호텔 버질",
+     "세실은 계속 영업했다" → "버질은 계속 영업했다"(E2 부록 A 원문과 이미 일치한다).
+  3. T-P0-01 계약 린트의 표출 "세실" 규칙 대상에 `index.html` 을 포함시킨다 —
+     `src/` 만 훑으면 이 결함이 영원히 안 잡힌다.
+  - 코드 식별자(`window.__CECIL__`·`cecil*` 접두 재질명)는 ARCH §0 이 잔존을 허용하므로
+    건드리지 않는다. **표출 문자열만**이다.
+- **요청자가 처리한 부분**: 배포 검증기(`tools/serve-check.mjs`)로 dist 를 실제 정적 서버에
+  얹어 부팅·콘솔 0 을 확인하면서 `<title>` 을 실측했고, 전 이력 시크릿 스캔(고유 텍스트
+  blob 748개/31.8MB)에서 시크릿 0·위험 경로 0 을 확인했다. 실존 인물명(Elisa Lam 계열)
+  잔존은 0 이다 — 남은 것은 호텔명뿐이다.
+
+### [ ] 시스템(제출 인프라) → [CORE] / E8 소유자 — **`low` 프리셋이 없다. `?q=low` 는 조용히 high 로 떨어진다**
+
+- **파일**: `src/core/config.js` (4~76행 `QUALITY`, 97~102행 `pickQuality`) · `docs/design/E8-ui.md` §2 표
+- **루브릭**: 제출 요건(심사자 실행 가능성) · E9 §2 프레임 예산
+- **문제**: 프리셋은 `cinematic`(QA 전용)·`high`·`medium` 셋뿐이다. `pickQuality` 는
+  `QUALITY[q]` 가 없으면 **아무 경고 없이 `high` 를 반환한다**(101~102행). 그래서
+  저사양 사용자가 `?q=low` 를 넣으면 가장 무거운 플레이어 프리셋을 받는다 — 조용한 실패다.
+  더해서 `medium` 조차 가장 비싼 패스를 끄지 않는다: `volumetric: true`(volSteps 16) ·
+  `gtao: true`(slices 2/steps 6) 유지, 끄는 것은 `ssr`·`dof`·`motionBlur`·`taa`·`parallax` 다.
+  심사자 노트북이 M2 가 아니라는 것이 이 항목의 실질 리스크다.
+- **지시**:
+  1. `QUALITY.low` 를 신설한다 — `volumetric: false` · `gtao: false` · `ssr: false` ·
+     `bloom: true`(느와르 룩의 최소선) · `texRes: 256` · `shadowMap: 512` · `cascades: 1` ·
+     `particles: 0` · `maxLights: 4`. 볼류메트릭·GTAO 를 **끄는 것**이 핵심이다 —
+     스텝 수를 줄이는 것으로는 저사양 노트북의 프레임이 안 산다.
+  2. `pickQuality` 의 미지 값 폴백에 콘솔 경고를 붙인다 — 조용한 폴백은 계약 §"실수 은닉
+     금지"(재질 마젠타 폴백과 같은 원칙) 위반이다. 단 **콘솔 0 게이트**가 있으므로
+     경고는 미지 값이 실제로 들어왔을 때만 낸다.
+  3. E8 §2 설정 표의 "품질 프리셋" 행에 선택지 3종(high/medium/low)을 명기한다 —
+     현재는 값 목록이 없어 설정 UI(T-P1-05)가 무엇을 띄울지 결정할 수 없다.
+  4. E9 §2 프레임 예산 행에 low 기준을 추가한다(제안: low 30fps @ CPU 4× 스로틀링).
+- **왜 지금인가**: 제출 체크리스트의 저사양 리허설(`?q=low` + CPU 4× 스로틀링 완주)이
+  이 프리셋 없이는 성립하지 않는다. 8/8 리허설 전에 닫혀야 한다.
+- **요청자가 처리한 부분**: `config.js` 는 [CORE] 잠김이라 읽기만 했다. 제출 체크리스트
+  (`docs/submission/checklist.md`)의 저사양 항목에 이 미해소 상태를 명기해 두었다.

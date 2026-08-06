@@ -1,1 +1,0 @@
-[{"tag":"fade3","js":"(()=>{const E=window.__ENGINE__;E.scene.traverse(o=>{const m=o.material;if(!(m&&m.defines&&m.defines.SHAFT_STEPS))return;m.uniforms.uSoftFade.value=3.0});E.time=9.2;return 'fade3'})()"}]

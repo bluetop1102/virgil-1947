@@ -7,7 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "vite",
     "build": "vite build",
-    "shot": "node tools/shoot.mjs"
+    "shot": "node tools/shoot.mjs",
+    "build:pages": "vite build --base=./",
+    "serve-check": "node tools/serve-check.mjs"
   },
   "keywords": [],
   "author": "",

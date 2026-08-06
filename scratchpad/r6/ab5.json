@@ -1,7 +1,0 @@
-[
- {"tag":"A","js":"(()=>{const E=window.__ENGINE__,p=E.get('pipeline');p.composite.mat.uniforms.uHalation.value=0;const lk=p.ctx.look.exposure||1;p.expo.measure=()=>45/lk;E.scene.traverse(o=>{if(o.name==='stairHead')window.__SH2=o});window.__SH2.children.forEach(c=>c.visible=true);return window.__SH2.children.map((c,i)=>i+':'+c.geometry.attributes.position.count+'v cc='+(c.material.clearcoat??0))})()"},
- {"tag":"c0","js":"(()=>{const C=window.__SH2.children;C.forEach(c=>c.visible=true);C[0].visible=false;return 'hide 0'})()"},
- {"tag":"c1","js":"(()=>{const C=window.__SH2.children;C.forEach(c=>c.visible=true);C[1].visible=false;return 'hide 1'})()"},
- {"tag":"c2","js":"(()=>{const C=window.__SH2.children;C.forEach(c=>c.visible=true);C[2].visible=false;return 'hide 2'})()"},
- {"tag":"c3","js":"(()=>{const C=window.__SH2.children;C.forEach(c=>c.visible=true);C[3].visible=false;return 'hide 3'})()"}
-]
