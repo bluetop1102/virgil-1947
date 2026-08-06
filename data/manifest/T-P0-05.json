@@ -62,7 +62,7 @@
     },
     {
       "cmd": "node tools/factcheck.mjs --mutate p5-perfect",
-      "expect": "FAIL 재현 — anxiousTell을 전부 제거해 거짓·텔 상관을 1.0으로 만든 변이에서 P5가 반드시 떨어진다(완전판별기 검출)"
+      "expect": "FAIL 재현 — anxiousTell을 전부 제거해 거짓·텔 상관을 1.0으로 만든 변이에서 P5가 반드시 떨어진다(완전판별기 검출). 상관은 거짓 여부×텔 발화 여부의 이진 phi 계수로 정의하고, 분산 0 등 계산 불가 분포는 실패로 판정한다(구현 정본: tools/factcheck.mjs P5 절)"
     },
     {
       "cmd": "node tools/factcheck.mjs --mutate p5-breaking",

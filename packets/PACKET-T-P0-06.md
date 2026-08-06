@@ -244,9 +244,9 @@ src/
 **A1.**
 
 ```bash
-SHOT_PORT=5906 node tools/shoot.mjs --out shots/p0-06 --url-suffix "?q=low" atmo-corridor-night
+node tools/calibration/check-low-preset.mjs
 ```
-→ 샷 성공 · 콘솔 에러·경고 0 · 볼류메트릭·GTAO·SSR 이 실제로 비활성(활성 프리셋 로그 또는 렌더 타깃 부재로 확인)
+→ 8/8 PASS · exit 0 — low 선택 · 볼류메트릭/GTAO/SSR/TAA 비활성 · 미지 값 경고 정확히 1회 후 high 폴백 · 무지정 high 유지. low 실샷 게이트는 tools/shoot.mjs 의 URL 쿼리 주입 지원 후 추가한다(docs/HANDOFF.md T-P0-06 항목 — 하네스 소유자 소관)
 
 **A2.**
 
@@ -260,7 +260,7 @@ node tools/serve-check.mjs --port 8131
 ```bash
 node tools/pix.mjs diff shots/_baseline/corridor.png shots/p0-06/atmo-corridor-night.png
 ```
-→ **기본 경로**의 픽셀 변화 0.0% — low 신설이 high/medium 렌더를 바꾸면 회귀다(low 샷 자체는 당연히 다르다)
+→ 기본 경로의 픽셀 게이트 PASS — low 신설이 high/medium 렌더를 바꾸면 회귀다(low 샷 자체는 당연히 다르다). 동결 기준선 shots/_baseline/ 은 gitignore 라 클론에 없다 — 이 검사는 기준선을 보유한 본체에서 머지 시점에 실행한다
 
 ## 9. 금지 사항
 

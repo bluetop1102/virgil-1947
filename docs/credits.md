@@ -52,8 +52,8 @@
 |---|---|---|---|
 | Claude Code | Claude Opus 5 / Fable 5 | 기획 라운드(E0~E10 요소 문서)·구현 라운드·통합·판정·시스템 구축 | 커밋 이력 전체 · `docs/design/**` · `PROMPT-*.md` |
 | Claude Code (서브에이전트) | Opus 5 / Sonnet 5 | 병렬 전담(재질·파이프라인·이펙트·소품·대기)·블라인드 채점자·반증 에이전트 | `docs/ROUNDS.md` 라운드 로그 · `docs/HANDOFF.md` 교차 요청 큐 |
-| OpenAI Codex | — | 독립 2차 코드 리뷰·외부 배정 티켓(예정) | `tools/calibration/report.md` |
-| Grok build | — | 외부 배정 티켓(예정) | `tools/calibration/report.md` |
+| OpenAI Codex | — | 독립 2차 코드 리뷰·**P0 발주 티켓 3장 구현·머지**(T-P0-01 계약 린트 · T-P0-05 텔 상관 · T-P0-06 low 프리셋) | `tools/calibration/report.md` · 머지 커밋 3건(발주 커밋 해시 명기) |
+| Grok build | — | 캘리브레이션 파일럿 ① 대조군(산출은 계약 개정으로 미머지) | `tools/calibration/report.md` §1·§4.1 |
 
 - **프롬프트 원문은 저장소에 있다**: `PROMPT-plan-v1.md`(기획) · `PROMPT-build-p0.md`·
   `PROMPT-build-p1.md`(구현) · `PROMPT-system-v1.md`(위임 시스템) · `packets/PACKET-*.md`
