@@ -98,7 +98,7 @@ export function caseLeaf (w, h, act = 2) {
 
   typed(ctx, 'LOS ANGELES POLICE DEPARTMENT', m, 32 * u, { size: 10.5 * u, track: 2.2 * u, ink: INK.faded, alpha: 0.62, seed: 3 })
   penLine(ctx, m, 41 * u, w - 30 * u, 41.5 * u, { w: 0.9, alpha: 0.34, seed: 5 })
-  typed(ctx, '실종 · 세실 호텔 942호', m, 74 * u, { size: 21 * u, ink: INK.ribbon, alpha: 0.95, seed: 7, track: 0.4 })
+  typed(ctx, '실종 · 호텔 버질 942호', m, 74 * u, { size: 21 * u, ink: INK.ribbon, alpha: 0.95, seed: 7, track: 0.4 })
   typed(ctx, '밴스, 아이리스 · 22', m, 102 * u, { size: 14 * u, ink: INK.ribbon, alpha: 0.86, seed: 11 })
   typed(ctx, '입실 10월 2일 — 최종 확인 10월 9일 밤', m, 124 * u, { size: 12 * u, ink: INK.faded, alpha: 0.8, seed: 13 })
 

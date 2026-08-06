@@ -1,5 +1,5 @@
 // [INTERROGATION] 심문 상태기계 — docs/STORY.md 4절 규칙의 구현.
-// 대사·정답 증거는 전부 script.js(NARRATIVE 소유)에서 온다. 이 파일은 규칙만 소유한다.
+// 대사는 script.js, 진위·정답 증거 관계는 case-graph-loader.js에서 온다. 이 파일은 규칙만 소유한다.
 //
 // 소비하는 script.js 계약 (script.js 상단 주석과 동일한 형태):
 //   INTERROGATIONS[npc] = { npc, act, mode?, intro:[{speaker,text}], statements:[…] }
@@ -14,6 +14,7 @@
 // script.js가 없어도 이 모듈은 부팅된다(심문만 비활성).
 
 import { damp, clamp } from '../core/util.js'
+import { hydrateInterrogations } from './case-graph-loader.js'
 
 export const CHOICES = ['TRUTH', 'DOUBT', 'LIE']
 
@@ -113,7 +114,7 @@ export class Interrogation {
   }
 
   _useScript (mod) {
-    this.script = mod.INTERROGATIONS || null
+    this.script = mod.INTERROGATIONS ? hydrateInterrogations(mod.INTERROGATIONS) : null
     this.names = { detective: mod.DETECTIVE?.name || '형사' }
     for (const [id, c] of Object.entries(mod.CHARACTERS || {})) this.names[id] = c.name || id
   }

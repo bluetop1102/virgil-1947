@@ -1,25 +1,24 @@
 // [INTERROGATION] 증거판 — docs/STORY.md 5.4의 링크 3개와 엔딩 분기.
 // 상태와 규칙만 소유한다. 렌더는 UI가 getBoardState()를 읽어 그린다.
-// script.js가 있으면 LINKS/ENDINGS/도일 도입부를 거기서 가져오고, 없으면 아래 사본으로 돈다.
+// script.js가 있으면 링크 표출/엔딩/도일 도입부를 가져오며, 증거 관계는 case-graph-loader.js에서 푼다.
 
 // 내부 표현: { id, evidence:[a,b], claim, line, action, detective }
-export const LINKS = [
+import { hydrateLinks } from './case-graph-loader.js'
+
+const LINK_PRESENTATION = [
   {
     id: 'L1',
-    evidence: ['hatch-lock', 'shoes'],
     claim: '자살이 아니다 — 해치는 바깥에서 잠겼고 구두는 가지런히 놓여 있었다',
     line: '가지런히요. 그건 그 여자가 그렇게 해놓은 겁니다. 요새 애들이 그럽디다.'
   },
   {
     id: 'L2',
-    evidence: ['water-log', 'pressure-log'],
     claim: '10월 9일 밤 탱크에 접근한 사람은 한 명뿐이다',
     action: '웃는다',
     line: '일지는 제가 씁니다. 제가 쓴 걸 저한테 들이대시는 겁니까.'
   },
   {
     id: 'L3',
-    evidence: ['photos', 'wrench'],
     claim: '14개월 전에도 같은 사람이 같은 자리에 있었다',
     action: '웃음을 멈추지 않는다',
     line: '…삼촌한테 전화 좀 하겠습니다.',
@@ -27,10 +26,12 @@ export const LINKS = [
   }
 ]
 
+export const LINKS = hydrateLinks(LINK_PRESENTATION).map(link => ({ ...link, evidence: link.needs }))
+
 export const ENDINGS = {
   full: { id: 'full', title: '완전', text: '도일 체포. 넬 밴스 사건 재수사 개시.', last: '물탱크의 물이 빠지는 소리', caption: null },
   partial: { id: 'partial', title: '부분', text: '도일 구금 48시간. 소유주 변호사가 온다.', last: '프런트에 걸린 942호 열쇠', caption: null },
-  cold: { id: 'cold', title: '미제', text: '사건 종결.', last: '새 손님이 942호 열쇠를 받아 간다', caption: '세실은 계속 영업했다.' }
+  cold: { id: 'cold', title: '미제', text: '사건 종결.', last: '새 손님이 942호 열쇠를 받아 간다', caption: '버질은 계속 영업했다. 9층 이야기가 하나 늘었다.' }
 }
 
 export const INTRO = [
@@ -79,7 +80,7 @@ export class Deduction {
     const names = { detective: mod.DETECTIVE?.name || '형사' }
     for (const [id, c] of Object.entries(mod.CHARACTERS || {})) names[id] = c.name || id
     if (Array.isArray(mod.LINKS)) {
-      this.links = mod.LINKS.map(l => ({
+      this.links = hydrateLinks(mod.LINKS).map(l => ({
         id: l.id,
         evidence: [...(l.needs || l.evidence || [])],
         claim: l.claim,
