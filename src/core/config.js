@@ -72,6 +72,30 @@ export const QUALITY = {
     parallaxSteps: 0,
     particles: 0.3,
     maxLights: 8
+  },
+  low: {
+    name: 'low',
+    texRes: 256,
+    shadowMap: 512,
+    cascades: 1,
+    taa: false,
+    taaSamples: 1,
+    gtao: false,
+    gtaoSlices: 1,
+    gtaoSteps: 2,
+    ssr: false,
+    ssrSteps: 0,
+    volumetric: false,
+    volSteps: 0,
+    bloom: true,
+    bloomMips: 3,
+    dof: false,
+    motionBlur: false,
+    grain: true,
+    parallax: false,
+    parallaxSteps: 0,
+    particles: 0,
+    maxLights: 4
   }
 }
 
@@ -98,5 +122,6 @@ export function pickQuality (search = '') {
   const p = new URLSearchParams(search)
   const q = p.get('q')
   if (q && QUALITY[q]) return QUALITY[q]
+  if (q) console.warn(`[config] unknown quality preset: ${q}`)
   return p.get('qa') === '1' ? QUALITY.cinematic : QUALITY.high
 }
