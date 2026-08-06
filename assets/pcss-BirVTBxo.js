@@ -1,0 +1,1 @@
+import{t as e}from"./pcss-CnsL8NK2.js";export{e as installPcss};

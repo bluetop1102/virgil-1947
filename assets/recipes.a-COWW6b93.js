@@ -1,0 +1,1 @@
+import{t as e}from"./recipes.a-vy4YT4vY.js";export{e as RECIPES_A};

@@ -1,0 +1,1 @@
+import{t as e}from"./board-KdLHBd1A.js";export{e as createBoard};

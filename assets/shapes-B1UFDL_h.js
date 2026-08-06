@@ -1,0 +1,1 @@
+import{a as e,i as t,n,o as r,r as i,s as a,t as o}from"./shapes-DUo_C1Be.js";export{o as bakeTrimesh,n as boxiness,i as initRapier,t as localPoints,e as matOf,r as unit,a as v3};

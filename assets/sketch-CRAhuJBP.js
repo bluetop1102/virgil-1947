@@ -1,0 +1,1 @@
+import{a as e,i as t,n,o as r,r as i,t as a}from"./sketch-ZbmV00pR.js";export{a as SKETCH,n as SKETCH_FOR,i as paperclip,t as pushpin,e as staple,r as tape};
