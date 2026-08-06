@@ -4,6 +4,8 @@
 > 계약 변경이 필요하면 코드를 고치지 말고 결과 보고에 `CONTRACT_CHANGE_REQUEST`로 적어 반환한다.
 > **v2 (2026-08-05)**: 재허구화(§0) · §2 소유권 표 실파일 동기화 · §5 표준 이벤트 추가분.
 > **v2.1 (2026-08-06)**: core 잠금 예외 1건 추가 — `config.js` QUALITY.low 신설(T-P0-06 한정, §2).
+> **v2.2 (2026-08-06)**: 지목판 개정(E5 §5) 파급 — `deduction:present`/`deduction:link`에
+> claim 필드, `qa.link` 시그니처(§9) · §5 구독 어휘 규칙 신설(폐집합 — HANDOFF 답신).
 > 코드 식별자(`__CECIL__` 등)는 내부 코드네임으로 잔존 허용 — 화면 표출 텍스트만 "세실" 0 (계약 린트, P0).
 
 ## 0. 작품 정의
@@ -231,14 +233,14 @@ engine.bus.emit('interrogation:start', {npc: 'deitch'})
 | `interrogation:prompt` | `{npc, sid, options}` | interrogation — UI에 3선택(또는 재질문 2선택) 요구. 렌더는 [UI] 소유 *(v2)* |
 | `interrogation:choose` | `{sid, choice, evidence?}` | ui — 플레이어 선택 반환(단일 발화 — LIE는 증거 확정 시점에만, 판정도 그때만) *(v2)* |
 | `interrogation:aiming` | `{sid, on}` | ui — LIE 증거 지목 모드 진입(on:true)/취소(on:false). 카메라 푸시인·롤백(E7 §1 3행)의 트리거. 판정 아님 *(v2)* |
-| `deduction:present` | `{linkId, evidence}` | ui(board) — 증거판에 링크 제시 입력. 판정·`deduction:link` 발화는 deduction 소유 *(v2)* |
+| `deduction:present` | `{evidence, claim}` | ui(board) — 증거판 시도 입력: 증거 2개 + 명제(claim id, case-graph `links[].claims`). 어느 링크인지는 UI가 모른다 — 판정·`deduction:link` 발화는 deduction 소유 *(v2.2 — 지목판 개정, E5 §5)* |
 | `deduction:sign` | `{}` | ui(board) — 조서 서명 = 지목 종결 선언. deduction이 성립 링크 수로 엔딩 분기(E5 §5) *(v2)* |
 | `deduction:end` | `{ending, links, flags}` | deduction — 지목 종결 확정 통지(ending ∈ full/partial/cold). cinematics(cin-end-* 개시)·save(**엔딩을 비가역 레코드에 기록, 회차 종결 — "이어서" 소멸, E8 §4**)가 소비 *(v2)* |
 | `boot:progress` | `{done, total}` | main.js — 부트 진행(모듈 init 계수+첫 프레임). 로딩 화면(E8 §3)이 구독 *(v2)* |
 | `title:proceed` | `{mode}` | ui(title) — 타이틀·재입장 통과 신호. mode `new`(첫 입력/처음부터) → cinematics가 cin-intro 개시. mode `resume` → title.js 자신이 `?resume=1` 재작성+리로드(수신자 없음, 로그 목적). mode `wake`(재제스처 화면 첫 입력 — E8 §4) → 각 모듈이 제스처 후 재개(audio 컨텍스트 활성·입력 홀드 해제·복원 지점 플레이 개시) *(v2)* |
 | `game:pause` | `{on}` | ui(settings 카드) — 일시정지 전파. **구독·정지 대상: physics·chars(perf)·cinematics·interrogation·audio(디제틱 감쇠) — 각 모듈이 자기 update를 스킵한다(core 무수정, engine.time은 계속 흐른다). 렌더·pipeline은 지속** — FOV·감도 즉시 반영을 카드 뒤 화면으로 확인하는 것이 목적이다. 시네마틱 재생 중 pause = 재생 정지(스킵 아님) *(v2)* |
 | `perf:state` | `{npc, state}` | interrogation — 연기 상태 idle/anxious/lying/breaking. perf.js는 이것만 구독하며 진위를 모른다. 산출 규칙(기계): 진술 제시 중 `truth:false`→lying, `anxiousTell:true`→anxious, 그 외→idle. **breaking은 case-graph `breakingOn:true` 진술의 lieCorrect 판정 직후에만**(현행 3건: deitch.S4·ruiz.S4·pryce.S3) *(v2)* |
-| `deduction:link` | `{id, ok}` | deduction — 지목판 링크 성립/실패. perf(도일 반응)·cinematics(광각화)가 구독 *(v2)* |
+| `deduction:link` | `{id?, claim, ok}` | deduction — 지목판 시도 판정. 성립: `{id, claim, ok:true}` · 불성립 시도: `{claim, ok:false}`(id 없음 — 어느 링크에 가까웠는지도 힌트라 싣지 않는다). perf(도일 반응 — 불성립은 받아치기 4줄 순환, STORY §5.4)·cinematics(광각화)가 구독 *(v2.2 — claim 필드 추가, E5 §5)* |
 | `camera:dof` | `{bias, ms}` | cinematics — LIE 푸시인의 조리개 개방(보케 붕괴) 요청. 수신·보간은 [PIPELINE-CORE]가 dof 패스에 전달(수신부 구현은 HANDOFF 큐 경유 — E10 T-P1-08 비고) *(v2)* |
 
 **`room:changed` 값 어휘 (정본 — v2)**: `lobby` · `elevator` · `corridor9` · `linen` ·
@@ -246,6 +248,16 @@ engine.bus.emit('interrogation:start', {npc: 'deitch'})
 완주 봇 로그가 이 문자열을 그대로 소비한다. 기존 코드의 `corridor` 등 이형 표기는
 T-P0-03 정합 라운드에서 이 어휘로 수렴한다. `elevator`는 이동 공간이라 case-graph 셀이
 아니며, `boiler`는 진입 불가 공간이라 room 값으로 발화되지 않는다(소리 원점 전용, E6 §0).
+
+**구독 어휘 규칙 (정본 — v2.2, 2026-08-06 HANDOFF 답신)**: 발화뿐 아니라 **구독도
+폐집합(a)**이다 — 모듈은 자기 티켓/매니페스트 `events` 절에 열거된 이벤트만 구독하고,
+`game:pause` 같은 공용 이벤트도 열거해야 구독할 수 있다. 필요해지면 발명이 아니라
+**열거 추가**로 해결한다(CONTRACT_CHANGE_REQUEST 또는 발주 세션의 매니페스트 갱신).
+선정 사유: 파일럿 ② 실측에서 두 에이전트가 갈린 유일한 구조 축이 이 미정이었다 —
+최소집합(b)은 "공용"의 경계가 다시 판단 문제가 되어 같은 분기를 재생산한다. 열거 비용이
+계약 드리프트보다 싸다. **직접 파급**: chars 티켓 events에 `game:pause` 추가 필요
+(§5 game:pause 행의 구독 대상에 chars(perf)가 이미 명시 — 부록과 티켓 정본의 어긋남이
+이 규칙으로 닫힌다). 매니페스트 재전사는 발주 세션 소관.
 
 ## 6. 재질 계약 (MATERIALS 소유, 전원 소비)
 
@@ -332,9 +344,11 @@ setMood('corridor-night')   // 안개 밀도·볼류메트릭 세기·IBL을 한
   `qa.interact(qaId)` 상호작용. interact/walk는 gameplay가 자기 경로로 `player:interact`를
   발화하므로 §5 발신 방향 계약과 충돌하지 않는다.
 - 심문·지목 입력([UI] 구현): `qa.choose({sid, choice, evidence?})` — UI의
-  `interrogation:choose` 발신 경로를 대리 구동 · `qa.link(linkId)` — 증거판 `deduction:present`
-  대리 · `qa.sign()` — 조서 서명(`deduction:sign`) 대리 · `qa.notebook({op, arg?})` —
-  수사노트 구동(op: open/close/tab/scrub/inspect — C3 스크럽·반사 상호작용 재현용).
+  `interrogation:choose` 발신 경로를 대리 구동 · `qa.link(evidence, claimId)` — 증거판
+  `deduction:present {evidence, claim}` 대리(증거 2개 배열 + 명제 id — E5 §5 개정, 완주 봇
+  골든 패스가 정답 명제 id를 E2 표에서 소비) · `qa.sign()` — 조서 서명(`deduction:sign`)
+  대리 · `qa.notebook({op, arg?})` — 수사노트 구동(op: open/close/tab/scrub/inspect —
+  C3 스크럽·반사 상호작용 재현용).
 - 관측(gameplay 구현): `qa.state()` → `{act, evidence[], burned[], flags[], room}` 읽기 전용
   스냅샷 · `qa.events(sinceIndex?)` → 버스 이벤트 링버퍼(QA 모드에서 gameplay가 기록).
   봇은 버스를 직접 발화·구독하지 않는다.

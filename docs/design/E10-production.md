@@ -35,7 +35,7 @@ goal 계약 형식은 [E9 §3](E9-gates.md) — 중단 조건 없는 루프 금�
 
 | 티켓 | 내용 | 소유 파일 | 의존 | 수용 기준 | 모델 |
 |---|---|---|---|---|---|
-| T-P1-01 | 로비 정식 레벨 ([E6](E6-spaces.md) §1 로비 사양 전체) | `src/world/lobby.js` | P0 | `room:changed`·샷 엔트리·증거 4종 상호작용·콘솔 0·프레임 예산·상호작용 밀도 ≥6 | **단일 최강** (첫 30초 무대) |
+| T-P1-01 | 로비 정식 레벨 ([E6](E6-spaces.md) §1 로비 사양 전체) | `src/world/lobby.js` | P0 | `room:changed`·샷 엔트리·증거 4종 상호작용·콘솔 0·프레임 예산·상호작용 밀도 ≥6 · **`interrogation-deitch` 샷이 심문 위치(`npc/deitch` 앵커)를 활성화해 촬영됨 — 재질 테스트베드 폴백 촬영 불수용**(HANDOFF 파일럿 ② 답신 2026-08-06) | **단일 최강** (첫 30초 무대) |
 | T-P1-02 | 다이치 리그 (실루엣+식별 소품, E4 §3) | `src/chars/rig.js` | P0 | 샷 판정(실루엣 판독)·콘솔 0 | 외부 |
 | T-P1-03 | 다이치 텔 연기 4클립 (E4 §2·§3) | `src/chars/perf.js` | T-P1-02 | 클립 4종 재생·이벤트 구독만으로 트리거·P5 PASS | **단일 최강** (타이밍 감각) |
 | T-P1-04 | 심문 1건 E2E — 소각 직렬화 포함 (E5 §1·§2) | `src/narrative/interrogation.js` | T-P1-01 | 판정표 6행 배터리·소각 후 unlocks 미발화·`state` 직렬화 포함 | 외부 |
@@ -43,14 +43,17 @@ goal 계약 형식은 [E9 §3](E9-gates.md) — 중단 조건 없는 루프 금�
 | T-P1-06 | 완주 봇 — E2 골든 패스 표 소비, 1막 구간 + **`--capture <구간>` 모드**(P2 첫 30초·P4 오답 변형 등 판정용 프레임 시퀀스 덤프 — 시퀀스 캡처 도구는 봇에 통합, 별도 신설 없음) | `tools/playthrough.mjs` | T-P1-01·04 | 1막 완주 로그·무사건 간격 측정 출력·캡처 모드 동작 | 외부 |
 | T-P1-07 | 첫 30초 시네마틱 `cin-intro` (E2 §첫 30초 표) | `src/narrative/cinematics.js`(신설 — ARCH §2 표기 P1) | T-P1-01 | 30초 캡처가 E2 표와 초 단위 대조 통과(P2) | **단일 최강** |
 | T-P1-08 | 심문 카메라·침묵 연출 — E7 §1 수치 7행(렌즈·트래킹·높이) + 오답 룸톤 -6dB·3초(E7 §3). 이벤트 구독만으로 트리거. LIE 보케 붕괴는 `camera:dof` 발화(ARCH §5) — **pipeline 수신부(dof 유니폼 보간 1점)는 HANDOFF 큐로 [PIPELINE-CORE] 소유자에게 선행 의뢰** | `src/narrative/cinematics.js` 심문 절 + `src/audio/engine.js` 룸톤 규칙 | T-P1-04·07 + HANDOFF(pipeline dof 수신) | 오답 시퀀스 캡처 P4 무설명 판독 · 심문 중 컷 0회 검증 | **단일 최강** |
-| T-P1-09 | 심문 UI — hud 3선택 프롬프트 + notebook 증거 지목 모드 (`interrogation:prompt`/`choose`/`aiming` 배선, E5 [구현]) + **qa 대리 구동 UI 측**(`qa.choose`·`qa.link`·`qa.sign`·`qa.notebook` — ARCH §9) | `src/ui/hud.js` + `src/ui/notebook.js` 지목 모드 | T-P1-04 | C1 시퀀스 완주 봇 재현 · 정지샷 힌트 요소 0(P6·E5 §1) | 외부 |
+| T-P1-09 | 심문 UI — hud 3선택 프롬프트 + notebook 증거 지목 모드 (`interrogation:prompt`/`choose`/`aiming` 배선, E5 [구현]) + **qa 대리 구동 UI 측**(`qa.choose`·`qa.link`·`qa.sign`·`qa.notebook` — ARCH §9. **qa.link는 증거 2 + 명제 id 시그니처** — v2.2, E5 §5 지목판 개정) | `src/ui/hud.js` + `src/ui/notebook.js` 지목 모드 | T-P1-04 | C1 시퀀스 완주 봇 재현 · 정지샷 힌트 요소 0(P6·E5 §1) | 외부 |
 | T-P1-10 | gameplay QA 하네스 — `__CECIL__.qa` 구동·관측부(list/goto/walk/interact/state/events, `?qa=1` 게이팅, 이벤트 링버퍼) + `lore:heard` 발화 | `src/gameplay/player.js`·`evidence.js`의 qa 절 | T-P1-01 | 봇 `--fast` 1막 구동 성립 · qa API가 비QA 모드에서 비노출 | 외부 |
 
 ### P2~P5 — 계열 티켓 (P1 완료 후 상세화)
 
 P2: 레벨 3종(T-P2-01~03, E6 §1 사양·레벨당 1담당) · 루이즈/프라이스/도일 리그+텔
 (T-P2-04~06) · 시네마틱 잔여 5종(T-P2-07) · `gameplay/save.js`+체크포인트(T-P2-08) ·
-설정 완성 FOV/자막/볼륨(T-P2-09) · 오디오 리버브 6종+발소리 5종(T-P2-10, E7 §3).
+설정 완성 FOV/자막/볼륨(T-P2-09) · 오디오 리버브 6종+발소리 5종(T-P2-10, E7 §3) ·
+**증거판+명제 선택(T-P2-11: `narrative/deduction.js`·`ui/board.js` — E5 §5 개정 소비.
+수용 기준: factcheck J1~J3 PASS · 정답 3링크 성립·불성립 시도 시 오답 반응 4줄 순환
+재현(STORY §5.4) · 주장란 정지샷 힌트 요소 0)**.
 P3: 채점 라운드 (티켓 아님 — goal 루프). P4: 2단 커널(T-P4-01)+판정 배터리(T-P4-02,
 **단일 최강**). P5: 그래픽 라운드 (동결 해제 후, 단일 담당 직렬).
 

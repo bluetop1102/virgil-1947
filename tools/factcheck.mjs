@@ -4,6 +4,8 @@
 // F2 타임라인 일관성 동일 시각·동일 인물의 위치 모순 0 · 증거 원산지 셀 결박 100%
 // F3 도달성        3링크 각각 수집 가능 경로 성립 + 최악 소각 경로에서도 엔딩 도달
 // F4 고아 노드      어떤 엣지에도 연결되지 않은 FACT/EVIDENCE 0 · LORE 인과 침투 0
+// J1~J3 지목판     링크별 명제 후보 스키마 · 오답 명제 들러리 금지 · 조합 수 하한
+//                  (codex-verdict §6.4 — 링크 = 증거 2 + 명제 1)
 // R1~R3 회귀       MASTER-PLAN §3.3 개연성 결함 3건의 수정이 데이터에 남아 있는가
 //
 // 사용: node tools/factcheck.mjs [--json]   실패 시 exit 1
@@ -162,6 +164,54 @@ const worst = solve(new Set(g.statements.filter(s => s.burnable).map(s => s.id))
   ]
   for (const id of causal) if (loreIds.has(id)) fails.push(`LORE ${id}: 사건 인과에 침투`)
   check('F4', fails.length === 0, fails.length ? fails : `고아 0 · LORE ${g.lore.length}건 인과 격리 유지`)
+}
+
+// ── J1 지목 명제 후보 스키마 (E5 §5 — 링크 = 증거 2 + 명제 1) ────────────────
+{
+  const fails = []
+  for (const l of g.links) {
+    const claims = l.claims ?? []
+    if (claims.length < 3) fails.push(`${l.id}: 명제 후보 ${claims.length}개 (기준 ≥3 — 정답 1 + 오답 ≥2)`)
+    const correct = claims.filter(c => c.correct === true)
+    if (correct.length !== 1) fails.push(`${l.id}: 정답 명제 ${correct.length}개 (기준 정확히 1)`)
+    for (const c of claims) {
+      if (!c.id) fails.push(`${l.id}: id 없는 명제`)
+      if (!c.text || c.text.length < 10) fails.push(`${l.id}.${c.id}: 명제 원문 부재 또는 10자 미만`)
+    }
+  }
+  check('J1', fails.length === 0, fails.length ? fails
+    : `링크 ${g.links.length}개 전부 명제 후보 ≥3 · 정답 1`)
+}
+
+// ── J2 오답 명제 들러리 금지 (검증형 퀴즈화 차단 — 리서치 C1 강등 사유 준용) ──
+{
+  const fails = []
+  for (const l of g.links) {
+    const claims = l.claims ?? []
+    const texts = new Set()
+    for (const c of claims) {
+      if (texts.has(c.text)) fails.push(`${l.id}.${c.id}: 명제 원문 중복`)
+      texts.add(c.text)
+      if (c.correct === true) continue
+      const grounded = (c.fact && facts.has(c.fact)) || c.kind === 'misread'
+      if (!grounded) fails.push(`${l.id}.${c.id}: 오답 명제가 실제 사실(fact) 참조도 오독(kind:misread) 표기도 아님 — 들러리`)
+      if (c.fact && !facts.has(c.fact)) fails.push(`${l.id}.${c.id}: fact ${c.fact} 미해결`)
+      if (c.fact && l.proves.includes(c.fact)) fails.push(`${l.id}.${c.id}: 오답 명제가 이 링크의 proves(${c.fact})를 참조 — 정답과 구분 불능`)
+    }
+  }
+  check('J2', fails.length === 0, fails.length ? fails
+    : `오답 명제 ${g.links.reduce((n, l) => n + (l.claims ?? []).filter(c => !c.correct).length, 0)}건 전부 사실 참조 또는 오독 표기 — 들러리 0`)
+}
+
+// ── J3 조합 수 하한 (brute force 비현실화는 결과 — 목적은 표현권 이전) ────────
+{
+  const nC2 = n => n * (n - 1) / 2
+  const pool = g.links.reduce((n, l) => n + (l.claims ?? []).length, 0)
+  const bestCombo = nC2(best.have.size) * pool
+  const worstCombo = nC2(worst.have.size) * pool
+  const pass = worstCombo >= 300
+  check('J3', pass,
+    `시도 공간 = 증거쌍 × 명제 풀(${pool}) — 최선 ${nC2(best.have.size)}쌍 → ${bestCombo} · 최악 소각 ${nC2(worst.have.size)}쌍 → ${worstCombo} (하한 300)`)
 }
 
 // ── P5d 텔 분포 데이터 사전 검사 (E4 §2 — 정적 근사, 본검사는 T-P0-05) ────────
