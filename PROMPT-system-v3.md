@@ -25,9 +25,10 @@
 ## 1. 필독 (이것만)
 
 1. `AGENTS.md` — 안전 규칙·샷 하네스 규약·**병렬 커밋 규약**.
-2. `tools/calibration/report.md` — §3.2 잔여 결함 4건 · §4 판정.
+2. `tools/calibration/report.md` — §1 2에이전트 실측 · §3 결함 역반영 · §4 판정.
 3. `tools/calibration/protocol.md` + `prompt-pilot.md` — 실행 규약과 투입 원문.
-4. `docs/HANDOFF.md` 하단 — Fable 에게 요청한 계약 공백 4건.
+4. `docs/design/E9-gates.md` §2 판별 규칙 7줄 — T-P0-01 발주 전 반드시. 계약이
+   여기까지 정해 놨다는 것을 알아야 패킷의 forbidden 을 이해할 수 있다.
 5. `docs/submission/README.md` — 제출 현황.
 
 ## 2. 소유 경계 (승계 — 변경 없음)
@@ -58,21 +59,26 @@ T-P0-06 은 저사양 리허설(8/8)을 막고 있으니 1군에 반드시 넣�
 
 ## 4. 할 일
 
-### 4.1 T-P0-05 · T-P0-06 실발주 (지금 — 승인됨)
+### 4.1 P0 1군 실발주 — T-P0-01 · 05 · 06 (지금. 승인 완료)
 
 **파일럿과 다르다: 이건 실제 산출을 본체에 머지하는 발주다.** 조건은 같되 결과를 쓴다.
 
 ```bash
-node tools/packet-gen.mjs T-P0-05 T-P0-06 && node tools/packet-gen.mjs --audit   # 잔여 0 확인
+node tools/packet-gen.mjs --all && node tools/packet-gen.mjs --audit   # 잔여 0 확인 선행
 W=/Users/kang-yunbyeong/Documents/WORK/Worktrees
-git clone --local . $W/p0-05 && git clone --local . $W/p0-06   # 워크트리 금지(protocol.md §2)
+for t in 01 05 06; do git clone --local . $W/p0-$t; done   # 워크트리 금지(protocol.md §2)
 
-# 투입 원문: tools/calibration/prompt-pilot.md 의 <PACKET> 만 바꾼다.
-# 단 실발주이므로 "추측하고 기록" 예외 문단은 빼고 패킷 §10.1(CONTRACT_CHANGE_REQUEST) 원칙을 그대로 둔다.
-codex exec -C $W/p0-05 -s workspace-write --skip-git-repo-check -o out-05.md "<프롬프트>"
+# 투입 원문: tools/calibration/prompt-pilot.md — <PACKET> 만 바꾼다.
+# 실발주이므로 "추측하고 기록" 예외 문단은 **빼고**, 패킷 §10.1
+# (결정 못 하면 CONTRACT_CHANGE_REQUEST 로 반환) 원칙을 그대로 살린다.
+codex exec -C $W/p0-01 -s workspace-write --skip-git-repo-check -o out-01.md "<프롬프트>"
 ```
 
-회수: 패킷 §8 수용 기준을 **그 클론 안에서 직접 실행**해 출력을 본다. 통과하면 §4.3 으로.
+- 셋은 서로 독립이라 **동시에 돌려도 된다**. 단 세션 한도가 가까우면 직렬로(§7).
+- T-P0-01 은 캘리브레이션에서 이미 2벌이 나와 있다 — **새로 발주하지 말고 §4.3 으로
+  머지하는 것이 싸다.** 계약이 그 뒤 바뀌었으니(마커 규약 등) 머지 후 새 수용 기준으로
+  재검증하고, 미달이면 그때 재발주한다.
+- 회수: 패킷 §8 수용 기준을 **그 클론 안에서 직접 실행**해 출력을 본다.
 
 ### 4.2 ~~Fable 답신 후 재전사~~ — **완료**
 
