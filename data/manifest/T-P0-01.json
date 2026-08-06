@@ -75,6 +75,10 @@
     {
       "cmd": "node tools/lint-contract.mjs --staged",
       "expect": "깨끗한 인덱스에서 exit 0. **차단 경로 재현 필수** — 위반 1건(예: src/ 임시 파일에 Math.random( 직호출)을 git add 로 스테이지한 뒤 재실행하면 exit 1 + 위반 규칙명 출력, 그 파일을 git reset 으로 되돌리면 다시 exit 0. 깨끗한 인덱스 단독 실행은 차단 경로를 검증하지 못하므로 통과 근거가 아니다."
+    },
+    {
+      "cmd": "printf '#!/bin/sh\\necho other\\n' > .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit && node tools/install-hooks.mjs",
+      "expect": "남의 훅(마커 없음)은 덮어쓰지 않고 exit 1. 그 뒤 마커 있는 자기 산출 훅에 대해 재실행하면 멱등 갱신 exit 0 — 두 경로를 모두 재현한다"
     }
   ],
   "shots": [],
@@ -82,7 +86,7 @@
     "src/** 편집 — 이 티켓은 검사기만 만든다. 현재 트리의 위반 코드 수정은 T-P0-02·T-P0-04 소관이다.",
     "규칙 완화·파일 화이트리스트 하드코딩으로 현재 트리를 통과시키는 것 — 예외는 ARCH §6/§6.5 예외 절 등재로만 인정된다.",
     ".git/hooks 산출물 커밋 — git이 추적하지 않는 경로다. 설치 스크립트만 커밋한다.",
-    "E9 §2 판별 규칙과 다른 검사 범위·판별법을 쓰는 것 — 범위(src/**·tools/**·index.html 의 .js/.mjs/.html, 500줄은 .js/.mjs 한정) · 표출 판별(문자열 리터럴·HTML 텍스트 전수 + `// lint-allow: display-name` 화이트리스트) · 훅 공존(자기 산출이면 멱등 갱신, 아니면 exit 1)이 전부 계약에 정해져 있다. 추측으로 메우지 마라."
+    "E9 §2 판별 규칙 7줄과 다르게 구현하는 것 — 검사 범위 · 표출 판별(리터럴 전수 + lint-allow) · 훅 공존 · **훅 마커는 `# virgil-contract-lint managed` 고정 문자열 포함 여부로만 판별(변형 금지)** · `--staged` 수집은 `git diff --cached --name-only --diff-filter=ACM --no-renames` + 파일 전체 검사 · 허용 경로(atmosphere.js + atmo/** · materials/**) · 주석 제거 후 검사(단 lint-allow 는 제거 전 수집, 500줄만 원문 물리 줄 수)가 전부 계약에 정해져 있다. 추측으로 메우지 마라."
   ],
   "model": "codex",
   "depends": [],

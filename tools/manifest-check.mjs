@@ -152,7 +152,10 @@ function shotlistNames () {
 
 // ─────────────────────────── 명령 실행 가능성 ───────────────────────────
 
-const SYSTEM_BINS = new Set(['grep', 'test', 'ls', 'cat', 'git', 'sed', 'awk', 'rm', 'mkdir', 'echo', 'diff'])
+const SYSTEM_BINS = new Set([
+  'grep', 'test', 'ls', 'cat', 'git', 'sed', 'awk', 'rm', 'mkdir', 'echo', 'diff',
+  'printf', 'chmod', 'cp', 'mv', 'touch', 'head', 'tail', 'wc', 'sort', 'true'
+])
 
 function commandTargets (cmd) {
   // &&·||·; 로 나뉜 각 구획의 진입점을 뽑는다.
