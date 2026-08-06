@@ -39,7 +39,9 @@ node tools/serve-check.mjs --url https://bluetop1102.github.io/virgil-1947/   # 
 - [ ] **배포본에 실존 업체·인물명 표출 0**. 확인 명령:
       `npm run build:pages && grep -roE '(CECIL|Cecil|세실)' dist/ | grep -v rapier`
       → 0건. `<title>` 과 부트 화면 대문짝을 눈으로도 확인한다.
-      *(2026-08-06 현재 **미해소** — `docs/HANDOFF.md` 등재분. 차단 항목이다.)*
+      *(2026-08-06 현재 **부분 해소** — `index.html` 의 `<title>`·부트 대문짝은 고쳤다.
+      번들에 남은 3건은 인게임 문자열이라 **플레이 중에 보인다**: 수사노트 표지 "세실 호텔",
+      미제 엔딩 캡션·자막 "세실은 계속 영업했다". `src/**` 소유자 몫 — `docs/HANDOFF.md` 등재분.)*
 - [ ] 시작 화면에 허구 고지문이 표시된다.
 - [ ] 외부 에셋 0 — `git ls-files | grep -icE '\.(png|jpg|hdr|mp3|wav|glb|woff2?|ttf)$'` → 0.
 - [ ] `docs/credits.md` 의 의존성 표가 `npm ls --omit=dev --depth=0` 실제 출력과 일치한다.
