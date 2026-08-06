@@ -379,7 +379,7 @@ SHOT_PORT=5922 node tools/shoot.mjs --out shots/p1-02 interrogation-deitch
 ```bash
 node tools/lint-contract.mjs
 ```
-→ 위반 0 — 특히 Math.random( 직호출(리그 변주는 rng(seed))·materials 밖 재질 생성
+→ src/** 위반 0 — 특히 Math.random( 직호출(리그 변주는 rng(seed))·materials 밖 재질 생성. tools/** 의 잔존(하네스·픽스처)은 검사 범위 계약 재획정 소관(docs/HANDOFF.md)이라 이 티켓의 판정 대상이 아니다
 
 ## 9. 금지 사항
 
