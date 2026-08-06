@@ -260,9 +260,9 @@ SHOT_PORT=5911 node tools/shoot.mjs --out shots/p0-02 atmo-corridor-night
 **A3.**
 
 ```bash
-node tools/pix.mjs diff shots/_baseline/corridor.png shots/p0-02/atmo-corridor-night.png
+git stash && SHOT_PORT=5911 node tools/shoot.mjs --out shots/base-self atmo-corridor-night && git stash pop && SHOT_PORT=5911 node tools/shoot.mjs --out shots/p0-02 atmo-corridor-night && node tools/pix.mjs diff shots/base-self/atmo-corridor-night.png shots/p0-02/atmo-corridor-night.png
 ```
-→ 기준선 대비 변화 0.0% — 청소는 픽셀을 바꾸지 않는다. 0이 아니면 회귀이고 롤백한다.. 동결 기준선 shots/_baseline/ 은 gitignore 라 클론에 없다 — 이 검사는 기준선을 보유한 본체에서 머지 시점에 실행한다
+→ meanDiff 0/255 · 유의변화 픽셀 0% — 청소는 픽셀을 바꾸지 않는다. 0이 아니면 회귀이고 반환 전에 스스로 잡는다(자기 변경 stash → 기준 커밋 재촬영 → 복원 → 재촬영 → 대조). 실측 경고: 렌더되지 않는 씬(testbed 등)의 광원이라도 practical() 팩토리에 등록하면 전역 광원 예산을 점유해 다른 씬 조명이 바뀐다 — 1차 발주가 정확히 이 회귀(+4.3/255)로 기각됐다. intensity 는 기존 직접 생성 값과 렌더 결과가 동일해야 하며, 변환식을 세울 수 없으면 §10.1 로 반환하라
 
 ## 9. 금지 사항
 
