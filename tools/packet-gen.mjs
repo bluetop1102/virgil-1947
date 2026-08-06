@@ -313,6 +313,7 @@ function packet (t, byId) {
   for (const f of t.forbidden) w(`- ${f}`)
   w('')
   w('### 9.2 전역 (프로젝트 전체 불변)', '')
+  seen.add('AGENTS.md 안전 규칙')   // §11 COMMON 이 같은 절을 다시 붙이지 않게
   w(quote('AGENTS.md', '안전 규칙'), '')
 
   // 10. 반환 형식
@@ -353,8 +354,12 @@ function packet (t, byId) {
     if (add.length === 0) break
     const A = []
     if (round === 0) {
-      A.push('', '## 12. 부록 — 본문이 가리키는 계약 절 (자동 인라인)', '',
-        '위 인용문들이 다른 절을 가리키기에 그 절들을 여기 붙였다. **이것 때문에 문서를 열 필요는 없다.**', '')
+      A.push('', '## 12. 부록 A — 본문이 직접 가리키는 계약 절', '',
+        '§1~§11 이 가리키는 절이다. **이 티켓과 직접 관계가 있다.**', '')
+    } else if (round === 1) {
+      A.push('', '## 13. 부록 B — 부록 A 가 다시 가리키는 절 (참고)', '',
+        '자기완결을 닫기 위한 2차 인라인이다. 대부분 이 티켓과 직접 관계가 없다 —',
+        '**읽을 필요는 없고, 본문에서 좌표를 만났을 때 여기서 찾으면 된다.**', '')
     }
     for (const a of add.sort((x, y) => y.n - x.n)) {
       A.push(`### ${a.label} — ${a.heading}`, '', quote(a.doc, a.heading), '')

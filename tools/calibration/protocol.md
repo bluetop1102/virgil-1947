@@ -23,13 +23,19 @@
 - **소지품은 패킷 1장뿐이다.** `packets/PACKET-<id>.md` 를 그대로 준다.
 - **열람 금지**: `docs/**` · `AGENTS.md` · `CLAUDE.md` · `PROMPT-*.md` · `data/manifest/**` ·
   다른 패킷. **허용**: `src/**` · `tools/**` · `package.json` — 검사·구현 대상이지 지시서가 아니다.
-- **각 에이전트는 별도 워크트리에서** 돈다. 서로의 산출을 보지 못한다.
+- **각 에이전트는 독립 클론에서** 돈다. 서로의 산출을 보지 못한다.
   ```bash
-  git worktree add ../cal-<agent>-<ticket> -b cal/<agent>-<ticket>
+  git clone --local <저장소> ../Worktrees/cal-<agent>-<ticket>
   ```
+  **워크트리를 쓰면 안 된다** — 워크트리는 `.git/hooks` 를 본체와 공유하므로, 패킷대로
+  커밋 훅을 설치하는 순간 본체 저장소의 커밋까지 그 훅에 걸린다(T-P0-01 이 정확히 그 티켓이다).
+  로컬 클론은 오브젝트를 하드링크해서 2GB 저장소도 0.2초에 끝나고 훅은 완전히 분리된다.
 - **질문 금지 · 추측 기록 의무**: 되묻지 말고, 패킷만으로 결정할 수 없어 추측한 지점을
   전부 기록하게 한다. 이 기록이 곧 패킷 결함 후보 목록이다.
-- 반환 형식은 패킷 §10 그대로.
+- 반환 형식은 패킷 §10 그대로. **단 한 가지만 다르다**: 패킷 §10.1 은 "결정할 수 없으면
+  추측하지 말고 반환하라"인데, 이 실험에서는 **추측해서 진행하고 그 추측을 기록**하게 한다.
+  기록이 곧 반환이다 — 반환하고 멈추면 게이트 통과 여부를 측정할 수 없기 때문이다.
+  이 예외를 프롬프트에 명시하지 않으면 에이전트가 두 지시의 충돌을 지적한다(Codex 실측).
 
 ## 3. 동일성의 정의 — 픽셀 동일이 아니다
 
@@ -49,17 +55,20 @@
 node tools/packet-gen.mjs T-P0-01 T-P1-02        # 패킷 최신화
 node tools/packet-gen.mjs --audit                # 잔여 좌표 0 확인 — 0이 아니면 먼저 닫는다
 
-# 1) 에이전트별 워크트리
-git worktree add ../cal-codex-P0-01 -b cal/codex-P0-01
-git worktree add ../cal-grok-P0-01  -b cal/grok-P0-01
+# 1) 에이전트별 독립 클론 (워크트리 아님 — §2 참조)
+W=../../Worktrees
+git clone --local . $W/cal-codex-P0-01
+git clone --local . $W/cal-grok-P0-01
 # … T-P1-02 도 동일하게
 
-# 2) 각 워크트리에서 해당 에이전트를 패킷 1장으로 투입 (§2 조건)
+# 2) 패킷 1장으로 투입 (§2 조건). 헤드리스 호출:
+codex exec -C $W/cal-codex-P0-01 -s workspace-write -o codex.out "$(cat 프롬프트)"
+grok --cwd $W/cal-grok-P0-01 --permission-mode acceptEdits --output-format plain --prompt-file 프롬프트
 
-# 3) 회수 — 각 워크트리에서
-node tools/manifest-check.mjs                    # 구조 축
-git diff --name-only main                        # 소유 축(패킷 §2 목록 밖 파일이 있으면 이탈)
-# 게이트 축은 패킷 §8 의 명령 그대로
+# 3) 회수 — 각 클론에서
+git -C $W/cal-<agent>-<ticket> status --short    # 소유 축(패킷 §2 목록 밖 파일이 있으면 이탈)
+git -C $W/cal-<agent>-<ticket> log --oneline -3
+# 게이트 축은 패킷 §8 의 명령 그대로, 해당 클론 안에서
 ```
 
 ## 5. 리포트 작성 규칙
