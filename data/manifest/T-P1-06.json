@@ -92,8 +92,8 @@
       "expect": "0:00–0:30 프레임 시퀀스 덤프 — E2 §첫 30초 표의 5행과 초 단위 대조 가능한 파일명(t 각인)"
     },
     {
-      "cmd": "node tools/lint-contract.mjs",
-      "expect": "전체 스캔 출력에서 tools/playthrough.mjs 행 0건 — 특히 Date.now() 직호출(봇 시간도 결정론적 스텝). 전체 스캔 종료 코드는 타 소유 파일의 기존 위반 때문에 1일 수 있다 — 그 경우 자기 소유 파일 행이 0건이면 통과이고, 잔여는 docs/HANDOFF.md 하단에 등재한다"
+      "cmd": "test -f tools/playthrough.mjs && node tools/lint-contract.mjs",
+      "expect": "**먼저 파일 존재를 검사한다** — 신규 산출 티켓에서 '전체 스캔에 자기 파일 행 0건'만 요구하면 파일을 만들지 않아도 통과하는 공허한 조건이 된다(T-P1-06 1차 반환 지적). tools/playthrough.mjs 가 실재하고, 전체 스캔 출력에서 그 행이 0건이어야 한다 — 특히 Date.now() 직호출(봇 시간도 결정론적 스텝). 전체 스캔 종료 코드는 타 소유 파일의 기존 위반 때문에 1일 수 있다 — 그 경우 자기 소유 파일 행이 0건이면 통과이고, 잔여는 docs/HANDOFF.md 하단에 등재한다"
     }
   ],
   "shots": [],
@@ -107,7 +107,9 @@
   "model": "codex",
   "depends": [
     "T-P1-01",
-    "T-P1-04"
+    "T-P1-04",
+    "T-P1-09",
+    "T-P1-10"
   ],
   "status": "todo"
 }

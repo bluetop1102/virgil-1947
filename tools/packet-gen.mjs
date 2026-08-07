@@ -310,6 +310,10 @@ function packet (t, byId) {
   w('**착수 전 확인**: 자기 수용 기준에 `tools/lint-contract.mjs` 가 있다면 착수 전에')
   w('`node tools/lint-contract.mjs --staged` 로 자기 수정 대상 파일이 이미 통과하는지 본다.')
   w('기존 위반이 있으면 그것은 선행 결박이므로 §10.1 로 반환하지 말고 §10.2 보고에 적어 회수 세션에 넘긴다.', '')
+  if (t.owner_files.some(o => o.state === 'new')) {
+    w('**신규 산출 티켓 주의**: "전체 스캔에 자기 파일 행 0건" 류 조건은 **파일을 만들지 않아도 문언상')
+    w('통과한다**. 신규 소유 파일은 실재해야 완료다 — 보고에 `test -f <경로>` 출력을 함께 붙인다.', '')
+  }
   t.acceptance.forEach((a, i) => {
     w(`**A${i + 1}.**`, '', '```bash', a.cmd, '```', `→ ${a.expect}`, '')
   })
