@@ -111,14 +111,13 @@
       "act:phase",
       "evidence:granted",
       "flag:set",
-      "interrogation:needEvidence"
+      "sfx",
+      "subtitle"
     ],
     "listen": [
       "interrogation:start",
       "interrogation:choose",
-      "player:interact",
-      "qa:state",
-      "interrogation:evidencePicked"
+      "player:interact"
     ]
   },
   "acceptance": [
@@ -152,5 +151,5 @@
   "depends": [
     "T-P1-01"
   ],
-  "status": "todo"
+  "status": "done"
 }

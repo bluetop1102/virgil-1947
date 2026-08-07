@@ -16,7 +16,7 @@
            상한 도달 시 라운드 경계에서 끊고 §10 형식으로 인수인계한다. 중단 조건 없는 루프 금지.
 ```
 
-- **타입**: interrogation · **배정 모델**: codex · **상태**: todo
+- **타입**: interrogation · **배정 모델**: codex · **상태**: done
 - **라운드 규율**: 단일 담당 · 단일 목표 · 사전 기준선 → 사후 기계 게이트 · 라운드 단위 커밋.
   회귀면 롤백한다. 판 갱신은 개선일 때만.
 
@@ -586,8 +586,8 @@ DOUBT→LIE정답은 +2이지 +2.5가 아니다. DOUBT 선제시가 점수 이�
 
 ## 6. 이벤트 계약
 
-- **발화(emit)**: `interrogation:statement` · `interrogation:verdict` · `interrogation:end` · `evidence:presented` · `interrogation:prompt` · `perf:state` · `act:enter` · `act:phase` · `evidence:granted` · `flag:set` · `interrogation:needEvidence`
-- **구독(listen)**: `interrogation:start` · `interrogation:choose` · `player:interact` · `qa:state` · `interrogation:evidencePicked`
+- **발화(emit)**: `interrogation:statement` · `interrogation:verdict` · `interrogation:end` · `evidence:presented` · `interrogation:prompt` · `perf:state` · `act:enter` · `act:phase` · `evidence:granted` · `flag:set` · `sfx` · `subtitle`
+- **구독(listen)**: `interrogation:start` · `interrogation:choose` · `player:interact`
 
 ARCHITECTURE §5 표의 해당 행 (payload·발신자 정본):
 
@@ -603,12 +603,11 @@ ARCHITECTURE §5 표의 해당 행 (payload·발신자 정본):
 | `act:phase` | `{act, phase}` | narrative(발화 파일: interrogation.js — act:enter와 동일 소유) — 막 내 페이즈 전환(조명·오디오 무드 연동). **phase 정본 어휘: `early` / `main` / `late` 3값 공통** — E2 결박: act1 late=7:00 도일 통과 개시 · act2 late=30:00 보일러 소리 · act3 late=지목 개시 *(v2)* |
 | `evidence:granted` | `{id, npc}` | interrogation — 심문 성과 증거(unlocks grants) 통지. gameplay/evidence.js가 구독해 수집 확정 후 `evidence:collected` 발화(E5 [구현] unlocks 반영 경로) *(v2.3)* |
 | `flag:set` | `{id}` | interrogation — 플래그 발생 통지(two-voices 등). 레벨이 구독해 조건 스폰(footprints), 노트가 구독해 기록. 판정 상태는 engine.state가 진실원 — 이 이벤트는 통지 전용 *(v2.3)* |
-| `interrogation:needEvidence` | — | **표에 없음 — 패킷 결함** |
+| `sfx` | `{id, pos?, gain?}` | any |
+| `subtitle` | `{speaker, text, dur}` | any |
 | `interrogation:start` | `{npc}` | gameplay |
 | `interrogation:choose` | `{sid, choice, evidence?}` | ui — 플레이어 선택 반환(단일 발화 — LIE는 증거 확정 시점에만, 판정도 그때만) *(v2)* |
 | `player:interact` | `{targetId}` | gameplay |
-| `qa:state` | — | **표에 없음 — 패킷 결함** |
-| `interrogation:evidencePicked` | — | **표에 없음 — 패킷 결함** |
 
 표에 없는 이벤트 이름을 새로 만들지 않는다. 발신 방향(누가 쏘는가)도 표가 정본이다.
 

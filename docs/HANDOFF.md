@@ -2915,3 +2915,15 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
 - **처리**: `init` 에 공개 필드 `this.sensitivity = 1` 을 만들고 mousemove 가 `SENS * this.sensitivity` 를 읽도록 했다. `settings.js:153` 이 이미 `player.sensitivity = value` 를 쓰고 있어 이 한 접점으로 결박이 닫힌다.
 - **왜 발주 세션이 했나**: 이 결박은 T-P1-05 회수 시점에 등재됐고 T-P1-10 패킷은 그 이전에 생성돼 담당자에게 전달되지 않았다 — 담당자 누락이 아니다. 통합 게이트의 `--assert-settings` 감도 항목이 이 필드에 걸려 있어 2파 머지와 함께 닫았다.
 - **주**: 패킷은 생성 시점의 HANDOFF 를 담지 않는다. **회수 중 등재된 결박은 그 다음 발주 패킷에 자동으로 실리지 않는다** — 발주 전 HANDOFF 잔여를 매니페스트에 손으로 반영하거나 회수 세션이 직접 닫아야 한다.
+
+### [x] 발주 세션 — T-P1-04 재발주 회수·머지 (심문 E2E, 2026-08-07)
+- **머지**: `src/narrative/interrogation.js`(불가역 상태기계 재작성) · `tools/test-interrogation.mjs`(배터리 재작성). 클론 `18d5f19`. 감사 청정 — 소유 2파일만 커밋 · rng 0 · **`act:enter` 직접 발화 0**(`state.setAct(2)`·`setAct(3)` 경유 — forbidden 결박 준수).
+- **본체 재검증**: 배터리 64/0 · `--burn` 9/0(역직렬화는 규약대로 WAIT 표기) · factcheck 전 게이트 PASS · 신규 2파일 린트 위반 0.
+- **드리프트 자동 소거 확인**: 새 구현이 `interrogation:choose` 정본 경로로 통일하면서 ARCH §5 미등재였던 `qa:state`·`interrogation:evidencePicked`·`interrogation:needEvidence` 사용을 없앴다. `manifest-check` 의 DRIFT 판별이 실코드를 보므로 **세 이름이 자동으로 DRIFT 목록에서 빠지고 매니페스트 쪽이 낡은 것으로 뒤집혔다** — 설계 의도대로 작동했다. 매니페스트에서 3종 제거, 실제 발화하는 `sfx`·`subtitle` 추가. 앞서 등재한 ARCH §5 반환 항목 중 이 3종은 **해소**로 내려도 된다(`act:enter` 발신자 이중 정의 항목은 유효).
+
+### [ ] T-P1-04 배터리 커버리지 축소 — 디렉터 판단 필요
+- **파일**: `tools/test-interrogation.mjs`
+- **문제**: 재작성으로 배터리가 **475줄·1098단언 → 235줄·73단언**으로 줄었다. 새 배터리는 판정표 7결과·DOUBT 재질문·tier·재심문·막 전환·소각 직렬화를 정확히 덮지만, **구 배터리의 스크립트 데이터 무결성 일괄 검사**(전 인물·전 진술을 돌며 `grants`/`spawns`/`lieVariants`/`wrongVariants` 참조가 EVIDENCE 에 실재하는지)가 사라졌다.
+- **중복 여부 실측**: `factcheck.mjs` S0 는 **`case-graph.json` 쪽** 참조 무결성(evidence origin·supports·refutes·statement hides/refutedBy·link requires/proves)을 덮는다. 구 배터리가 덮던 것은 **심문 스크립트 데이터** 쪽이라 **겹치지 않는다** — 순수 손실이다.
+- **지시**: ①손실을 수용하고 넘어갈지 ②스크립트 데이터 일괄 검사를 배터리에 복원할지 결정하라. 복원하면 구 버전이 `git show 8855ada:tools/test-interrogation.mjs` 에 있다.
+- **요청자가 처리한 부분**: 담당자는 수용 기준을 전건 통과했고 축소를 숨기지 않았다 — **수용 기준이 커버리지 하한을 말하지 않은 것**이 원인이다. 배터리를 소유 파일로 넘길 때 "기존 단언 수 이하로 줄이지 않는다" 같은 하한 조항이 없었다.
