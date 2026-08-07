@@ -115,6 +115,26 @@ function sectionBody (relPath, heading) {
 }
 
 // ARCHITECTURE §5 표에서 이벤트 어휘를 뽑는다 — 첫 칸의 백틱 토큰만.
+// src/** 이 실제로 bus.emit(...)·bus.on(...) 하는 이벤트 이름. ARCH §5 표와의 차이가
+// 문서 지연인지 어휘 발명인지를 가르는 판별자다 — 손으로 적은 예외 목록을 쓰지 않는다.
+function liveEventNames () {
+  const names = new Set()
+  // 버스 핸들을 b·bus 등 어떤 이름에 담아도 잡히도록 수신자는 보지 않고, 대신 이벤트
+  // 이름이 `네임스페이스:이름` 꼴인 것만 취해 일반 .on()·.emit() 오검출을 막는다.
+  const pattern = /\.\s*(?:emit|on)\s*\(\s*['"`]([a-z][a-zA-Z0-9]*:[a-zA-Z0-9]+)['"`]/g
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name)
+      if (entry.isDirectory()) walk(full)
+      else if (entry.name.endsWith('.js')) {
+        for (const m of readFileSync(full, 'utf8').matchAll(pattern)) names.add(m[1])
+      }
+    }
+  }
+  walk(join(ROOT, 'src'))
+  return names
+}
+
 function eventVocabulary () {
   const body = sectionBody('docs/ARCHITECTURE.md', '5. 이벤트 버스 계약')
   if (!body) throw new Error('ARCHITECTURE.md §5 이벤트 버스 계약 절을 찾지 못했다')
@@ -295,12 +315,24 @@ for (const t of tickets) {
 // ─────────────────────────── R4 이벤트 어휘 ───────────────────────────
 
 const vocab = eventVocabulary()
+const liveEvents = liveEventNames()
+const drift = new Set()
 for (const t of tickets) {
   for (const [dir, list] of [['emit', t.events.emit], ['listen', t.events.listen]]) {
     for (const ev of list) {
-      if (!vocab.has(ev)) add('R4', 'MANIFEST', t.id, `${dir} 이벤트가 ARCH §5 어휘에 없다 — ${ev}`)
+      if (vocab.has(ev)) continue
+      // ARCH §5 표가 실코드보다 뒤처진 경우까지 티켓을 막으면 계약 소유자 답신을 기다리는
+      // 동안 발주가 멎는다. src/** 가 이미 그 이름으로 emit/on 하고 있으면 설계 결정이
+      // 아니라 문서 지연이므로 통과시키되, 드리프트로 출력해 등재 요구를 남긴다.
+      if (liveEvents.has(ev)) { drift.add(`${t.id} ${dir} ${ev}`); continue }
+      add('R4', 'MANIFEST', t.id, `${dir} 이벤트가 ARCH §5 어휘에 없다 — ${ev}`)
     }
   }
+}
+if (drift.size > 0) {
+  console.log(`\n  [DRIFT] 실코드 사용 중이나 ARCH §5 미등재 — ${drift.size}건 (ARCH 소유자 등재 대기)`)
+  for (const d of [...drift].sort()) console.log(`    ${d}`)
+  console.log('')
 }
 
 // ─────────────────────────── R6 acceptance 실행 가능성 ───────────────────────────

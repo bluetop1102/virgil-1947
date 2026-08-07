@@ -143,6 +143,11 @@ const settings = {
 
   _apply (key, value) {
     if (key === 'fov') {
+      // QA 모드에서는 카메라를 샷 하네스가 소유한다(shotlist 의 fov). 여기서 기본 FOV 를
+      // 덮으면 파이프라인이 첫 프레임에 잡아두는 투영 의존 상태가 샷 카메라와 어긋나
+      // atmo 프로브에 검은 블록이 남는다 — lobby 머지 후 실측(dark 0.11%→4.4%).
+      // 품질 프리셋이 이미 쓰는 !engine.qa 가드와 같은 이유다.
+      if (this.engine.qa) return
       this.engine.camera.fov = value
       this.engine.camera.updateProjectionMatrix()
     } else if (key === 'sensitivity') {

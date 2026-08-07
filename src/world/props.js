@@ -10,6 +10,7 @@ import {
 
 export * from './props-fixtures.js'
 export * from './props-detail.js'
+export { potPlant } from './props-decor.js'
 
 // util.kelvin은 선형 RGB를 반환하고 three의 워킹 색공간도 선형이므로 그대로 넣는다.
 export const K = (k) => new THREE.Color().setRGB(...kelvin(k))
@@ -39,7 +40,7 @@ export function drape (w, d, h, seed, o = {}) {
 // 실광원이 그림자를 던지지 않으면 그 빛이 닿는 모든 표면에서 접지가 붕괴한다(D5). 데스크램프처럼
 // 근거리 표면을 직접 때리는 실광원은 반드시 캐스팅한다 — 그림자 맵은 근거리 전용으로 좁게 잡는다.
 function spot (kelvin, intensity, angle, penumbra, dist, shadow) {
-  const l = new THREE.SpotLight(K(kelvin), intensity, dist ?? 0, angle, penumbra, 2)
+  const l = new THREE.SpotLight(K(kelvin), intensity, dist ?? 0, angle, penumbra, 2)  // lint-allow: light-direct (ARCH §6.5 폐집합)
   l.castShadow = !!shadow
   if (shadow) {
     l.shadow.mapSize.set(1024, 1024)
@@ -94,7 +95,7 @@ export function sconce (seed = 1) {
   shade.position.z = 0.13
   root.add(plate, arm, cup, shade)
 
-  const l = new THREE.PointLight(K(2700), 1.7, 6.0, 2)
+  const l = new THREE.PointLight(K(2700), 1.7, 6.0, 2)  // lint-allow: light-direct (ARCH §6.5 폐집합)
   l.position.set(0, 0.21, 0.13)
   root.add(l)
   return { root, lights: [l], anchors: { glass: [0, 0.20, 0.13] } }
@@ -145,14 +146,14 @@ export function chandelier (seed = 1, o = {}) {
   }
   root.add(mesh(merge(dg, dm), 'glass.clear', { cast: false }))
 
-  const l = new THREE.PointLight(K(2650), 8, 14, 2)
+  const l = new THREE.PointLight(K(2650), 8, 14, 2)  // lint-allow: light-direct (ARCH §6.5 폐집합)
   l.position.y = 0.26
   root.add(l)
   return { root, lights: [l], anchors: { hang: [0, 0.60, 0], bulbs: 0.29 } }
 }
 
 export function neonSign (seed = 1, o = {}) {
-  const text = (o.text ?? 'HOTEL CECIL').toUpperCase()
+  const text = (o.text ?? 'HOTEL VIRGIL').toUpperCase()
   const S = {
     H: [[[0, 0], [0, 1.6]], [[1, 0], [1, 1.6]], [[0, 0.82], [1, 0.82]]],
     O: [[[0.5, 1.6], [0.02, 1.22], [0.02, 0.38], [0.5, 0], [0.98, 0.38], [0.98, 1.22], [0.5, 1.6]]],
@@ -473,32 +474,4 @@ export function framedPicture (seed = 1, o = {}) {
   tilt.add(hook)
   tilt.rotation.x = -0.035 - r() * 0.020
   return { root, anchors: { face: [0, 0, 0.02] } }
-}
-
-export function potPlant (seed = 1) {
-  const root = group('potPlant')
-  const r = rng(seed)
-  const pot = mesh(lathe([[0, 0], [0.14, 0], [0.155, 0.02], [0.175, 0.24], [0.19, 0.28], [0.185, 0.30], [0.168, 0.29], [0.155, 0.03]], 30),
-    'ceramic.sink', { wear: 0.85, seed })
-  const soil = mesh(crumple(lathe([[0, 0.27], [0.16, 0.275], [0.166, 0.265]], 26), { amp: 0.012, freq: 22, seed: seed + 1 }),
-    'grime.overlay', { wear: 0.6, seed: seed + 1 })
-  root.add(pot, soil)
-  const fg = [], fm = []
-  for (let i = 0; i < 11; i++) {
-    const a = r() * Math.PI * 2
-    const lean = lerp(0.18, 0.62, r())
-    const len = lerp(0.34, 0.62, r())
-    const droop = lerp(0.3, 0.85, r())
-    const p = [
-      [0, 0.27, 0],
-      [Math.cos(a) * len * 0.34 * lean, 0.27 + len * 0.55, Math.sin(a) * len * 0.34 * lean],
-      [Math.cos(a) * len * 0.85, 0.27 + len * (0.86 - droop * 0.42), Math.sin(a) * len * 0.85],
-      [Math.cos(a) * len * 1.12, 0.27 + len * (0.72 - droop * 0.62), Math.sin(a) * len * 1.12]
-    ]
-    fg.push(ribbon(p, (t) => 0.012 + Math.sin(clamp(t, 0, 1) * Math.PI) * 0.055 * (1 - t * 0.35), 14, (r() - 0.5) * 1.4))
-    fm.push(null)
-  }
-  root.add(mesh(twoSided(merge(fg, fm)), 'grime.overlay', { wear: 0.9, seed: seed + 3 }))
-  groundContact(root, { strength: 0.6, spread: 0.8 })
-  return { root, anchors: { rim: [0, 0.30, 0] } }
 }

@@ -26,6 +26,7 @@
 "그 담당이 지금 안 보인다"는 안전 신호가 아니다.
 
 - `src/narrative/interrogation.js` — 파일 전체
+- `tools/test-interrogation.mjs` — 파일 전체
 
 ## 3. 선행 의존
 
@@ -585,8 +586,8 @@ DOUBT→LIE정답은 +2이지 +2.5가 아니다. DOUBT 선제시가 점수 이�
 
 ## 6. 이벤트 계약
 
-- **발화(emit)**: `interrogation:statement` · `interrogation:verdict` · `interrogation:end` · `evidence:presented` · `interrogation:prompt` · `perf:state` · `act:enter` · `act:phase`
-- **구독(listen)**: `interrogation:start` · `interrogation:choose`
+- **발화(emit)**: `interrogation:statement` · `interrogation:verdict` · `interrogation:end` · `evidence:presented` · `interrogation:prompt` · `perf:state` · `act:enter` · `act:phase` · `evidence:granted` · `flag:set` · `interrogation:needEvidence`
+- **구독(listen)**: `interrogation:start` · `interrogation:choose` · `player:interact` · `qa:state` · `interrogation:evidencePicked`
 
 ARCHITECTURE §5 표의 해당 행 (payload·발신자 정본):
 
@@ -600,8 +601,14 @@ ARCHITECTURE §5 표의 해당 행 (payload·발신자 정본):
 | `perf:state` | `{npc, state}` | interrogation — 연기 상태 idle/anxious/lying/breaking. perf.js는 이것만 구독하며 진위를 모른다. 산출 규칙(기계): 진술 제시 중 `truth:false`→lying, `anxiousTell:true`→anxious, 그 외→idle. **breaking은 case-graph `breakingOn:true` 진술의 lieCorrect 판정 직후에만**(현행 3건: deitch.S4·ruiz.S4·pryce.S3) *(v2)* |
 | `act:enter` | `{act: 1\|2\|3}` | narrative — **발화 파일: interrogation.js (판정 상태기계와 함께 막·페이즈 진행 상태기계를 소유, E5 §4)** *(v2에서 소유 명시)* |
 | `act:phase` | `{act, phase}` | narrative(발화 파일: interrogation.js — act:enter와 동일 소유) — 막 내 페이즈 전환(조명·오디오 무드 연동). **phase 정본 어휘: `early` / `main` / `late` 3값 공통** — E2 결박: act1 late=7:00 도일 통과 개시 · act2 late=30:00 보일러 소리 · act3 late=지목 개시 *(v2)* |
+| `evidence:granted` | `{id, npc}` | interrogation — 심문 성과 증거(unlocks grants) 통지. gameplay/evidence.js가 구독해 수집 확정 후 `evidence:collected` 발화(E5 [구현] unlocks 반영 경로) *(v2.3)* |
+| `flag:set` | `{id}` | interrogation — 플래그 발생 통지(two-voices 등). 레벨이 구독해 조건 스폰(footprints), 노트가 구독해 기록. 판정 상태는 engine.state가 진실원 — 이 이벤트는 통지 전용 *(v2.3)* |
+| `interrogation:needEvidence` | — | **표에 없음 — 패킷 결함** |
 | `interrogation:start` | `{npc}` | gameplay |
 | `interrogation:choose` | `{sid, choice, evidence?}` | ui — 플레이어 선택 반환(단일 발화 — LIE는 증거 확정 시점에만, 판정도 그때만) *(v2)* |
+| `player:interact` | `{targetId}` | gameplay |
+| `qa:state` | — | **표에 없음 — 패킷 결함** |
+| `interrogation:evidencePicked` | — | **표에 없음 — 패킷 결함** |
 
 표에 없는 이벤트 이름을 새로 만들지 않는다. 발신 방향(누가 쏘는가)도 표가 정본이다.
 
@@ -626,14 +633,14 @@ ARCHITECTURE §5 표의 해당 행 (payload·발신자 정본):
 ```bash
 node tools/test-interrogation.mjs
 ```
-→ E5 §1 판정표 6행 전이가 배터리로 전건 재현 — 진실×{TRUTH,DOUBT,LIE}·거짓×{TRUTH,DOUBT,LIE정답,LIE오답}
+→ E5 §1 판정표 전이가 배터리로 전건 재현 — 진실×{TRUTH,DOUBT,LIE}(3) · 거짓×{TRUTH,DOUBT,LIE정답,LIE오답}(4) = **결과 7가지**. E5 §1 본문의 '6행'은 거짓+LIE 를 한 행으로 센 표기이며 결과 수는 7이다 — 배터리는 7가지를 전부 판정한다
 
 **A2.**
 
 ```bash
 node tools/test-interrogation.mjs --burn
 ```
-→ 소각 후 해당 진술의 grants/spawns/flags가 재발화되지 않는다 · state 직렬화에 소각 상태가 포함되고 역직렬화 후에도 유지
+→ `--burn` 을 배터리의 실제 인자로 신설한다(현재 배터리는 argv 를 읽지 않아 기본 실행과 출력이 같다 — 그 상태로는 이 항목이 무의미하다). 판정: 소각된 진술의 grants/spawns/flags 가 재발화되지 않는다 · `engine.state.serialize().npcs[npc].burned` 에 소각 상태가 포함된다. **역직렬화 후 유지는 이 티켓 범위 밖이다** — `src/core/state.js` 는 잠금이고 restore 경로·`src/gameplay/save.js` 가 아직 없다. 직렬화까지만 판정하고 역직렬화는 '대기'로 보고한다
 
 **A3.**
 
@@ -658,6 +665,7 @@ node tools/playthrough.mjs --fast --act 1
 - DOUBT 선제시가 점수 이득이 되게 만드는 것 — 후속 LIE 점수는 DOUBT 점수를 대체한다(누적 아님).
 - case-graph.json·script.js 수정 — 데이터는 T-P0-03이 이미 정합시켰다.
 - 수동 저장·로드 경로 추가 — 소각 회피 루트가 되어 U1을 무너뜨린다.
+- `act:enter` 를 interrogation.js 에서 직접 bus.emit 하는 것 — 유일 발신 지점은 `src/core/state.js:24` 의 `setAct()` 다(core 잠금). interrogation.js 는 막 진행을 결정하고 `engine.state.setAct(n)` 을 호출한다. ARCH §5 의 '발화 파일: interrogation.js' 는 **막 전환을 일으키는 소유자**를 뜻하며 bus.emit 호출 지점을 뜻하지 않는다(2026-08-07 회수 세션 확정).
 
 ### 9.2 전역 (프로젝트 전체 불변)
 

@@ -2870,3 +2870,37 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
 - **머지**: `src/ui/settings.js`(230줄) · `src/ui/title.js`(207줄) 신설 · `src/main.js` 부트 계수 훅 · `src/core/shotlist.js` UI 샷 4종 추가(ARCH §2 허용 예외). 클론 커밋 `d3ca7e7`. 감사 청정 — status 0 · `Math.random`/`Date.now` 0.
 - **본체 재검증**: `ui-loading`·`ui-title`·`ui-settings`·`ui-resume` 4샷 gate ok(p99.9=196 · dark 0.42~0.59%) · bootErrors 0 · console 0 · gateFailures 0 · `settings`·`title` 모듈 자동 등록. PNG 육안 검수 — 시스템 폰트·기본 버튼·라운드 코너·이모지 0, 전부 디제틱(놋쇠 명패·객실 안내 조정표 카드·열쇠 고리 진행률). 파탄 0.
 - **주**: 클론의 dark 8.2~8.5% 대비 본체 0.4~0.6% 은 로비 레벨(T-P1-01) 머지로 카드 뒤 배경이 테스트베드에서 로비로 바뀐 결과다 — 회귀가 아니라 통합 효과.
+
+### [ ] T-P1-04 §10.1 반환 → ARCHITECTURE §5 소유자 — 실코드 이벤트 3종 미등재
+- **파일**: `docs/ARCHITECTURE.md` §5 이벤트 버스 계약 표
+- **루브릭**: ARCH §5 구독 폐집합 / T-P1-04 A1
+- **문제**: `qa:state` · `interrogation:evidencePicked` · `interrogation:needEvidence` 는 실코드가 이미 쓰고 있는데 §5 표에 없다. `qa:state` 는 `src/main.js`가 발화하고 hud·notebook·subtitles·title·settings 5개 모듈이 구독한다. 나머지 2종은 `src/narrative/interrogation.js:134,221` 에 구현돼 있고 `tools/test-interrogation.mjs` 가 판정에 쓴다. 폐집합 규칙 아래에서 T-P1-04 담당자는 **기존 배터리를 통과시키려면 계약을 어겨야 하는** 상태였고, 실제로 §10.1 반환했다.
+- **지시**: 세 이벤트를 §5 표에 등재하고 발신자·payload 를 명시하라. 설계 결정이 아니라 문서 지연이므로 등재만 하면 해소된다.
+- **요청자가 처리한 부분**: `tools/manifest-check.mjs` R4 를 고쳐 **src/** 가 실제로 emit/on 하는 이름은 오류가 아니라 `[DRIFT]` 로 출력**하도록 했다 — 문서 지연이 발주를 막지 않되 미등재 사실은 매 실행마다 보인다. 등재되면 DRIFT 목록에서 자동으로 빠진다. 손으로 적는 예외 목록은 쓰지 않았다.
+
+### [ ] T-P1-04 §10.1 반환 → ARCHITECTURE §5 소유자 — act:enter 발신자 이중 정의
+- **파일**: `docs/ARCHITECTURE.md` §5 `act:enter` 행 · (현물) `src/core/state.js:24`
+- **문제**: §5 는 "발화 파일: interrogation.js" 라고 못박는데, 잠긴 `src/core/state.js:24` 의 `setAct()` 가 이미 `act:enter` 를 발화한다. 담당자가 계약대로 하면 이중 발신, core 를 따르면 계약 위반이라 착수가 불가했다.
+- **지시**: §5 문구를 "**소유(막 전환을 결정하는 주체) = interrogation.js · 발화 지점 = state.setAct()**" 로 분리하거나, core 의 발화를 제거할 것인지 정하라.
+- **요청자가 처리한 부분**: 재발주 매니페스트의 `forbidden` 에 "interrogation.js 에서 직접 bus.emit 금지 · `engine.state.setAct(n)` 호출" 을 명시해 단일 발신자로 결박했다. ARCH 문구 개정 전까지의 운용 해석이다.
+
+### [ ] T-P1-04 §10.1 반환 → 발주 세션 자체 처리분 (매니페스트 역반영 완료)
+- **문제·처리**: ①`evidence:granted`·`flag:set` 이 E5 [구현]·ARCH §5 v2.3 에서 interrogation 발신인데 매니페스트 emit 목록에 없었다 → 추가 ②막 전환에 필요한 `player:interact` 가 listen 에 없었다 → 추가 ③A2(`--burn`)가 **담당자가 소유하지 않은** `tools/test-interrogation.mjs` 의 동작을 요구했다 → 배터리를 `owner_files` 에 추가 ④A2 의 "역직렬화 후 유지" 는 `src/core/state.js` 잠금·`src/gameplay/save.js` 부재로 달성 불가 → 직렬화(`state.serialize().npcs[npc].burned`)까지만 판정하고 역직렬화는 대기로 명시 ⑤A1 의 "판정표 6행" 이 실제 결과 7가지와 어긋남 → 7가지로 정정.
+- **주**: 이 반환은 **비용 손실이 아니다** — 다섯 건 모두 착수했으면 잘못 구현됐거나 중간에 막혔을 계약 결함이고, 담당자가 코드 0줄로 정확히 짚었다.
+
+### [x] 발주 세션 — 통합 회귀 1건 발견·수정 (atmo-rooftop-rain 검은 블록, 2026-08-07)
+- **파일**: `src/ui/settings.js` `_apply('fov')`
+- **루브릭**: G1/G7 · 게이트 1 실격
+- **문제**: 1파 3장을 합치자 `atmo-rooftop-rain` 에 검은 폴리곤 블록이 다수 생겼다(dark 0.11%→4.4%). **단독으로는 셋 다 정상**이고 lobby+perf 도 정상이며 **lobby+settings 조합에서만** 발현했다. `settings.js` 가 init 에서 기본 FOV(70)를 카메라에 적용하는데 QA 모드에선 샷 하네스가 카메라를 소유(shotlist fov 38)하므로, 파이프라인이 첫 프레임에 잡아두는 투영 의존 상태가 이후 샷 카메라와 어긋난다. lobby 지오메트리가 있어야 어긋남이 픽셀로 드러난다.
+- **처리**: `_apply('fov')` 에 `if (this.engine.qa) return` 가드 추가. 같은 모듈의 품질 프리셋이 이미 쓰는 `!engine.qa` 가드와 동일 근거다. 실측 — rooftop dark 0.11% 복귀·아티팩트 소멸 · `ui-settings`·`lobby-wide` 재촬영 gate ok · 콘솔 0.
+- **주**: `gate ok` 가 이 파탄을 통과시켰다. 육안 검수가 유일한 탐지 수단이었다.
+
+### [ ] 발주 세션 → T-P1-10 (qa 하네스) — dark% 급변을 게이트로 올려라
+- **파일**: `tools/shoot.mjs` 게이트 판정 (T-P1-10 범위)
+- **문제**: 화면의 4.4% 를 검은 블록이 덮은 샷이 `gate ok` 로 통과했다. `dark%` 는 이미 계산·출력되는데 판정에 쓰이지 않는다 — 정상 0.11% 대비 40배였다.
+- **지시**: 샷별 `dark` 기준선을 두고 급변(예: 절대 +2%p 또는 상대 3배)을 FAIL 로 올려라. 기존 밝기·클리핑 축은 그대로 둔다.
+- **요청자가 처리한 부분**: 이번 회귀의 원인 수정과 실측치(정상 0.11~0.12% · 파탄 4.4%)를 report.md §5.6 에 남겼다 — 임계 설계의 근거로 쓸 수 있다.
+
+### [ ] 발주 세션 → 기준선 소유자 (#28 병합) — corridor 샷·기준선 불일치
+- **문제**: `corridor-long` 이 코리도가 아니라 벽 텍스처만 찍는다. **머지 이전 커밋 `b578121` 에서도 동일 재현**되므로 이번 머지와 무관하고, corridor 레벨이 아직 없어 테스트베드 벽을 찍는 #32 계열이다. `shots/_baseline/corridor.png` 도 이 샷과 대응하지 않아 `regress.mjs` 판정이 무의미하다(detail -58.7% 등).
+- **지시**: corridor 레벨(T-P2) 착수 전까지 이 샷을 보류 표기하거나, 기준선을 현 상태로 재동결할지 정하라.

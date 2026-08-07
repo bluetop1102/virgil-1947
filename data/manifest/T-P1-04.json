@@ -7,6 +7,11 @@
       "path": "src/narrative/interrogation.js",
       "scope": "file",
       "state": "existing"
+    },
+    {
+      "path": "tools/test-interrogation.mjs",
+      "scope": "file",
+      "state": "existing"
     }
   ],
   "consumes": [
@@ -103,21 +108,27 @@
       "interrogation:prompt",
       "perf:state",
       "act:enter",
-      "act:phase"
+      "act:phase",
+      "evidence:granted",
+      "flag:set",
+      "interrogation:needEvidence"
     ],
     "listen": [
       "interrogation:start",
-      "interrogation:choose"
+      "interrogation:choose",
+      "player:interact",
+      "qa:state",
+      "interrogation:evidencePicked"
     ]
   },
   "acceptance": [
     {
       "cmd": "node tools/test-interrogation.mjs",
-      "expect": "E5 §1 판정표 6행 전이가 배터리로 전건 재현 — 진실×{TRUTH,DOUBT,LIE}·거짓×{TRUTH,DOUBT,LIE정답,LIE오답}"
+      "expect": "E5 §1 판정표 전이가 배터리로 전건 재현 — 진실×{TRUTH,DOUBT,LIE}(3) · 거짓×{TRUTH,DOUBT,LIE정답,LIE오답}(4) = **결과 7가지**. E5 §1 본문의 '6행'은 거짓+LIE 를 한 행으로 센 표기이며 결과 수는 7이다 — 배터리는 7가지를 전부 판정한다"
     },
     {
       "cmd": "node tools/test-interrogation.mjs --burn",
-      "expect": "소각 후 해당 진술의 grants/spawns/flags가 재발화되지 않는다 · state 직렬화에 소각 상태가 포함되고 역직렬화 후에도 유지"
+      "expect": "`--burn` 을 배터리의 실제 인자로 신설한다(현재 배터리는 argv 를 읽지 않아 기본 실행과 출력이 같다 — 그 상태로는 이 항목이 무의미하다). 판정: 소각된 진술의 grants/spawns/flags 가 재발화되지 않는다 · `engine.state.serialize().npcs[npc].burned` 에 소각 상태가 포함된다. **역직렬화 후 유지는 이 티켓 범위 밖이다** — `src/core/state.js` 는 잠금이고 restore 경로·`src/gameplay/save.js` 가 아직 없다. 직렬화까지만 판정하고 역직렬화는 '대기'로 보고한다"
     },
     {
       "cmd": "node tools/factcheck.mjs",
@@ -134,7 +145,8 @@
     "힌트 신호를 이벤트로 흘리는 것 — 남은 증거 수·정답률·체크 표시 금지(E5 §1 불변).",
     "DOUBT 선제시가 점수 이득이 되게 만드는 것 — 후속 LIE 점수는 DOUBT 점수를 대체한다(누적 아님).",
     "case-graph.json·script.js 수정 — 데이터는 T-P0-03이 이미 정합시켰다.",
-    "수동 저장·로드 경로 추가 — 소각 회피 루트가 되어 U1을 무너뜨린다."
+    "수동 저장·로드 경로 추가 — 소각 회피 루트가 되어 U1을 무너뜨린다.",
+    "`act:enter` 를 interrogation.js 에서 직접 bus.emit 하는 것 — 유일 발신 지점은 `src/core/state.js:24` 의 `setAct()` 다(core 잠금). interrogation.js 는 막 진행을 결정하고 `engine.state.setAct(n)` 을 호출한다. ARCH §5 의 '발화 파일: interrogation.js' 는 **막 전환을 일으키는 소유자**를 뜻하며 bus.emit 호출 지점을 뜻하지 않는다(2026-08-07 회수 세션 확정)."
   ],
   "model": "codex",
   "depends": [

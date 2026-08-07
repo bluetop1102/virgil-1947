@@ -2,9 +2,10 @@ import { execFileSync } from 'node:child_process'
 import { readdirSync, readFileSync } from 'node:fs'
 import { dirname, extname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { runSelfTest } from './lint-contract-selftest.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const DISPLAY_NAME = String.fromCodePoint(0xc138, 0xc2e4)
+export const DISPLAY_NAME = String.fromCodePoint(0xc138, 0xc2e4)
 // E9 §2 개정(2026-08-07 답신): 영문 표출 변형 CECIL 도 대소문자 무시로 검사한다 —
 // 문자열 리터럴·HTML 텍스트 한정. 코드 식별자는 원천 비검사: 매치 전후가 영숫자·_ 면
 // 식별자 토큰(CECIL_POM·__CECIL__ 등 — 셰이더 소스 리터럴 포함)으로 보고 제외한다.
@@ -22,12 +23,27 @@ function matchesDisplay(source, index) {
   return !(IDENT_CHAR.test(before) || IDENT_CHAR.test(after))
 }
 
-const RULES = {
+export const RULES = {
   material: 'materials-outside-factory',
   light: 'lights-outside-atmosphere',
   deterministic: 'random-clock-direct-call',
   lines: 'max-500-lines',
   display: 'display-name'
+}
+
+// E9 §2 개정(2026-08-07 #29 답신): 패턴 규칙의 lint-allow 는 **주석 단독으로 성립하지
+// 않는다**. ARCH §6.5 승인 예외 절이 등재한 좌표·수량과 아래 표가 같아야 하고(2중 결박),
+// 등재 밖 파일의 주석이나 파일별 등재 수 초과는 그 자체가 위반이다. 랜덤/시계 규칙은
+// lint-allow 불허(결정론 계약에 예외 없음)이므로 여기에 넣지 않는다.
+const PATTERN_ALLOW = {
+  [RULES.light]: {
+    marker: 'lint-allow: light-direct',
+    registered: { 'src/world/props.js': 3, 'src/world/testbed.js': 1 }   // 폐집합 · 총 4
+  },
+  [RULES.material]: {
+    marker: 'lint-allow: material-direct',
+    registered: {}                                                       // 계약 등재 0건
+  }
 }
 
 const MATERIAL_PATTERN = new RegExp(
@@ -38,7 +54,7 @@ const LIGHT_PATTERN = new RegExp(
   '\\bnew\\s+THREE\\s*\\.\\s*[$\\w]*Light\\s*\\(',
   'g'
 )
-const DIRECT_CALL_PATTERNS = [
+export const DIRECT_CALL_PATTERNS = [
   ['Math', 'random'],
   ['Date', 'now'],
   ['performance', 'now']
@@ -219,9 +235,8 @@ function findHtmlDisplay(source) {
   return offsets
 }
 
-function allowedDisplayLines(source) {
+function allowedDisplayLines(source, marker = 'lint-allow: display-name') {
   const allowed = new Set()
-  const marker = 'lint-allow: display-name'
   let state = 'code'
   let line = 1
 
@@ -298,8 +313,22 @@ function lintFile(file) {
   const source = file.source
   const sanitized = stripComments(source)
   const addPatternFindings = (rule, pattern, message) => {
+    const allow = PATTERN_ALLOW[rule]
+    const allowedLines = allow ? allowedDisplayLines(source, allow.marker) : new Set()
+    const quota = allow ? (allow.registered[path] ?? 0) : 0
+    let suppressed = 0
     for (const offset of findPattern(sanitized, pattern)) {
-      findings.push(violation(rule, path, lineAt(sanitized, offset), message))
+      const line = lineAt(sanitized, offset)
+      if (allowedLines.has(line) && suppressed < quota) {
+        suppressed += 1
+        continue
+      }
+      findings.push(violation(rule, path, line, message))
+    }
+    // 등재 밖 주석·등재 수 초과 주석은 예외가 아니라 위반이다 — 2중 결박의 계약 측.
+    if (allowedLines.size > quota) {
+      findings.push(violation(rule, path, Math.min(...allowedLines),
+        `unregistered ${allow.marker} — 계약 등재 ${quota}건, 주석 ${allowedLines.size}건 (ARCH §6.5)`))
     }
   }
 
@@ -344,11 +373,11 @@ function lintFile(file) {
   return findings
 }
 
-function lintFiles(files) {
+export function lintFiles(files) {
   return files.flatMap(lintFile)
 }
 
-function printFindings(findings) {
+export function printFindings(findings) {
   for (const finding of findings) {
     console.error(`${finding.rule} ${finding.path}:${finding.line} ${finding.message}`)
   }
@@ -391,88 +420,6 @@ function stagedFiles() {
   }))
 }
 
-function runSelfTest() {
-  const directMaterial = ['new THREE', 'MeshStandardMaterial()'].join('.')
-  const directLight = ['new THREE', 'PointLight()'].join('.')
-  const directCalls = DIRECT_CALL_PATTERNS
-    .map(({ label }) => `${label}()`)
-    .join('\n')
-  const cases = [
-    {
-      name: 'material',
-      expected: RULES.material,
-      files: [{ path: 'src/world/material-fixture.js', source: directMaterial }]
-    },
-    {
-      name: 'light',
-      expected: RULES.light,
-      files: [{ path: 'src/world/light-fixture.js', source: directLight }]
-    },
-    {
-      name: 'random-clock',
-      expected: RULES.deterministic,
-      files: [{ path: 'src/core/time-fixture.js', source: directCalls }]
-    },
-    {
-      name: 'display-name-latin',
-      expected: RULES.display,
-      files: [{ path: 'src/world/neon-fixture.js', source: `const sign = 'HOTEL ${['CE', 'CIL'].join('')}'` }]
-    },
-    {
-      name: 'line-count',
-      expected: RULES.lines,
-      files: [{
-        path: 'tools/long-fixture.mjs',
-        source: Array.from({ length: 501 }, (_, index) => `export const n${index} = ${index}`).join('\n')
-      }]
-    },
-    {
-      name: 'display-name-index',
-      expected: RULES.display,
-      files: [{ path: 'index.html', source: `<main>${DISPLAY_NAME}</main>` }]
-    }
-  ]
-
-  let failed = false
-  for (const fixture of cases) {
-    const findings = lintFiles(fixture.files)
-    const simulatedExit = findings.length === 0 ? 0 : 1
-    printFindings(findings)
-    const valid = simulatedExit === 1 && findings.some(item =>
-      item.rule === fixture.expected && item.path && item.line > 0
-    )
-    console.log(`SELF-TEST ${valid ? 'PASS' : 'FAIL'} ${fixture.name} exit ${simulatedExit}`)
-    if (!valid) failed = true
-  }
-
-  const allowedDisplay = `const hotel = '${DISPLAY_NAME}' // lint-allow: display-name`
-  const commentOnly = `// ${directMaterial}\n/* ${directLight}\n${directCalls} */`
-  const clean = lintFiles([
-    { path: 'src/materials/allowed.js', source: directMaterial },
-    { path: 'src/world/atmosphere.js', source: directLight },
-    { path: 'src/world/atmo/allowed.js', source: directLight },
-    { path: 'src/ui/allowed.js', source: allowedDisplay },
-    { path: 'src/ui/allowed-latin.js', source: `const key = '${['ce', 'cil'].join('')}-wear' // lint-allow: display-name` },
-    { path: 'src/ui/ident-context.js', source: `const define = '${['CE', 'CIL'].join('')}_POM'; const boot = 'window.__${['CE', 'CIL'].join('')}__'` },
-    { path: 'tools/comments.mjs', source: commentOnly },
-    { path: 'tools/harness-scope.mjs', source: [directLight, directMaterial, directCalls].join('\n') },
-    { path: 'tools/short.mjs', source: Array(500).fill('export {}').join('\n') }
-  ])
-  const cleanExit = clean.length === 0 ? 0 : 1
-  printFindings(clean)
-  console.log(`SELF-TEST ${cleanExit === 0 ? 'PASS' : 'FAIL'} clean exit ${cleanExit}`)
-  if (cleanExit !== 0) failed = true
-
-  const stringBypass = lintFiles([{
-    path: 'src/ui/not-allowed.js',
-    source: `const marker = 'lint-allow: display-name'; const hotel = '${DISPLAY_NAME}'`
-  }])
-  const bypassBlocked = stringBypass.some(item => item.rule === RULES.display)
-  console.log(`SELF-TEST ${bypassBlocked ? 'PASS' : 'FAIL'} display-allow-comment-only exit ${bypassBlocked ? 1 : 0}`)
-  if (!bypassBlocked) failed = true
-
-  if (failed) process.exitCode = 1
-}
 
 function run(files) {
   const findings = lintFiles(files)

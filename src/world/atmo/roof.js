@@ -84,7 +84,7 @@ export function rooftop () {
   shadows(bulk, true, true)
   g.add(bulk)
 
-  const sign = P.neonSign(341, { text: 'CECIL', scale: 0.46 }).root
+  const sign = P.neonSign(341, { text: 'VIRGIL', scale: 0.46 }).root
   sign.position.set(-7.0, 3.35, 0.35)
   sign.rotation.y = 0.34
   g.add(sign)

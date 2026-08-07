@@ -87,7 +87,7 @@ function dotTexture () {
 }
 
 function keyLight (kind, kelvinK, intensity, angle, from, to, q) {
-  const l = new THREE.SpotLight(new THREE.Color().setRGB(...kelvin(kelvinK)), intensity, 26, angle, 0.62, 2)
+  const l = new THREE.SpotLight(new THREE.Color().setRGB(...kelvin(kelvinK)), intensity, 26, angle, 0.62, 2)  // lint-allow: light-direct (ARCH §6.5 폐집합)
   l.name = kind
   l.position.set(from[0], from[1], from[2])
   l.target.position.set(to[0], to[1], to[2])
