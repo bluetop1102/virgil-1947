@@ -247,10 +247,11 @@ export default {
     else ui.setPrompt(null)
   },
 
-  _interact () {
-    if (!this.focus) return
+  _interact (target = this.focus) {
+    if (!target) return
     if (this.engine.get('evidence')?.isModal?.() || this.engine.get('interrogation')?.isModal?.()) return
-    this.engine.bus.emit('player:interact', { targetId: this.focus.id })
+    this.engine.bus.emit('player:interact', { targetId: target.id })
+    if (target.data?.kind === 'npc' && target.data.npc) this.engine.bus.emit('interrogation:start', { npc: target.data.npc })
   },
 
   update (dt, elapsed) {
@@ -464,7 +465,7 @@ export default {
     if (!target) return false
     const raw = target.obj.userData?.interact
     const targetId = typeof raw === 'string' ? raw : raw?.id ?? id
-    this.engine.bus.emit('player:interact', { targetId })
+    this._interact({ id: targetId, data: raw })
     const evidence = this.engine.get('evidence'), observed = evidence?.byObject?.get(target.obj)
     if (observed?.mode === 'observe' && !evidence.has(observed.id)) {
       evidence.onFocus(target.obj, 0)
