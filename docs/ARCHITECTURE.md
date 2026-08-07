@@ -6,6 +6,8 @@
 > **v2.1 (2026-08-06)**: core 잠금 예외 1건 추가 — `config.js` QUALITY.low 신설(T-P0-06 한정, §2).
 > **v2.2 (2026-08-06)**: 지목판 개정(E5 §5) 파급 — `deduction:present`/`deduction:link`에
 > claim 필드, `qa.link` 시그니처(§9) · §5 구독 어휘 규칙 신설(폐집합 — HANDOFF 답신).
+> **v2.3 (2026-08-07)**: 심문 unlocks 반영 경로 이벤트 2종(`evidence:granted`·`flag:set`)
+> 열거 — E5 [구현] 신설 조항의 계약 측. 신선 테스트 실측 공백의 해소.
 > 코드 식별자(`__CECIL__` 등)는 내부 코드네임으로 잔존 허용 — 화면 표출 텍스트만 "세실" 0 (계약 린트, P0).
 
 ## 0. 작품 정의
@@ -213,7 +215,9 @@ engine.bus.emit('interrogation:start', {npc: 'deitch'})
 |---|---|---|
 | `game:ready` | — | core |
 | `act:enter` | `{act: 1\|2\|3}` | narrative — **발화 파일: interrogation.js (판정 상태기계와 함께 막·페이즈 진행 상태기계를 소유, E5 §4)** *(v2에서 소유 명시)* |
-| `evidence:collected` | `{id, kind}` | gameplay |
+| `evidence:collected` | `{id, kind}` | gameplay — **수집 이벤트의 단일 발신자.** 심문 grants 포함 전 경로가 이 이벤트로 수렴한다 *(v2.3 명시)* |
+| `evidence:granted` | `{id, npc}` | interrogation — 심문 성과 증거(unlocks grants) 통지. gameplay/evidence.js가 구독해 수집 확정 후 `evidence:collected` 발화(E5 [구현] unlocks 반영 경로) *(v2.3)* |
+| `flag:set` | `{id}` | interrogation — 플래그 발생 통지(two-voices 등). 레벨이 구독해 조건 스폰(footprints), 노트가 구독해 기록. 판정 상태는 engine.state가 진실원 — 이 이벤트는 통지 전용 *(v2.3)* |
 | `evidence:presented` | `{id, npc, correct}` | interrogation |
 | `interrogation:start` | `{npc}` | gameplay |
 | `interrogation:statement` | `{npc, line, truth}` | interrogation |

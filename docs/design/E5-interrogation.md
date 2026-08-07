@@ -59,12 +59,21 @@ DOUBT→LIE정답은 +2이지 +2.5가 아니다. DOUBT 선제시가 점수 이�
    roofkey 재반박 = 플래그 `deitch-confession`만). 종료 상태는 3막 증거 가용성에 영향이
    없다 — 가용성은 오직 획득/소각 상태가 정한다(책임 분리: 판정은 드라마, 소지품은 사실).
 
-## 3. 재심문
+## 3. 재심문·중단·재개
 
 - 재심문은 **명시된 진술만** 가능: `deitch.S4` (1막 `keyrack` 부분 성공 → 2막 `roofkey`로
   재개, C2 클러치). 그 외 진술은 막이 지나면 닫힌다.
 - 오답 소각된 진술은 재심문 자체가 불가(§2.3의 노트 표기).
 - 재심문 진입: 해당 인물 공간 재방문 + 조건 증거 소지(case-graph `reAct`·`requiresEvidence`).
+- **중단·재개 (2026-08-07 신설 — 신선 테스트 실측 공백)**: 잔여 진술이 남은 심문은
+  대화 이탈(이동)로 **중단**할 수 있고, 같은 막 안에서 재접근하면 **다음 미제시
+  진술부터 재개**된다(제시된 진술은 반복되지 않는다 — `interrogation:start {npc}`
+  재발화, 판정·점수 상태 유지). 종료 3단 판정과 `interrogation:end`는 **전 진술
+  소진 시에만** 발화한다. 정본 사용례: 루이즈 S2 정답 → 복도 `footprints` 수집 →
+  재접근해 S3·S4(E2 12:45–14:40행 — S4 정답이 footprints를 요구하므로 이 규칙 없이는
+  만점 경로가 성립하지 않는다). 막 경계를 넘기면 잔여 진술은 닫힌다(위 재심문 규칙과
+  동일 지위 — 미수집 증거와 같은 "몰랐던 것" 취급, §4). qa 구동은 기존
+  `qa.interact(npc/*)` 재호출로 충분(신규 API 없음).
 
 ## 4. 막 전환 (progression — case-graph `progression`과 1:1)
 
@@ -132,10 +141,17 @@ DOUBT→LIE정답은 +2이지 +2.5가 아니다. DOUBT 선제시가 점수 이�
 ## [구현]
 
 - `narrative/interrogation.js` [INTERROGATION]: §1 판정표·재질문·종료 3단의 상태기계 +
-  **§4 막·페이즈 진행 상태기계(`act:enter`·`act:phase` 발화 — ARCH §5 소유 명시)**.
-  **렌더 금지 — 상태·판정만.** 이벤트 발화: `interrogation:start/statement/verdict/end`,
-  `evidence:presented`, `interrogation:prompt`(선택 요구), `perf:state`(연기 상태 —
-  ARCHITECTURE v2 §5).
+  §3 중단·재개 + **§4 막·페이즈 진행 상태기계(`act:enter`·`act:phase` 발화 — ARCH §5
+  소유 명시)**. **렌더 금지 — 상태·판정만.** 이벤트 발화:
+  `interrogation:start/statement/verdict/end`, `evidence:presented`,
+  `interrogation:prompt`(선택 요구), `perf:state`(연기 상태 — ARCHITECTURE v2 §5).
+- **unlocks 반영 경로 (2026-08-07 신설 — 신선 테스트 실측 공백)**: 심문 성과 증거
+  (grants)와 스폰(spawns)의 **수집·배치 실체는 [GAMEPLAY]·레벨 소유를 유지**하고,
+  interrogation은 사실만 통지한다 — `evidence:granted {id, npc}` 발화 →
+  `gameplay/evidence.js`가 구독해 수집 확정 후 기존 `evidence:collected` 발화(수집
+  이벤트의 단일 발신 유지 — N4·`qa.state()` 정합) · `flag:set {id}` 발화 → 레벨이
+  구독해 조건 스폰(corridor.js가 `two-voices`에 `footprints` 배치). 두 이벤트는
+  ARCH §5 열거 등재(v2.3 — 구독 폐집합 규칙 준수).
 - **3선택 프롬프트·증거 지목 UI의 소유는 [UI]다**: 3선택 표시 = `ui/hud.js`, LIE 시 증거
   지목 모드 = `ui/notebook.js`(E8 §1). UI는 `interrogation:choose {sid, choice, evidence?}`로
   선택을 되돌린다(ARCH v2 §5). 티켓: E10 T-P1-09.
