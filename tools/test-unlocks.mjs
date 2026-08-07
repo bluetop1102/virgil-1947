@@ -90,6 +90,22 @@ ok(SUB.test(consumer), `U1 ${CONSUMER} 가 evidence:granted 를 구독한다 (E5
   ok(missing.length === 0, `U5 script grants/spawns/variant 참조 전건 정합 — 위반 ${missing.join(' · ')}`)
 }
 
+// ── U6. QA 하네스가 관찰형 증거를 획득할 수 있다 ───────────────────────────
+// evidence._onInteract 는 mode==='observe' 를 명시적으로 거절하고("관찰형은 집히지 않는다"),
+// 실제 획득은 매 프레임 onFocus → gaze 누적으로만 일어난다. QA 모드는 player 의 조준
+// 레이캐스트를 돌리지 않으므로, qa.interact 만으로는 observe 증거 7종(keyrack·flask·
+// footprints·sink-trap·hatch-lock·wrench·shoes = 전 증거 14종의 절반)이 원리적으로
+// 도달 불가다. 완주 봇이 "증거 4종 획득"을 만족할 수 없다(T-P1-06 §10.1 반환).
+{
+  const player = read('src/gameplay/player.js')
+  const at = player.indexOf('qa: {')
+  const surface = at >= 0 ? player.slice(at, at + 700) : ''
+  const hasObserveEntry = /\bobserve\s*:/.test(surface) ||
+    /_qaObserve|onFocus|gaze/.test(player.slice(player.indexOf('_qaInteract'), player.indexOf('_qaInteract') + 700))
+  ok(hasObserveEntry,
+    'U6 qa 하네스에 관찰형 증거 획득 경로가 있다 — qa.observe(id) 진입점이거나 _qaInteract 가 onFocus/gaze 를 구동한다')
+}
+
 console.log(`unlocks 반영 경로: ${pass} passed, ${fails.length} failed`)
 for (const f of fails) console.log(`  FAIL  ${f}`)
 process.exit(fails.length ? 1 : 0)

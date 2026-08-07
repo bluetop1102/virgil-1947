@@ -9,7 +9,7 @@
 
 ```
 /goal 완주 봇 — 골든 패스 소비 + 캡처 모드 — T-P1-06
-통과 조건: §8 수용 기준 4건 중 실행 가능한 전건 통과 · 콘솔 에러·경고 0 · §9 금지 사항 위반 0
+통과 조건: §8 수용 기준 5건 중 실행 가능한 전건 통과 · 콘솔 에러·경고 0 · §9 금지 사항 위반 0
            (§8 이 "도구 부재 시 건너뛴다"고 명시한 항목은 실행 불가로 보고 통과 계수에서 뺀다)
 중단 조건: 라운드 상한 1회 · 서브에이전트 토큰 상한 150만
            (PROMPT-build-p1.md 의 P1 전체 상한 14회·1500만을 티켓 10장으로 나눈 몫)
@@ -26,6 +26,7 @@
 "그 담당이 지금 안 보인다"는 안전 신호가 아니다.
 
 - `tools/playthrough.mjs` — 파일 전체 · 신설
+- `src/gameplay/player.js` — **구역 한정** — qa 절의 관찰형 증거 획득 진입점 — qa.observe(id) 신설 또는 _qaInteract 의 observe 분기 (이 구역 밖은 남의 것이다)
 
 ## 3. 선행 의존
 
@@ -396,25 +397,32 @@ E7 [구현] 수용 기준) · **클러치 검증** = C1~C5 각 좌표의 완주 
 **A1.**
 
 ```bash
+node tools/test-unlocks.mjs
+```
+→ 전건 PASS. **이 게이트는 네 소유가 아니다** — 발주 세션이 착수 전에 작성했고 현재 U6 가 실패한다(8 passed, 1 failed). 게이트 파일을 고쳐서 통과시키면 §10.1 반환보다 나쁜 위반이다. U6 는 관찰형 증거(observe 모드 7종)를 QA 에서 획득할 경로를 요구한다 — evidence._onInteract 는 observe 를 명시적으로 거절하고 실제 획득은 onFocus → gaze 누적으로만 일어나는데, QA 는 조준 레이캐스트를 돌리지 않는다. 이 결박을 닫지 않으면 A2 의 '증거 4종 획득'이 원리적으로 불가하다
+
+**A2.**
+
+```bash
 node tools/playthrough.mjs --fast --act 1
 ```
 → 1막 완주 로그 출력 · qa.goto/interact 경로로 증거 4종 획득 · act:enter{act:2} 도달 · exit 0
 
-**A2.**
+**A3.**
 
 ```bash
 node tools/playthrough.mjs --paced --act 1
 ```
 → E2 표의 t를 행동 스케줄로 소비 — 행 t에 행동 개시, 지연을 초 단위로 기록. 막 경계 실측이 스케줄 +40% 상한 안, 무사건 간격 ≤3:00
 
-**A3.**
+**A4.**
 
 ```bash
 node tools/playthrough.mjs --capture first30 --out shots/p1-06
 ```
 → 0:00–0:30 프레임 시퀀스 덤프 — E2 §첫 30초 표의 5행과 초 단위 대조 가능한 파일명(t 각인)
 
-**A4.**
+**A5.**
 
 ```bash
 test -f tools/playthrough.mjs && node tools/lint-contract.mjs
@@ -430,6 +438,8 @@ test -f tools/playthrough.mjs && node tools/lint-contract.mjs
 - E2 표를 봇에 하드코딩 복사 — 표를 파싱해서 소비한다. 표가 정본이다.
 - Date.now()/Math.random() 직호출 — 봇 실행이 재현 가능해야 판정 입력이 된다.
 - 별도 시퀀스 캡처 도구 신설 — 캡처는 이 봇에 통합한다(E10 T-P1-06).
+- tools/test-unlocks.mjs 를 편집하는 것 — 판정 도구는 구현자 소유가 아니다. 계약이 틀렸다고 판단하면 고치지 말고 §10.1 로 반환하라.
+- src/gameplay/player.js 의 qa 절 밖(이동·조준·상호작용 본체)을 고치는 것 — 이 티켓이 소유한 것은 관찰형 획득 진입점뿐이다.
 
 ### 9.2 전역 (프로젝트 전체 불변)
 
@@ -468,7 +478,7 @@ test -f tools/playthrough.mjs && node tools/lint-contract.mjs
 
 ### 10.2 결과 보고
 
-- 수용 기준 A1~A4 각각의 **실제 명령 출력**을 붙인다. 요약 서술로 대체하지 않는다.
+- 수용 기준 A1~A5 각각의 **실제 명령 출력**을 붙인다. 요약 서술로 대체하지 않는다.
   도구 부재로 **대기** 처리한 항목은 부재를 증명하는 출력(MODULE_NOT_FOUND 등)을 그대로 붙인다 —
   실행 자체를 생략하지 않는다. §8 의 판정 3분류를 항목마다 명시한다.
 - 커밋은 자기 소유 파일만, 라운드 단위로. squash·force push 금지 — 커밋 이력 자체가 제출물이다.
