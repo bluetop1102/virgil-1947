@@ -1,0 +1,1 @@
+import{t as e}from"./contact-C5zdI5M8.js";export{e as default};

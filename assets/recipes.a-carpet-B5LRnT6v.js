@@ -1,0 +1,1 @@
+import{t as e}from"./recipes.a-carpet-BcMBIMpU.js";export{e as RECIPES_A_CARPET};
