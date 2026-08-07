@@ -4,6 +4,8 @@
 // F2 타임라인 일관성 동일 시각·동일 인물의 위치 모순 0 · 증거 원산지 셀 결박 100%
 // F3 도달성        3링크 각각 수집 가능 경로 성립 + 최악 소각 경로에서도 엔딩 도달
 // F4 고아 노드      어떤 엣지에도 연결되지 않은 FACT/EVIDENCE 0 · LORE 인과 침투 0
+// B1 소각 반향      소각 가능 진술 전건에 관측 가능한 하류 델타 ≥1 (--echo 추적표 —
+//                  E9 §2 C5·C10·C11 회귀 게이트)
 // J1~J3 지목판     링크별 명제 후보 스키마 · 오답 명제 들러리 금지 · 조합 수 하한
 //                  (codex-verdict §6.4 — 링크 = 증거 2 + 명제 1)
 // R1~R3 회귀       MASTER-PLAN §3.3 개연성 결함 3건의 수정이 데이터에 남아 있는가
@@ -164,6 +166,40 @@ const worst = solve(new Set(g.statements.filter(s => s.burnable).map(s => s.id))
   ]
   for (const id of causal) if (loreIds.has(id)) fails.push(`LORE ${id}: 사건 인과에 침투`)
   check('F4', fails.length === 0, fails.length ? fails : `고아 0 · LORE ${g.lore.length}건 인과 격리 유지`)
+}
+
+// ── B1 소각 반향 커버리지 (E9 §2 — C5·C10·C11 회귀 게이트. --echo로 추적표 출력) ──
+{
+  const flagSinks = new Set(['deitch-confession', 'doyle-pattern', 'pryce-confession']) // STORY §5.4 엔딩 변주 소비
+  const echo = []
+  const fails = []
+  for (const s of g.statements) {
+    if (!s.burnable) continue
+    const solo = solve(new Set([s.id]))
+    const lostEv = [...best.have].filter(e => !solo.have.has(e))
+    const lostFlags = [...best.flags].filter(f => !solo.flags.has(f))
+    const wrongFlags = Object.keys(s.unlocks ?? {}).includes('onLieWrong')
+      ? (s.unlocks.onLieWrong.flags ?? []) : []
+    const delta = lostEv.length + lostFlags.length + wrongFlags.length
+    if (delta === 0) fails.push(`${s.id}: 소각해도 관측 가능한 하류 델타 0 — 반향 없는 비가역`)
+    echo.push({
+      statement: s.id,
+      lostEvidence: lostEv,
+      lostFlags,
+      onLieWrongFlags: wrongFlags,
+      noteTrace: '취소선 잔존 (E5 §2.3 / E8 §1)',
+      endingEcho: lostFlags.filter(f => flagSinks.has(f))
+    })
+  }
+  if (process.argv.includes('--echo')) {
+    console.log('\n── 소각 반향 추적표 (B1) ──')
+    for (const e of echo) {
+      console.log(`  ${e.statement}: 소실 증거 [${e.lostEvidence.join(', ') || '—'}] · 소실 플래그 [${e.lostFlags.join(', ') || '—'}] · 오답 플래그 [${e.onLieWrongFlags.join(', ') || '—'}] · 엔딩 변주 [${e.endingEcho.join(', ') || '—'}]`)
+    }
+    console.log('')
+  }
+  check('B1', fails.length === 0, fails.length ? fails
+    : `소각 가능 진술 ${echo.length}건 전부 하류 반향 ≥1 (--echo로 추적표)`)
 }
 
 // ── J1 지목 명제 후보 스키마 (E5 §5 — 링크 = 증거 2 + 명제 1) ────────────────
