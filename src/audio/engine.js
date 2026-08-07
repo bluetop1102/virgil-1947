@@ -35,6 +35,7 @@ const audio = {
     this.beds = new Map()
     this.ctx = null
     this.interro = false
+    this.breaking = false
     this.musicOn = false
     this.act = engine.state?.act ?? 1
     this.room = roomKey(engine.state?.room ?? 'lobby')
@@ -132,6 +133,29 @@ const audio = {
     g.linearRampToValueAtTime(0.0001, now + 0.035)
     g.setValueAtTime(0.0001, now + Math.max(dur, 0.1))
     g.linearRampToValueAtTime(1, now + Math.max(dur, 0.1) + 0.55)
+  },
+
+  // 소각은 세계를 끄지 않고 한 걸음 물린다. 환경층만 -6dB로 3초간 낮춘다.
+  roomtoneDip (dur = 3, db = -6) {
+    const c = this.ctx
+    if (!c || this.silent) return
+    const now = c.currentTime
+    const ratio = Math.pow(10, db / 20)
+    for (const param of [this.toneBus.gain, this.waterBus.gain]) {
+      const level = param.value
+      param.cancelScheduledValues(now)
+      param.setValueAtTime(level, now)
+      param.linearRampToValueAtTime(level * ratio, now + 0.08)
+      param.setValueAtTime(level * ratio, now + Math.max(dur, 0.1))
+      param.linearRampToValueAtTime(level, now + Math.max(dur, 0.1) + 0.35)
+    }
+  },
+
+  _setBreaking (on, dur = 0.18) {
+    this.breaking = on
+    const c = this.ctx
+    if (!c) return
+    ramp(this.musicBus.gain, on ? 0 : 1, c.currentTime, dur)
   },
 
   // ── 컨텍스트 수명 ───────────────────────────────────────────────────
@@ -280,7 +304,10 @@ const audio = {
     bus.on('evidence:collected', () => this.play('paper.pickup', { gain: 0.55 }))
     bus.on('interrogation:start', () => { this.interro = true; this._levels(0.9); this.duck(0.22, 1.4) })
     bus.on('interrogation:end', () => { this.interro = false; this._levels(2.6) })
-    bus.on('interrogation:verdict', (p) => { if (p && p.correct === false) this.silence(1.2) })
+    bus.on('interrogation:verdict', (p) => {
+      if (p?.choice === 'LIE' && p.correct === false) this.roomtoneDip(3, -6)
+    })
+    bus.on('perf:state', (p) => this._setBreaking(p?.state === 'breaking'))
     bus.on('cinematic:start', (p) => { if (String(p?.id ?? '').includes('ending')) this._music('ending') })
   },
 
