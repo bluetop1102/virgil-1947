@@ -77,7 +77,8 @@
   "events": {
     "emit": [],
     "listen": [
-      "room:changed"
+      "room:changed",
+      "game:pause"
     ]
   },
   "acceptance": [
