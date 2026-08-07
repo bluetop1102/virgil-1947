@@ -40,8 +40,24 @@ for (const [path, load] of Object.entries(found)) {
   }
 }
 
+const bootModules = [...engine.modules.values()].filter(mod => typeof mod.init === 'function')
+const bootState = { done: 0, total: bootModules.length + 1 }
+window.__VIRGIL_BOOT__ = bootState
+const reportBootProgress = () => {
+  bootState.done = Math.min(bootState.done + 1, bootState.total)
+  engine.bus.emit('boot:progress', { done: bootState.done, total: bootState.total })
+}
+for (const mod of bootModules) {
+  const init = mod.init
+  mod.init = async function (activeEngine) {
+    try { return await init.call(this, activeEngine) } finally { reportBootProgress() }
+  }
+}
+
 if (bootMsg) bootMsg.textContent = `${loaded.length} systems online`
 await engine.init()
+engine.frame(1 / 60)
+reportBootProgress()
 
 const harness = engine.harness()
 harness.errors = errors
@@ -80,7 +96,7 @@ if (scene) {
     p.pos?.set(sx, -500, sz)   // pos는 발 위치. 공간 로컬 바닥이 0이므로 월드로는 -500
     p.vy = 0
   }
-  console.log(`[cecil] scene=${scene} — 진입`)
+  console.log(`[virgil] scene=${scene} — 진입`)
 }
 
 if (boot) {
@@ -89,4 +105,4 @@ if (boot) {
 }
 
 engine.start()
-console.log('[cecil] modules:', loaded.join(', ') || '(none)')
+console.log('[virgil] modules:', loaded.join(', ') || '(none)')

@@ -2853,3 +2853,20 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
 - **파일**: 기존 등재분과 동일 — `src/main.js` · `src/materials/procedural.js` · `src/ui/subtitles.js` · `src/world/atmo/{rain,roof}.js` · `src/world/kit-mat.js` · `src/world/kit.js` · `src/world/props.js` · `src/world/testbed.js` · `tools/ui-selftest.html`
 - **문제**: T-P1-01·T-P1-03 두 에이전트가 독립적으로 같은 15건을 반환했다. 신규 산출(`lobby.js`·`perf.js`)의 위반은 0건이다.
 - **지시**: 이미 등재된 라우팅(#29 답신 대기 · lint-allow 후보 · props.js 분할)을 그대로 따른다. 새 결박은 없다.
+
+### [ ] T-P1-05 → [GAMEPLAY] (codex 클론 회수분, 원문 승계)
+- **파일**: `src/gameplay/player.js`
+- **루브릭**: P6 / D7
+- **문제**: T-P1-05 패킷은 마우스 감도를 `player.js`의 SENS 인스턴스 필드에 즉시 반영하도록 계약하지만, 현재 구현은 모듈 상수 `SENS`를 mousemove 클로저에서 직접 읽어 settings 모듈이 값을 바꿀 접점이 없다.
+- **지시**: 기본값 0.0021의 공개 인스턴스 필드(예: `sensitivity`)를 만들고 mousemove가 그 필드에 패킷의 0.5~1.5 배율을 적용해 읽도록 변경한다.
+- **요청자가 처리한 부분**: `src/ui/settings.js`에서 감도 값을 저장하고 `player.sensitivity`에 즉시 기록하며 `settings:changed {key:'sensitivity', value}`를 발화한다. **발주 세션 주**: 이 결박이 남아 있으면 통합 게이트의 `--assert-settings` 감도 항목이 실패한다 — 2파 이후 GAMEPLAY 소유 라운드에서 먼저 닫아야 한다.
+
+### [x] T-P1-05 → [CORE] main.js 코드네임 로그 — 발주 세션이 처리
+- **파일**: `src/main.js:99,108`
+- **문제**: T-P1-05의 부트 훅 추가로 main.js가 staged 린트 대상이 되면서 기존 코드네임 로그 2건(`[cecil] scene`·`[cecil] modules`)이 display-name 규칙에 걸려 본체 커밋이 막혔다.
+- **처리**: #29 답신의 계약 소유자 권고("`[cecil]` 로그 프리픽스는 콘솔이라 어느 쪽이든 무방하나 QA 콘솔 판독 혼선을 줄이려면 `[virgil]` 교체가 낫다")대로 **문자열만** `[virgil]`로 교체. 로직 무수정. 하네스 의존 확인 완료 — `[cecil]` 프리픽스를 파싱하는 코드는 `tools/`·`src/` 어디에도 없다. staged 린트 PASS (4 files).
+
+### [x] 발주 세션 — P1 1파 회수 완료 (T-P1-05, 2026-08-07)
+- **머지**: `src/ui/settings.js`(230줄) · `src/ui/title.js`(207줄) 신설 · `src/main.js` 부트 계수 훅 · `src/core/shotlist.js` UI 샷 4종 추가(ARCH §2 허용 예외). 클론 커밋 `d3ca7e7`. 감사 청정 — status 0 · `Math.random`/`Date.now` 0.
+- **본체 재검증**: `ui-loading`·`ui-title`·`ui-settings`·`ui-resume` 4샷 gate ok(p99.9=196 · dark 0.42~0.59%) · bootErrors 0 · console 0 · gateFailures 0 · `settings`·`title` 모듈 자동 등록. PNG 육안 검수 — 시스템 폰트·기본 버튼·라운드 코너·이모지 0, 전부 디제틱(놋쇠 명패·객실 안내 조정표 카드·열쇠 고리 진행률). 파탄 0.
+- **주**: 클론의 dark 8.2~8.5% 대비 본체 0.4~0.6% 은 로비 레벨(T-P1-01) 머지로 카드 뒤 배경이 테스트베드에서 로비로 바뀐 결과다 — 회귀가 아니라 통합 효과.

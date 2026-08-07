@@ -114,6 +114,26 @@ export const SHOTS = {
     pos: [1.3, 1.64, 4.2], target: [-1.4, 1.5, 1.4], fov: 40, time: 25, act: 2,
     state: { ui: 'prompt' },
     note: '[UI QA] HUD — 크로스헤어 없음, 타자체 프롬프트와 증거 슬립. D7'
+  },
+  'ui-loading': {
+    pos: [0, 1.5, 1.0], target: [0, 1.3, 0], fov: 45, time: 2, act: 1,
+    state: { ui: 'loading' },
+    note: '[UI QA] 허구 고지문 타건 중 · 객실 열쇠 고리 부트 진행률. P6/D7'
+  },
+  'ui-title': {
+    pos: [0, 1.5, 1.0], target: [0, 1.3, 0], fov: 45, time: 3, act: 1,
+    state: { ui: 'title' },
+    note: '[UI QA] 정문 유리 금박 각인 · 놋쇠 명패 두 장. P6/D7'
+  },
+  'ui-settings': {
+    pos: [0, 1.5, 1.0], target: [0, 1.3, 0], fov: 45, time: 4, act: 1,
+    state: { ui: 'settings' },
+    note: '[UI QA] 프런트 서류함 카드 설정 오버레이. P6/D7'
+  },
+  'ui-resume': {
+    pos: [0, 1.5, 1.0], target: [0, 1.3, 0], fov: 45, time: 5, act: 1,
+    state: { ui: 'resume' },
+    note: '[UI QA] 재입장 제스처 · 타자기 두 줄과 놋쇠 벨. P6/D7'
   }
 }
 
