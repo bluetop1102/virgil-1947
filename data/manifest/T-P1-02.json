@@ -112,9 +112,7 @@
   "model": "codex",
   "depends": [
     "T-P0-01",
-    "T-P0-02",
     "T-P0-03",
-    "T-P0-04",
     "T-P0-05"
   ],
   "status": "todo"
