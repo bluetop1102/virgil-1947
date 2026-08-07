@@ -8,6 +8,8 @@
 > claim 필드, `qa.link` 시그니처(§9) · §5 구독 어휘 규칙 신설(폐집합 — HANDOFF 답신).
 > **v2.3 (2026-08-07)**: 심문 unlocks 반영 경로 이벤트 2종(`evidence:granted`·`flag:set`)
 > 열거 — E5 [구현] 신설 조항의 계약 측. 신선 테스트 실측 공백의 해소.
+> **v2.4 (2026-08-07)**: §6.5 직접 광원 승인 예외 4건 폐집합 등재(HANDOFF #29 답신 —
+> 비등록 팩토리는 P5 백로그 이월).
 > 코드 식별자(`__CECIL__` 등)는 내부 코드네임으로 잔존 허용 — 화면 표출 텍스트만 "세실" 0 (계약 린트, P0).
 
 ## 0. 작품 정의
@@ -300,6 +302,17 @@ setMood('corridor-night')   // 안개 밀도·볼류메트릭 세기·IBL을 한
 - 모든 광원은 켈빈으로 지정한다. 한 공간 안에 **최소 2가지 이상 색온도**가 공존해야 한다 (루브릭 G1).
 - `atmosphere.js`는 `engine.scene.environment`에 절차 생성 IBL(PMREM)을 세팅한다. HDR 파일 로드 금지.
 - 무드 프리셋: `lobby-night`, `corridor-night`, `room-dusk`, `bathroom`, `rooftop-rain`, `interrogation`.
+
+**승인 예외 — 직접 광원 생성 (폐집합, v2.4 · 2026-08-07 HANDOFF #29 답신)**: 다음
+4건은 `practical()` 경유화가 **불가로 실측**되어(경유 시 S.seed 전진 → corridor-night
+플리커 시드 변경, A3 meanDiff 7.536/255 회귀 — T-P0-02 실측) 직접 생성을 승인한다.
+`src/world/props.js` 광원 3건 · `src/world/testbed.js` 광원 1건. 각 행에
+`// lint-allow: light-direct` 주석 필수(계약 린트가 이 목록과 주석의 2중 결박으로
+판정 — E9 §2). **이 목록은 폐집합이다** — 추가는 이 절의 개정으로만 하며, 신규 코드의
+직접 광원 생성은 여전히 금지다. 근본 해소(비등록 팩토리 — S.pool·S.queue·S.seed·scene
+비참여, practical()과 켈빈·루멘 변환 공유, fixture/fill/up/shaft·플리커 레코드 미생성)는
+**P5 그래픽 동결 해제 후 [ATMOSPHERE] 백로그**로 이월한다 — 그때 4건을 스왑하고 예외
+절을 소거하되, pix diff 무변화가 스왑 수용 기준이다.
 
 ## 7. 텍스처 규약
 
