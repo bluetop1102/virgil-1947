@@ -2945,3 +2945,21 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
 - **T-P1-11** unlocks 소비 배선: `src/gameplay/evidence.js` 3줄 추가. 클론 `6c05c12`. **게이트 `tools/test-unlocks.mjs` 무변조 확인(diff 0) — §9 금지 준수**. TDD 기록 6/2 → 8/0.
 - **본체 통합 재검증**: `test-unlocks` 8/0 · `test-interrogation` 64/0 · `factcheck` 전 게이트 · 머지 3파일 린트 위반 0 · `npm run build` 성공 · 샷 3종 gate ok · 콘솔 0 · bootErrors 0.
 - **판정 도구 분리의 첫 실적**: T-P1-11 은 acceptance oracle 을 소유하지 않은 첫 티켓이다. 구현자는 게이트를 고칠 수 없었고 `evidence.js` 만 고쳐 통과시켰다 — 독립 검토가 지목한 근본 원인(구현자·oracle 동시 소유)의 교정이 실제로 작동했다.
+
+### [x] 발주 세션 — P1 전건 완료·통합 게이트 (2026-08-08)
+- **P1 12장 전건 머지**. 마지막 T-P1-12(`interrogation:start` 발화자)로 **게임이 처음 1막을 스스로 완주한다**.
+- **§4 통합 게이트 전건 PASS**: 완주 봇 1막(`--fast`) exit 0 · 30초 캡처 31프레임 콘솔 0 · 심문 배터리 64/0 · unlocks 10/0 · factcheck 전 게이트(P4·P5·J1~J3·R1~R3) · `npm run shot` 28/28 콘솔 0 gateFailures 0.
+- **린트 잔여 6건은 전부 타 소유 기존 위반**(등재분). 이 세션 산출물의 위반은 0.
+
+### [ ] 발주 세션 → T-P1-06 소유(완주 봇) — `--paced` 모드가 막 전환에 도달하지 못한다
+- **파일**: `tools/playthrough.mjs`
+- **문제**: `--fast` 는 완주하는데 `--paced`(E2 스케줄 실시간 소비)는 `act:enter {act:2} 미도달` 로 실패한다. **증거 4종은 획득한다** — 실패 순서상 `missing.length` 검사를 통과하고 `!act2` 에서 걸린다. 두 모드의 차이는 이동 방식이다(`playthrough.mjs:233` — paced 는 `walk`, fast 는 `goto`). 다만 `_qaWalk` 는 실패 시 `_qaPlace` 로 순간이동하고 `qa:walk:fallback` 을 기록한 뒤 true 를 반환하므로 **보행 실패가 false 로 새는 경로는 아니다** — 스케줄 소비와 엘리베이터 상호작용 시점의 상호작용으로 보인다.
+- **지시**: paced 경로에서 `session.schedule` 소비 후 엘리베이터 상호작용이 실제로 발생하는지 이벤트 로그로 확인하고, 필요하면 대기 조건을 보정하라. 재현은 `node tools/playthrough.mjs --paced --act 1`(실시간이라 십수 분 걸린다).
+- **주**: 발사문 §4 통합 게이트가 지정한 명령은 `--fast --act 1` 이고 그것은 통과한다. 이 항목은 T-P1-06 자체 수용 기준 A3 의 잔여이며 **제출 차단은 아니다**.
+
+### [ ] 발주 세션 → 샷 하네스 소유 — 샷 시간 결정성과 없는 레벨 샷 6개
+- **파일**: `tools/shoot.mjs` · `src/core/shotlist.js` (· 기전은 `src/core/engine.js:127`)
+- **문제 1(시간 결정성)**: `advanceTo` 가 `Math.max(t, self.time)` 라 **샷이 선언한 `time` 은 현재 시간보다 클 때만 존중된다**. 전 스위트에서 atmo 프로브가 선언값(23~31) 대신 t≈52~56 에 촬영되고, 그 상태에서 검은 폴리곤 아티팩트가 나타난다. 단독 촬영은 깨끗하다(실측 `atmo-interrogation` t=31.8 정상 / t=55.7 오염). **머지 이전 커밋 `b578121` 에서도 재현되는 기존 결함이다.** 샷 순서가 결과를 바꾸는 상태 자체가 회귀 판정의 기반을 흔든다.
+- **문제 2(없는 레벨)**: `corridor-long`·`corridor-942`·`room942-bed`·`room942-bath`·`rooftop-tanks`·`rooftop-ladder` 6개는 해당 레벨이 P2 산출이라 아직 없고, 카메라가 로비의 벽·천장을 찍는다. `gate ok` 로 통과하므로 **28/28 이라는 수치가 실제보다 부풀어 보인다 — 실질 판정은 22개다.**
+- **지시**: ①샷별 선언 시간을 보장할지(시간 되감기 또는 샷별 세션 분리) 정하라 ②6개를 P2 착수 전까지 보류 표기하라.
+- **요청자가 처리한 부분**: 기전·최소 재현·머지 이전 대조를 `tools/calibration/report.md` §5.6 정정·§5.12 에 실측으로 남겼다. 앞서 T-P1-10 에 낸 "dark% 급변을 FAIL 로" 제안은 **어두운 장면에서 성립하지 않음**을 확인해 함께 정정했다(심문실 정상 5.13% vs 오염 6.53% — 갈리지 않는다).
