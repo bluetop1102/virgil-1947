@@ -106,6 +106,18 @@ ok(SUB.test(consumer), `U1 ${CONSUMER} 가 evidence:granted 를 구독한다 (E5
     'U6 qa 하네스에 관찰형 증거 획득 경로가 있다 — qa.observe(id) 진입점이거나 _qaInteract 가 onFocus/gaze 를 구동한다')
 }
 
+// ── U7. interrogation:start 에 발화자가 있다 ───────────────────────────────
+// ARCH §5 는 발신자를 gameplay 로 지정한다. 그런데 구독자는 셋인데(interrogation.js·
+// atmosphere.js·audio/engine.js) 발화자가 저장소에 0이었다 — NPC 를 상호작용해도 심문이
+// 시작되지 않는다. #57(evidence:granted 소비자 부재)의 거울상이고, 완주 봇이 1막을
+// 끝내지 못한 원인이다(T-P1-06 A2/A3 실패).
+{
+  const EMIT = /\.\s*emit\s*\(\s*['"`]interrogation:start['"`]/
+  const emitters = ['src/gameplay/player.js', 'src/gameplay/evidence.js', 'src/ui/hud.js', 'src/ui/notebook.js']
+    .filter(p => EMIT.test(read(p)))
+  ok(emitters.length >= 1, 'U7 gameplay 가 interrogation:start 를 발화한다 (ARCH §5 발신자 = gameplay)')
+}
+
 console.log(`unlocks 반영 경로: ${pass} passed, ${fails.length} failed`)
 for (const f of fails) console.log(`  FAIL  ${f}`)
 process.exit(fails.length ? 1 : 0)

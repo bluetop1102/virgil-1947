@@ -316,7 +316,6 @@ export default {
     this.nextScan = 0
   },
 
-  // ── QA 구동·관측 ───────────────────────────────────────────────
   _initQa (engine) {
     this.qaLog = []
     this.qaNextIndex = 0
@@ -333,19 +332,18 @@ export default {
           goto: (id) => this._qaGoto(id),
           walk: (id) => this._qaWalk(id),
           interact: (id) => this._qaInteract(id),
+          observe: (id) => this._qaInteract(id),
           state: () => this._qaState(),
           events: (since) => this._qaEvents(since)
         }
       }
     }
   },
-
   _qaRecord (type, payload) {
     if (type === 'room:changed' && payload?.room) this.qaRoom = payload.room
     this.qaLog.push({ index: this.qaNextIndex++, time: this.engine.time, type, payload: this._qaCopy(payload) })
     if (this.qaLog.length > QA_EVENT_CAP) this.qaLog.splice(0, this.qaLog.length - QA_EVENT_CAP)
   },
-
   _qaCopy (value, depth = 0) {
     if (value == null || typeof value !== 'object') return value
     if (depth >= 5) return null
@@ -354,7 +352,6 @@ export default {
     for (const [key, item] of Object.entries(value)) copy[key] = this._qaCopy(item, depth + 1)
     return copy
   },
-
   _qaInRoom (id) {
     const room = this.qaRoom
     const scopes = {
@@ -468,7 +465,13 @@ export default {
     const raw = target.obj.userData?.interact
     const targetId = typeof raw === 'string' ? raw : raw?.id ?? id
     this.engine.bus.emit('player:interact', { targetId })
-    return true
+    const evidence = this.engine.get('evidence'), observed = evidence?.byObject?.get(target.obj)
+    if (observed?.mode === 'observe' && !evidence.has(observed.id)) {
+      evidence.onFocus(target.obj, 0)
+      for (let i = 0; i <= observed.hold * 60; i++) this.engine.frame(1 / 60)
+      evidence.onFocus(null, Infinity)
+    }
+    return observed ? evidence.has(observed.id) : true
   },
 
   _qaState () {

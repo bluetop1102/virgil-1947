@@ -1,0 +1,77 @@
+{
+  "id": "T-P1-12",
+  "type": "tool",
+  "title": "NPC 상호작용 → 심문 개시 배선 (interrogation:start 발화자)",
+  "owner_files": [
+    {
+      "path": "src/gameplay/player.js",
+      "scope": "section",
+      "state": "existing",
+      "section": "상호작용 처리 절 — NPC 타깃일 때 interrogation:start 발화"
+    }
+  ],
+  "consumes": [
+    {
+      "label": "ARCH §5 이벤트 버스 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "5. 이벤트 버스 계약",
+      "why": "interrogation:start 의 발신자는 gameplay 로 지정돼 있다. payload 는 {npc}."
+    },
+    {
+      "label": "E5 [구현] 심문 개시",
+      "doc": "docs/design/E5-interrogation.md",
+      "heading": "1. 3선택 판정표",
+      "why": "심문 상태기계는 interrogation:start 를 받아야 시작한다 — 그 발화가 없으면 게임이 진행되지 않는다."
+    },
+    {
+      "label": "ARCH §9 QA 계약",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "9. 스크린샷·QA 하네스 계약",
+      "why": "완주 봇이 qa.interact('npc/deitch') 로 이 경로를 구동한다."
+    },
+    {
+      "label": "ARCH §11 코드 스타일",
+      "doc": "docs/ARCHITECTURE.md",
+      "heading": "11. 코드 스타일",
+      "why": "ESM·세미콜론 없음·2스페이스·500줄·콘솔 0."
+    }
+  ],
+  "inputs": [],
+  "events": {
+    "emit": [
+      "interrogation:start"
+    ],
+    "listen": []
+  },
+  "acceptance": [
+    {
+      "cmd": "node tools/test-unlocks.mjs",
+      "expect": "전건 PASS. **이 게이트는 네 소유가 아니다** — 발주 세션이 착수 전에 작성했고 현재 U7 이 실패한다(9 passed, 1 failed). 게이트 파일을 고치면 §10.1 반환보다 나쁜 위반이다"
+    },
+    {
+      "cmd": "node tools/playthrough.mjs --fast --act 1",
+      "expect": "1막 완주 · exit 0. **이것이 이 티켓의 진짜 판정이다** — 현재는 'interrogation:prompt 이벤트 대기 초과'로 실패한다. 봇이 qa.interact('npc/deitch') 를 부르면 심문이 시작돼 프롬프트가 떠야 한다"
+    },
+    {
+      "cmd": "node tools/test-interrogation.mjs",
+      "expect": "64/0 유지"
+    },
+    {
+      "cmd": "node tools/lint-contract.mjs",
+      "expect": "전체 스캔 출력에서 src/gameplay/player.js 행 0건. 전체 스캔 종료 코드는 타 소유 파일의 기존 위반 때문에 1일 수 있다 — 그 경우 자기 소유 파일 행이 0건이면 통과이고, 잔여는 HANDOFF 등재"
+    }
+  ],
+  "shots": [],
+  "forbidden": [
+    "tools/test-unlocks.mjs·tools/playthrough.mjs 를 편집하는 것 — 판정 도구는 구현자 소유가 아니다. 계약이 틀렸다고 판단하면 고치지 말고 §10.1 로 반환하라.",
+    "src/narrative/interrogation.js 를 고치는 것 — 구독 측은 이미 정상이다(T-P1-04 소유).",
+    "qa 절·관찰형 진입점(T-P1-10·T-P1-06 소유)을 건드리는 것 — 이 티켓은 상호작용 처리 절만 소유한다.",
+    "Math.random()/Date.now() 직호출."
+  ],
+  "model": "codex",
+  "depends": [
+    "T-P1-04",
+    "T-P1-06"
+  ],
+  "status": "todo"
+}
