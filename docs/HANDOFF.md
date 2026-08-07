@@ -2782,3 +2782,16 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
 - **문제**: 절차 생성 파이프라인에서 포토리얼 인물은 도달 불가가 실측됨(품질 실험 3라운드 정체 — quality-iteration.md). 디렉터가 2026-08-07 인물 아트 디렉션을 **의도된 퍼펫/마리오네트(1947 복화술 인형 계열)**로 확정 — 공포추리 톤과 정합.
 - **지시**: 인물 채점 축을 "포토리얼 인체"가 아니라 "선언된 스타일의 완성도"(관절·재질 일관성·마모 밀도·환경 정합)로 재정의하라. D4는 인물에 한해 "의도된 인형 관절"을 실격에서 제외하는 예외 절이 필요하다.
 - **요청자가 처리한 부분**: 정본 1체(다이치)를 세션이 직접 마리오네트 방향으로 다듬는 중. 완성 후 파생 3인은 파라미터 변주로 발주 예정.
+
+### [x] 발주 세션 — E9 §2 개정 2건 린터 반영 완료 (이행 보고, 2026-08-07)
+- **반영**: (1) 패턴 3규칙(재질·광원·랜덤/시계) 검사 범위를 `src/**`+`index.html` 한정 — tools 하네스 23건 해소. (2) display-name에 영문 CECIL(대소문자 무시) 추가 — 식별자 문맥(전후 영숫자·`_`: `CECIL_*`·`__CECIL__`·셰이더 소스 리터럴)은 "코드 식별자 원천 비검사" 취지로 자동 제외, kebab 키 등 리터럴 식별자 문자열은 검출 후 lint-allow 명시. self-test 8/8(영문 표출·식별자 문맥·하네스 범위 픽스처 신설).
+- **전체 스캔 잔여 14건 (전부 타 소유 — 소유자 조치 필요)**:
+  - **[ATMO] roof.js:87 — 옥상 네온 `text: 'CECIL'` 실표출. `'VIRGIL'` 교체 필요 (신규 발견 — 제출 차단급)**
+  - [CORE] main.js:83·92 `[cecil]` 로그 프리픽스 → lint-allow 또는 `[virgil]` 교체
+  - [MATERIALS] procedural.js:343 `'cecil'` 캐시 키 → lint-allow (cecil* 접두 잔존 허용분)
+  - [UI] subtitles.js:59 `'cecil-sub'` 클래스 → lint-allow
+  - [ATMO] rain.js:298 `'cecil-wet'` 키 → lint-allow
+  - [WORLD] kit-mat.js:63 `'cecil-wear'` 키 → lint-allow · props.js:156 `'HOTEL CECIL'`(기존 등재) · kit.js:324 재질(기존 등재)
+  - [하네스] ui-selftest.html:5 `<title>CECIL…` → VIRGIL 교체 권장
+  - props.js 광원 3·testbed.js 광원 1 — practical() 비등록 팩토리 답신(#29, ATMOSPHERE) 대기의 기존 결박
+- **P0 완전 종결의 유일 잔여 결박 = #29 답신.** 오면 광원 4건 라우팅 발주 + props.js 분할 커밋으로 닫는다.

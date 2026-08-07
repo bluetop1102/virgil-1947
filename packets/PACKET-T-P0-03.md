@@ -144,7 +144,9 @@ engine.bus.emit('interrogation:start', {npc: 'deitch'})
 |---|---|---|
 | `game:ready` | — | core |
 | `act:enter` | `{act: 1\|2\|3}` | narrative — **발화 파일: interrogation.js (판정 상태기계와 함께 막·페이즈 진행 상태기계를 소유, E5 §4)** *(v2에서 소유 명시)* |
-| `evidence:collected` | `{id, kind}` | gameplay |
+| `evidence:collected` | `{id, kind}` | gameplay — **수집 이벤트의 단일 발신자.** 심문 grants 포함 전 경로가 이 이벤트로 수렴한다 *(v2.3 명시)* |
+| `evidence:granted` | `{id, npc}` | interrogation — 심문 성과 증거(unlocks grants) 통지. gameplay/evidence.js가 구독해 수집 확정 후 `evidence:collected` 발화(E5 [구현] unlocks 반영 경로) *(v2.3)* |
+| `flag:set` | `{id}` | interrogation — 플래그 발생 통지(two-voices 등). 레벨이 구독해 조건 스폰(footprints), 노트가 구독해 기록. 판정 상태는 engine.state가 진실원 — 이 이벤트는 통지 전용 *(v2.3)* |
 | `evidence:presented` | `{id, npc, correct}` | interrogation |
 | `interrogation:start` | `{npc}` | gameplay |
 | `interrogation:statement` | `{npc, line, truth}` | interrogation |
@@ -218,8 +220,9 @@ T-P0-03 정합 라운드에서 이 어휘로 수렴한다. `elevator`는 이동 
 - 선행 의존: E3(진술·링크 데이터) · E1(U1 정의).
 - 배타 소유 파일: `docs/design/E5-interrogation.md` · (구현 시) `src/narrative/interrogation.js`,
   `src/narrative/deduction.js`. **승인 조항**: T-P0-03(E10)이 두 파일의 **데이터 접근층**
-  (관계 필드 참조를 `case-graph-loader.js` 경유로 전환)을 편집하는 것을 소유자로서
-  승인한다 — 판정 로직·이벤트 발화 절은 T-P0-03 범위 밖이다.
+  (관계 필드 참조를 `case-graph-loader.js` 경유로 전환)과 **deduction.js의 표출 문자열
+  구역**(`deduction.js:33` 미제 자막 재허구화 — 문자열만, 로직 무수정)을 편집하는 것을
+  소유자로서 승인한다 — 판정 로직·이벤트 발화 절은 T-P0-03 범위 밖이다.
 - 수용 기준: 위 [구현] 4항 (전건 기계 판정).
 - 권장 모델 클래스: 상태기계·증거판은 계약 두껍고 테스트 배터리가 수용 기준 — **외부 모델
   가능**. 2단 커널 스왑은 판정 배터리 설계 포함 — **단일 최강 모델**(E10).
@@ -443,7 +446,9 @@ engine.bus.emit('interrogation:start', {npc: 'deitch'})
 |---|---|---|
 | `game:ready` | — | core |
 | `act:enter` | `{act: 1\|2\|3}` | narrative — **발화 파일: interrogation.js (판정 상태기계와 함께 막·페이즈 진행 상태기계를 소유, E5 §4)** *(v2에서 소유 명시)* |
-| `evidence:collected` | `{id, kind}` | gameplay |
+| `evidence:collected` | `{id, kind}` | gameplay — **수집 이벤트의 단일 발신자.** 심문 grants 포함 전 경로가 이 이벤트로 수렴한다 *(v2.3 명시)* |
+| `evidence:granted` | `{id, npc}` | interrogation — 심문 성과 증거(unlocks grants) 통지. gameplay/evidence.js가 구독해 수집 확정 후 `evidence:collected` 발화(E5 [구현] unlocks 반영 경로) *(v2.3)* |
+| `flag:set` | `{id}` | interrogation — 플래그 발생 통지(two-voices 등). 레벨이 구독해 조건 스폰(footprints), 노트가 구독해 기록. 판정 상태는 engine.state가 진실원 — 이 이벤트는 통지 전용 *(v2.3)* |
 | `evidence:presented` | `{id, npc, correct}` | interrogation |
 | `interrogation:start` | `{npc}` | gameplay |
 | `interrogation:statement` | `{npc, line, truth}` | interrogation |
@@ -1053,8 +1058,9 @@ ROUNDS.md에 인수인계를 남긴다.
   않는다(동일 상태 중복 기록 방지).
 - **재개 부트의 재제스처(정본)**: 리로드는 브라우저 사용자 활성화를 소멸시키므로,
   `?resume=1` 부트는 로딩 후 **타이틀을 재표시하지 않고**(선택은 이미 끝났다) 최소
-  재입장 제스처 화면 한 장을 띄운다 — 타자기 한 줄 "돌아오셨습니까 — 벨을 누르십시오"
-  (§3 벨 도상 재사용). 첫 입력 = `title:proceed {mode:'wake'}` 발화(ARCH §5) —
+  재입장 제스처 화면 한 장을 띄운다 — 타자기 두 줄 "돌아오셨습니까 — 벨을 누르십시오" /
+  **"노트는 두고 가신 그대로입니다."**(§3 벨 도상 재사용. 둘째 줄은 복원 불변 — 소각·
+  취소선이 복원 후에도 남는다는 계약 — 의 표면 전달이다. X5 공백 실측 해소, 2026-08-07). 첫 입력 = `title:proceed {mode:'wake'}` 발화(ARCH §5) —
   AudioContext·포인터록 재활성과 입력 홀드 해제는 각 모듈이 이 신호를 구독해 수행한다.
   이 화면은 P6 정지샷 판정 대상에 포함된다(title.js 소유).
 - **이중 레이어 영속 규칙**: 소각·플래그 같은 **비가역 데이터는 발생 즉시 write-through
@@ -1087,18 +1093,27 @@ ROUNDS.md에 인수인계를 남긴다.
 | 계약 린트 | 커밋 훅 grep 5종: materials 밖 `Mesh*Material` · atmosphere 밖 `*Light` · `Math.random(`/`Date.now(`/`performance.now(` · 500줄 초과 · 화면 표출 "세실" — 검사 범위·판별법·훅 공존은 표 아래 판별 규칙이 정본 | 커밋마다 | P0 티켓 |
 | 프레임 예산 | `?stats=1` 통계 오버레이(frametime p50/p95·드로우콜·메모리 — QA 전용·플레이어 비노출·D7 면제) + 샷 하네스 게이트: high 60fps / medium 30fps / **low 30fps @ CPU 4× 스로틀링**(저사양 리허설 기준 — 프리셋 신설은 T-P0-06). 구현 티켓 T-P1-05 (E8 §5에서 이관) | 레벨 라운드마다 | P1 티켓 |
 | 판정 배터리 (2단) | 정답/오답/무관 60건 오판 0 | 커널 스왑 머지 조건 | P4 티켓 |
+| 소각 반향 추적표 (C5·C10·C11 회귀 — codex §6.1 축 강등분의 게이트 채택) | `factcheck` **B1**: 소각 가능 진술 전건이 관측 가능한 하류 델타(소실 증거·플래그 또는 onLieWrong 플래그) ≥1 · `--echo`가 추적표(선택→소실·플래그→노트 취소선→엔딩 변주 소비) 출력 · 구현 후: 완주 봇 이벤트 로그로 추적표 100% 재현(T-P1-06 수용 기준) | 내러티브 데이터 변경마다 | **가동 중 (이 세션 신설)** |
 
 **계약 린트 판별 규칙 (T-P0-01 정본 — 규칙 5종의 적용 범위·판별법. 이 절이 없으면
 에이전트마다 다른 판정이 난다. 2에이전트 캘리브레이션 실측으로 보강 —
 `tools/calibration/report.md` §1.3):**
 
-- **검사 범위**: `src/**` · `tools/**` · `index.html` 의 `.js`/`.mjs`/`.html`.
-  500줄 초과 규칙만 `.js`/`.mjs` 로 한정.
+- **검사 범위 (2026-08-07 재획정 — HANDOFF 답신)**: 표출·500줄 규칙은 `src/**` ·
+  `tools/**` · `index.html` 의 `.js`/`.mjs`/`.html`(500줄 초과 규칙만 `.js`/`.mjs` 로
+  한정). **패턴 3규칙(재질·광원·랜덤/시계)은 `src/**` + `index.html` 로 한정** —
+  tools 하네스의 `Date.now()` 계측 15건·셀프테스트 픽스처의 재질/광원 생성 8건은
+  브라우저 밖 계측·검증 대상 그 자체라 정당 사용이다(전건 스캔 실측, 어느 티켓도
+  소유하지 않는 위반 23건의 원인). 게임 결정론 계약(ARCH §10)의 사정거리는 게임
+  코드다 — 하네스 어휘까지 넓히면 게이트가 영구 미달이 된다.
 - **화면 표출 "세실" 판별**: 표출 sink 추적은 정적으로 결정 불가 — 검사 범위 내
-  **문자열 리터럴·HTML 텍스트 전수 검사**가 정본이다. 표출이 아닌 잔존 허용분
-  (코드 식별자·`cecil*` 접두 재질명 등 — ARCH §0)은 해당 행의
-  `// lint-allow: display-name` 주석(HTML은 `<!-- lint-allow: display-name -->`)
-  화이트리스트로 제외한다.
+  **문자열 리터럴·HTML 텍스트 전수 검사**가 정본이다. **검사 문자열은 한글 "세실" +
+  영문 표출 변형 `CECIL`(대소문자 무시, 리터럴·HTML 텍스트 한정 — `'HOTEL CECIL'` 등.
+  2026-08-07 HANDOFF 답신: 파일럿 ② 네온 소품 실측으로 영문 사각지대 확인)**. 표출이
+  아닌 잔존 허용분(코드 식별자 `CECIL_*`·`__CECIL__`·`cecil*` 접두 재질명 등 — ARCH §0.
+  식별자는 리터럴이 아니므로 원천 비검사, 리터럴로 쓰인 식별자 문자열만 예외 처리)은
+  해당 행의 `// lint-allow: display-name` 주석(HTML은
+  `<!-- lint-allow: display-name -->`) 화이트리스트로 제외한다.
 - **pre-commit 훅 공존**: 기존 훅이 이 설치기의 산출이면 멱등 갱신, 아니면
   덮어쓰지 않고 exit 1.
 - **훅 "자기 산출" 식별**: 설치기는 훅 머리(셔뱅 직후)에 고정 마커 줄
@@ -1229,6 +1244,10 @@ cinematics·interrogation·audio가 구독해 자기 update를 스킵하고, **�
 - **심문 아크**: 부인(인사만 했습니다) → 이력 시인 → **죄책의 개방(C3, 사진 — "제출했더니
   이틀 뒤에 잘렸습니다")** → 고해(줬습니다. 그게 제가 한 겁니다) → 협력(해치 증언).
   4인 중 유일하게 아크가 상승한다 — 은폐에서 협력으로.
+- **익명 신고자 (case-graph FC0)**: 새벽의 지명 전화가 그의 것이다 — 심문 어디에서도
+  스스로 밝히지 않고, S1의 거짓("인사만 했습니다")이 이 사실까지 가린다(hides 결박).
+  아이리스를 무장시킨 죄책과 같은 손이 형사를 부른다 — 고해 대사에 추가하지 않는다
+  (그의 마지막 비밀로 남긴다).
 
 ### 도일 (에멧 도일, 39 — 시설관리인, 소유주의 조카)
 - **목소리 지문**: 웃으면서 말한다. 질문을 되묻는다. 기술어(밸브·압력)로 도피한다.
@@ -1508,6 +1527,12 @@ NAN 요건 교훈의 습관화).
 - **증거 지목 모드 (T-P1-09)**: 심문 중 LIE 선택 시 노트가 지목 모드로 열린다 —
   `interrogation:prompt` 구독, 선택 결과를 `interrogation:choose`로 반환(ARCH v2 §5).
   3선택 프롬프트 자체는 `ui/hud.js` 소유. 힌트 표시 0(E5 §1 불변).
+  **면지 수칙 문구 (X5 — 비가역 계약의 사전 전달, 2026-08-07)**: 지목 모드로 열린 노트
+  상단에 1947년 경찰 지급품 인쇄 문구가 항상 보인다 —
+  **"제시한 증거는 회수되지 않는다. 닫힌 진술은 다시 열리지 않는다. 수사는 계속된다."**
+  — 증거를 내밀기 **전에**(aiming 중, 제출 전) 읽히는 위치다. 정적 인쇄 문구는 정답
+  힌트가 아니라 계약 고지라 E5 §1 무힌트 불변과 양립한다(정답·잔여 개수·상태 정보 0).
+  물성: 조서 면지의 활판 인쇄 — D7 무발생. 원문은 이 절이 소유한다(로딩 고지문 전례).
 - **괴담 면**: `lore:heard` 축적. 증거 면과 **다른 지질**(신문 스크랩·메모 쪼가리 콜라주 —
   타자 정서가 아니라 풀로 붙인 잡동사니)로 물리적 구분 — 괴담은 증거가 아니라는 시스템
   발화(E7 §4). 지목판에 나타나지 않는다.
@@ -1625,7 +1650,7 @@ NAN 요건 교훈의 습관화).
 | `pryce` | 월터 프라이스 | 58 | 944호 장기투숙, 전 하우스 디텍티브 | 아이리스를 옥상으로 보낸 게 자신이다 | 죄책감. 그리고 도일이 무섭다 |
 | `doyle` | 에멧 도일 | 39 | 시설관리인, 소유주의 조카 | 전부 | 범인 |
 
-### 인물별 텔(tell) — CHARACTERS의 perf.js가 구현할 미세신호
+### 인물별 텔(tell) — 미세신호 (채널 소유: 신체=perf.js · 음성/대사=script.js — E4 [구현] 텔 채널 분리)
 
 | 인물 | 거짓 시 | 진실이나 불안할 때 | 무너질 때 |
 |---|---|---|---|

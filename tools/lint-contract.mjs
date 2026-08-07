@@ -5,8 +5,22 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DISPLAY_NAME = String.fromCodePoint(0xc138, 0xc2e4)
+// E9 §2 개정(2026-08-07 답신): 영문 표출 변형 CECIL 도 대소문자 무시로 검사한다 —
+// 문자열 리터럴·HTML 텍스트 한정. 코드 식별자는 원천 비검사: 매치 전후가 영숫자·_ 면
+// 식별자 토큰(CECIL_POM·__CECIL__ 등 — 셰이더 소스 리터럴 포함)으로 보고 제외한다.
+// kebab 키('cecil-wear' 등)는 식별자 문맥이 아니므로 검출되며 lint-allow 로 명시 제외한다.
+const DISPLAY_LATIN = ['ce', 'cil'].join('')
+const IDENT_CHAR = /[A-Za-z0-9_]/
 const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.html'])
 const CODE_EXTENSIONS = new Set(['.js', '.mjs'])
+
+function matchesDisplay(source, index) {
+  if (source.startsWith(DISPLAY_NAME, index)) return true
+  if (source.slice(index, index + DISPLAY_LATIN.length).toLowerCase() !== DISPLAY_LATIN) return false
+  const before = index > 0 ? source[index - 1] : ''
+  const after = source[index + DISPLAY_LATIN.length] ?? ''
+  return !(IDENT_CHAR.test(before) || IDENT_CHAR.test(after))
+}
 
 const RULES = {
   material: 'materials-outside-factory',
@@ -146,7 +160,7 @@ function findJsDisplay(source, baseOffset = 0) {
     const char = source[index]
     if (state === 'single' || state === 'double' || state === 'template') {
       const delimiter = state === 'single' ? "'" : state === 'double' ? '"' : '`'
-      if (source.startsWith(DISPLAY_NAME, index)) offsets.push(baseOffset + index)
+      if (matchesDisplay(source, index)) offsets.push(baseOffset + index)
       if (char === '\\') index += 1
       else if (char === delimiter) state = 'code'
     } else if (char === "'") {
@@ -177,7 +191,7 @@ function findHtmlDisplay(source) {
     }
 
     if (source[index] !== '<') {
-      if (source.startsWith(DISPLAY_NAME, index)) offsets.push(index)
+      if (matchesDisplay(source, index)) offsets.push(index)
       index += 1
       continue
     }
@@ -188,7 +202,7 @@ function findHtmlDisplay(source) {
     for (; index < source.length; index += 1) {
       const char = source[index]
       if (quote) {
-        if (source.startsWith(DISPLAY_NAME, index)) offsets.push(index)
+        if (matchesDisplay(source, index)) offsets.push(index)
         if (char === '\\') index += 1
         else if (char === quote) quote = null
       } else if (char === "'" || char === '"') {
@@ -296,17 +310,24 @@ function lintFile(file) {
     }
   }
 
-  if (!path.startsWith('src/materials/')) {
+  // E9 §2 개정(2026-08-07 답신 (a)): 패턴 3규칙(재질·광원·랜덤/시계)은 게임 코드
+  // (src/** + index.html) 한정 — 하네스(tools/**)의 계측·픽스처는 결정론 계약 밖.
+  // 표출·500줄 규칙은 tools 포함 유지.
+  const patternScope = path === 'index.html' || path.startsWith('src/')
+
+  if (patternScope && !path.startsWith('src/materials/')) {
     addPatternFindings(RULES.material, MATERIAL_PATTERN, 'direct mesh material construction')
   }
 
   const lightFactory = path === 'src/world/atmosphere.js' || path.startsWith('src/world/atmo/')
-  if (!lightFactory) {
+  if (patternScope && !lightFactory) {
     addPatternFindings(RULES.light, LIGHT_PATTERN, 'direct light construction')
   }
 
-  for (const direct of DIRECT_CALL_PATTERNS) {
-    addPatternFindings(RULES.deterministic, direct.pattern, `${direct.label} direct call`)
+  if (patternScope) {
+    for (const direct of DIRECT_CALL_PATTERNS) {
+      addPatternFindings(RULES.deterministic, direct.pattern, `${direct.label} direct call`)
+    }
   }
 
   const displayOffsets = extension === '.html'
@@ -355,7 +376,7 @@ function stagedFiles() {
   const output = execFileSync(
     'git',
     ['diff', '--cached', '--name-only', '--diff-filter=ACM', '--no-renames'],
-    { cwd: ROOT, encoding: 'utf8' }
+    { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
   )
   const paths = output.split('\n').filter(Boolean).filter(path => {
     const normalized = normalizePath(path)
@@ -366,7 +387,7 @@ function stagedFiles() {
 
   return paths.map(path => ({
     path: normalizePath(path),
-    source: execFileSync('git', ['show', `:${path}`], { cwd: ROOT, encoding: 'utf8' })
+    source: execFileSync('git', ['show', `:${path}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
   }))
 }
 
@@ -390,7 +411,12 @@ function runSelfTest() {
     {
       name: 'random-clock',
       expected: RULES.deterministic,
-      files: [{ path: 'tools/time-fixture.mjs', source: directCalls }]
+      files: [{ path: 'src/core/time-fixture.js', source: directCalls }]
+    },
+    {
+      name: 'display-name-latin',
+      expected: RULES.display,
+      files: [{ path: 'src/world/neon-fixture.js', source: `const sign = 'HOTEL ${['CE', 'CIL'].join('')}'` }]
     },
     {
       name: 'line-count',
@@ -426,7 +452,10 @@ function runSelfTest() {
     { path: 'src/world/atmosphere.js', source: directLight },
     { path: 'src/world/atmo/allowed.js', source: directLight },
     { path: 'src/ui/allowed.js', source: allowedDisplay },
+    { path: 'src/ui/allowed-latin.js', source: `const key = '${['ce', 'cil'].join('')}-wear' // lint-allow: display-name` },
+    { path: 'src/ui/ident-context.js', source: `const define = '${['CE', 'CIL'].join('')}_POM'; const boot = 'window.__${['CE', 'CIL'].join('')}__'` },
     { path: 'tools/comments.mjs', source: commentOnly },
+    { path: 'tools/harness-scope.mjs', source: [directLight, directMaterial, directCalls].join('\n') },
     { path: 'tools/short.mjs', source: Array(500).fill('export {}').join('\n') }
   ])
   const cleanExit = clean.length === 0 ? 0 : 1
