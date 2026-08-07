@@ -2938,3 +2938,10 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
 - **처리**: ①depends 를 `[01, 04]` → `[01, 04, 09, 10]` 으로 교정(`qa.choose` 는 09 산출, `qa.goto/interact` 는 10 산출) ②lint 수용 기준을 `test -f tools/playthrough.mjs && node tools/lint-contract.mjs` 로 교체 — 신규 산출 티켓에서 "행 0건"만 요구하면 파일을 안 만들어도 통과하는 공허한 조건이었다 ③`packet-gen` §8 에 신규 산출 티켓 경고 절 신설.
 - **주**: ②는 **회수 세션이 오늘 #35 를 고치며 만든 결함**이고 외부 에이전트가 되짚어 줬다. 같은 문구를 쓰는 P0-03·P1-01·02·03·07 은 전부 파일을 실제로 산출해 물리지 않았다.
 - **재발주 시점**: T-P1-09 머지 후. 그때 위 GAMEPLAY 결박도 함께 닫아야 A1 이 성립한다.
+
+### [x] 발주 세션 — P1 3파 회수·머지 (T-P1-08·09·11, 2026-08-07)
+- **T-P1-08** 심문 카메라·침묵 연출: `src/narrative/cinematics.js`(+193) · `src/audio/engine.js`(+29). 클론 `354a555`. `test-audio.mjs --roomtone` PASS.
+- **T-P1-09** 심문 UI: `src/ui/hud.js`(+136) · `src/ui/notebook.js`(+88). 클론 `3c33116`. 샷 `hud-prompt`·`notebook-present` gate ok · 육안 검수 디제틱(3선택 종이 쪽지·증거 노트 끼움 카드) · 파탄 0.
+- **T-P1-11** unlocks 소비 배선: `src/gameplay/evidence.js` 3줄 추가. 클론 `6c05c12`. **게이트 `tools/test-unlocks.mjs` 무변조 확인(diff 0) — §9 금지 준수**. TDD 기록 6/2 → 8/0.
+- **본체 통합 재검증**: `test-unlocks` 8/0 · `test-interrogation` 64/0 · `factcheck` 전 게이트 · 머지 3파일 린트 위반 0 · `npm run build` 성공 · 샷 3종 gate ok · 콘솔 0 · bootErrors 0.
+- **판정 도구 분리의 첫 실적**: T-P1-11 은 acceptance oracle 을 소유하지 않은 첫 티켓이다. 구현자는 게이트를 고칠 수 없었고 `evidence.js` 만 고쳐 통과시켰다 — 독립 검토가 지목한 근본 원인(구현자·oracle 동시 소유)의 교정이 실제로 작동했다.

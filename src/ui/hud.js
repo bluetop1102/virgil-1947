@@ -15,6 +15,8 @@ export default {
     this.prompt = null
     this.slip = null
     this.slipT0 = -99
+    this.choicePrompt = null
+    this.choiceBusy = false
 
     this.layer = document.createElement('div')
     this.layer.style.cssText = 'position:absolute;inset:0;pointer-events:none'
@@ -28,23 +30,47 @@ export default {
     this.sWrap.style.cssText = 'position:absolute;opacity:0;transform:translateY(26px) rotate(-1.4deg);transition:opacity .3s ease,transform .42s cubic-bezier(.16,1,.3,1);filter:drop-shadow(-6px 10px 12px rgba(0,0,0,.62))'
     this.layer.appendChild(this.sWrap)
 
+    // ── T-P1-09 심문 3선택 프롬프트 ─────────────────────────────
+    this.choiceWrap = document.createElement('div')
+    this.choiceWrap.style.cssText = 'position:absolute;left:50%;bottom:6.5%;opacity:0;pointer-events:none;transform:translate(-50%,16px) rotate(-.4deg);transition:opacity .2s ease,transform .28s cubic-bezier(.16,1,.3,1);filter:drop-shadow(-8px 13px 15px rgba(0,0,0,.68))'
+    this.layer.appendChild(this.choiceWrap)
+    this.choiceWrap.addEventListener('pointerdown', (e) => this._choicePointer(e))
+    this._choiceKey = (e) => this._keyChoice(e)
+    window.addEventListener('keydown', this._choiceKey)
+
     if (engine.qa) {
       this.pWrap.style.transition = 'none'
       this.sWrap.style.transition = 'none'
+      this.choiceWrap.style.transition = 'none'
     }
 
     this._layout(engine.size.w, engine.size.h)
 
     engine.bus.on('evidence:collected', ({ id }) => this._noteEvidence(id))
-    engine.bus.on('qa:shot', () => { if (engine.qa) { this.setPrompt(null); this._hideSlip() } })
+    engine.bus.on('interrogation:prompt', (prompt) => this._showChoicePrompt(prompt))
+    engine.bus.on('qa:shot', () => { if (engine.qa) { this.setPrompt(null); this._hideSlip(); this._hideChoicePrompt() } })
     engine.bus.on('qa:state', (s) => {
       if (!engine.qa) return
       if (s?.ui === 'prompt') {
-        this.setPrompt('숙박부를 넘긴다', 'E')
+        this._showChoicePrompt({ npc: 'deitch', sid: 'deitch.S2', options: ['TRUTH', 'DOUBT', 'LIE'] })
         this._noteEvidence('register')
       }
       if (s?.ui === 'notebook' || s?.ui === 'deduction' || s?.ui === 'photos' || s?.ui === 'present') this.setPrompt(null)
     })
+
+    if (engine.qa) {
+      const harness = engine.harness.bind(engine)
+      engine.harness = () => {
+        const base = harness()
+        return {
+          ...base,
+          qa: {
+            ...(base.qa ?? {}),
+            choose: (input) => this._qaChoose(input)
+          }
+        }
+      }
+    }
   },
 
   _layout (w, h) {
@@ -59,6 +85,7 @@ export default {
     this.sWrap.style.bottom = Math.round(this.pad * 1.05) + 'px'
     if (this.prompt) this._drawPrompt()
     if (this.slip) this._drawSlip()
+    if (this.choicePrompt) this._drawChoicePrompt()
   },
 
   resize (w, h) {
@@ -108,6 +135,107 @@ export default {
     this.pWrap.appendChild(this.pc.c)
   },
 
+  _showChoicePrompt (payload) {
+    const allowed = ['TRUTH', 'DOUBT', 'LIE']
+    const options = Array.isArray(payload?.options) ? payload.options.filter(o => allowed.includes(o)) : []
+    if (!payload?.sid || options.length < 2) return false
+    this.choicePrompt = { npc: payload.npc, sid: payload.sid, options }
+    this.choiceBusy = false
+    this.setPrompt(null)
+    this._drawChoicePrompt()
+    this.choiceWrap.style.opacity = '1'
+    this.choiceWrap.style.pointerEvents = 'auto'
+    this.choiceWrap.style.transform = 'translate(-50%,0) rotate(-.4deg)'
+    return true
+  },
+
+  _hideChoicePrompt () {
+    this.choicePrompt = null
+    this.choiceBusy = false
+    this.choiceWrap.style.opacity = '0'
+    this.choiceWrap.style.pointerEvents = 'none'
+    this.choiceWrap.style.transform = 'translate(-50%,16px) rotate(-.4deg)'
+  },
+
+  _drawChoicePrompt () {
+    if (this.cc) this.cc.c.remove()
+    const options = this.choicePrompt?.options || []
+    const w = clamp(Math.round(this.vw * 0.43), 410, 710)
+    const h = clamp(Math.round(w * 0.19), 82, 128)
+    const s = sheet({ w, h, seed: 942, tone: 'bond', creases: 1, deckle: 1.8, grain: 0.7 })
+    const ctx = s.ctx
+    const labels = { TRUTH: '진실', DOUBT: '의심', LIE: '거짓' }
+    const size = clamp(Math.round(w * 0.028), 13, 20)
+    typed(ctx, '진술 기록 — 판단', w * 0.055, h * 0.28, { size: size * 0.58, ink: INK.faded, alpha: 0.62, track: 1.5, seed: 3 })
+    penLine(ctx, w * 0.05, h * 0.37, w * 0.95, h * 0.37, { w: 0.75, alpha: 0.24, ink: INK.faded, seed: 7 })
+    options.forEach((choice, i) => {
+      const x = w * (i + 0.5) / options.length
+      typed(ctx, `${i + 1}. ${labels[choice]}`, x - size * 1.65, h * 0.76, {
+        size, ink: INK.ribbon, alpha: 0.88, seed: 21 + i * 13, track: 0.7
+      })
+      if (i > 0) penLine(ctx, w * i / options.length, h * 0.48, w * i / options.length, h * 0.83, { w: 0.65, alpha: 0.16, ink: INK.faded, seed: 40 + i })
+    })
+    this.cc = s
+    this.choiceWrap.appendChild(s.c)
+  },
+
+  _choicePointer (e) {
+    if (!this.choicePrompt || this.choiceBusy) return
+    const box = this.choiceWrap.getBoundingClientRect()
+    const i = Math.floor(clamp((e.clientX - box.left) / Math.max(box.width, 1), 0, 0.999) * this.choicePrompt.options.length)
+    this._choosePrompt(this.choicePrompt.options[i])
+  },
+
+  _keyChoice (e) {
+    if (!this.choicePrompt || this.choiceBusy || e.repeat) return
+    const i = Number(e.key) - 1
+    if (!Number.isInteger(i) || i < 0 || i >= this.choicePrompt.options.length) return
+    e.preventDefault()
+    this._choosePrompt(this.choicePrompt.options[i])
+  },
+
+  _emitChoice (sid, choice, evidence) {
+    const payload = { sid, choice }
+    if (evidence != null) payload.evidence = evidence
+    this.engine.bus.emit('interrogation:choose', payload)
+  },
+
+  _emitAiming (sid, on) {
+    this.engine.bus.emit('interrogation:aiming', { sid, on })
+  },
+
+  async _choosePrompt (choice) {
+    const prompt = this.choicePrompt
+    if (!prompt || prompt.options.indexOf(choice) < 0 || this.choiceBusy) return false
+    if (choice !== 'LIE') {
+      this._emitChoice(prompt.sid, choice)
+      this._hideChoicePrompt()
+      return true
+    }
+    this.choiceBusy = true
+    this._emitAiming(prompt.sid, true)
+    const held = this.engine.state.evidenceList().map(e => e.id)
+    const evidence = await this.engine.get('notebook')?.pickEvidence({ available: held, sid: prompt.sid })
+    this._emitAiming(prompt.sid, false)
+    if (evidence) this._hideChoicePrompt()
+    else this.choiceBusy = false
+    return !!evidence
+  },
+
+  _qaChoose (input) {
+    const choice = input?.choice
+    const sid = input?.sid
+    if (!sid || !['TRUTH', 'DOUBT', 'LIE'].includes(choice)) return false
+    if (choice === 'LIE') {
+      if (!input.evidence) return false
+      this._emitAiming(sid, true)
+      this._emitChoice(sid, choice, input.evidence)
+      this._emitAiming(sid, false)
+    } else this._emitChoice(sid, choice)
+    if (this.choicePrompt?.sid === sid) this._hideChoicePrompt()
+    return true
+  },
+
   _noteEvidence (id) {
     const st = this.engine.state.evidence.get(id)
     this.slip = normalize(st || { id })
@@ -139,5 +267,7 @@ export default {
 
   update () {
     if (this.slip && this.engine.time - this.slipT0 > 4.6 && !this.engine.qa) this._hideSlip()
-  }
+  },
+
+  dispose () { window.removeEventListener('keydown', this._choiceKey) }
 }

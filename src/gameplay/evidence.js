@@ -67,6 +67,7 @@ export default {
   fired: null,         // 이미 처리한 조건부 플래그
   photo: null,
   keyHandler: null,
+  grantedOff: null,
 
   async init (engine) {
     this.engine = engine
@@ -90,6 +91,7 @@ export default {
     }
 
     engine.bus.on('player:interact', ({ targetId }) => this._onInteract(targetId))
+    this.grantedOff = engine.bus.on('evidence:granted', ({ id, npc }) => this.grant(id, npc))
     this._initLore(engine)
     engine.bus.on('qa:state', (s) => { if (s?.ui === 'photos') this.openPhotos() })
   },
@@ -349,5 +351,5 @@ export default {
     this.grant(id)
   },
 
-  dispose () { this.keyHandler?.(); this.loreOff?.() }
+  dispose () { this.keyHandler?.(); this.loreOff?.(); this.grantedOff?.() }
 }

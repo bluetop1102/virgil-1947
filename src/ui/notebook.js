@@ -25,6 +25,8 @@ const SLOT_L = [
   { x: 0.490, y: 0.808, w: 0.240, rot: -2.2 }
 ]
 
+const AIMING_NOTICE = '제시한 증거는 회수되지 않는다. 닫힌 진술은 다시 열리지 않는다. 수사는 계속된다.'
+
 export default {
   name: 'notebook',
   order: 80,
@@ -35,6 +37,7 @@ export default {
     this.items = []
     this.focus = 0
     this._pick = null
+    this.interrogationPrompt = null
 
     const root = document.getElementById('ui-root')
     this.layer = document.createElement('div')
@@ -72,6 +75,14 @@ export default {
 
     // 막이 바뀌면 수첩 첫 장의 확인 항목이 달라진다 — 열 때가 아니라 바뀔 때 다시 찍는다
     engine.bus.on('act:enter', () => { if (this.vw) this._layout(this.vw, this.vh) })
+    // ── T-P1-09 증거 지목 모드·QA 대리 구동 ─────────────────────
+    engine.bus.on('interrogation:prompt', (prompt) => { this.interrogationPrompt = prompt })
+    engine.bus.on('evidence:collected', () => {
+      if (this.mode === 'read' || this.mode === 'present') this._build()
+    })
+    engine.bus.on('lore:heard', () => {
+      if (this.mode === 'read') this._build()
+    })
     engine.bus.on('qa:shot', () => { if (engine.qa) this.close(true) })
     engine.bus.on('qa:state', (s) => {
       if (!engine.qa || !s?.ui) return
@@ -80,6 +91,22 @@ export default {
       else if (s.ui === 'photos') { this.open('read'); this._openScrub(3, false) }
       else if (s.ui === 'deduction') this.openBoard()
     })
+
+    if (engine.qa) {
+      const harness = engine.harness.bind(engine)
+      engine.harness = () => {
+        const base = harness()
+        return {
+          ...base,
+          qa: {
+            ...(base.qa ?? {}),
+            link: (evidence, claimId) => this._qaLink(evidence, claimId),
+            sign: () => this._qaSign(),
+            notebook: (input) => this._qaNotebook(input)
+          }
+        }
+      }
+    }
   },
 
   _layout (vw, vh) {
@@ -170,7 +197,25 @@ export default {
         rot: sl.rot, w, h, lift: false
       })
     })
+    if (this.mode === 'present') this._mountAimingNotice()
     this._paint()
+  },
+
+  _mountAimingNotice () {
+    const w = Math.round(this.W * 0.56)
+    const h = Math.round(this.H * 0.155)
+    const s = sheet({ w, h, seed: 1947, tone: 'bond', creases: 1, deckle: 1.4, grain: 0.65 })
+    const ctx = s.ctx
+    const size = clamp(Math.round(h * 0.135), 10, 15)
+    typed(ctx, '증거 제시 수칙', w * 0.06, h * 0.24, { size: size * 0.72, ink: INK.stamp, alpha: 0.72, track: 1.8, seed: 5 })
+    typed(ctx, '제시한 증거는 회수되지 않는다.', w * 0.06, h * 0.49, { size, ink: INK.ribbon, alpha: 0.88, seed: 11 })
+    typed(ctx, '닫힌 진술은 다시 열리지 않는다.', w * 0.06, h * 0.69, { size, ink: INK.ribbon, alpha: 0.86, seed: 23 })
+    typed(ctx, '수사는 계속된다.', w * 0.06, h * 0.89, { size, ink: INK.ribbon, alpha: 0.88, seed: 37 })
+    const d = document.createElement('div')
+    d.style.cssText = `position:absolute;left:${Math.round(this.W * 0.37)}px;top:${Math.round(this.H * 0.015)}px;z-index:8;transform:rotate(.45deg);pointer-events:none;filter:drop-shadow(-5px 8px 10px rgba(0,0,0,.58))`
+    d.dataset.notice = AIMING_NOTICE
+    d.appendChild(s.c)
+    this.itemWrap.appendChild(d)
   },
 
   _photo (w, h) {
@@ -270,7 +315,7 @@ export default {
     this._paint()
     let resolve
     const p = new Promise(r => { resolve = r })
-    this._pick = { p, resolve }
+    this._pick = { p, resolve, sid: opts?.sid || this.interrogationPrompt?.sid || null }
     return p
   },
 
@@ -282,8 +327,49 @@ export default {
     const pick = this._pick
     this._pick = null
     this.close(true)
+    if (pick?.sid) this.engine.bus.emit('interrogation:choose', { sid: pick.sid, choice: 'LIE', evidence: id })
     pick?.resolve(id)
     this.engine.bus.emit('ui:close', { ui: 'present' })
+  },
+
+  _qaLink (evidence, claimId) {
+    if (!Array.isArray(evidence) || evidence.length !== 2 || evidence[0] === evidence[1] ||
+      evidence.some(id => typeof id !== 'string' || !id) || typeof claimId !== 'string' || !claimId) return false
+    this.engine.bus.emit('deduction:present', { evidence: [...evidence], claim: claimId })
+    return true
+  },
+
+  _qaSign () {
+    this.engine.bus.emit('deduction:sign', {})
+    return true
+  },
+
+  _qaNotebook (input) {
+    const op = input?.op
+    const arg = input?.arg
+    if (op === 'open') { this.open('read'); return true }
+    if (op === 'close') { this.close(); return true }
+    if (op === 'tab') {
+      if (arg === 'deduction') this.openBoard()
+      else this.open(arg === 'present' ? 'present' : 'read')
+      return true
+    }
+    if (op === 'scrub') {
+      if (!this.mode) this.open('read')
+      const index = Number.isInteger(arg) ? clamp(arg, 0, 3) : 0
+      this._openScrub(index, false)
+      return true
+    }
+    if (op === 'inspect') {
+      if (!this.mode) this.open('read')
+      const item = typeof arg === 'string' ? this.items.find(it => it.ev.id === arg) : this.items[arg ?? this.focus]
+      if (!item) return false
+      this.focus = this.items.indexOf(item)
+      if (item.ev.id === 'photos') this._openScrub(0, false)
+      else this._paint()
+      return true
+    }
+    return false
   },
 
   _openScrub (idx, zoom) {
