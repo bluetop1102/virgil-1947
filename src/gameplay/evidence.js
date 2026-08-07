@@ -47,6 +47,13 @@ const ZOOM_MAX = 3.4
 // 4번째 사진 유리 반사의 두 번째 형체. UI 렌더가 같은 좌표를 쓰도록 photoLayout()으로만 넘긴다.
 const FIGURE = { photo: 3, x: 0.665, y: 0.405, r: 0.115, zoom: 2.4, hold: 0.7 }
 
+const LORE_BY_MEDIUM = {
+  'radio-lobby': ['lore.pipes'],
+  'register-margin': ['lore.lightwell'],
+  'linen-wall': ['lore.linen', 'lore.lightwell'],
+  'lobby-frame': ['lore.1912']
+}
+
 export default {
   name: 'evidence',
   order: 21,
@@ -83,6 +90,7 @@ export default {
     }
 
     engine.bus.on('player:interact', ({ targetId }) => this._onInteract(targetId))
+    this._initLore(engine)
     engine.bus.on('qa:state', (s) => { if (s?.ui === 'photos') this.openPhotos() })
   },
 
@@ -278,6 +286,46 @@ export default {
     this.engine.bus.emit('evidence:flag', { flag: 'second-figure', id: 'photos' })
   },
 
+  // ── QA 관측·lore:heard ────────────────────────────────────────
+  _initLore (engine) {
+    this.heardLore = new Set()
+    this.loreOff = engine.bus.on('player:interact', ({ targetId }) => this._hearLore(targetId))
+  },
+
+  _loreTarget (targetId) {
+    const bound = this.bound.get(targetId)?.obj
+    if (bound) return bound
+    let found = null
+    const visit = (obj) => {
+      if (found || obj.visible === false) return
+      const raw = obj.userData?.interact
+      const id = typeof raw === 'string' ? raw : raw?.id
+      if (id === targetId) { found = obj; return }
+      for (const child of obj.children ?? []) visit(child)
+    }
+    visit(this.engine.scene)
+    return found
+  },
+
+  _hearLore (targetId) {
+    const obj = this._loreTarget(targetId)
+    if (!obj) return
+    const interaction = obj.userData?.interact
+    const tagged = obj.userData?.lore
+    const medium = tagged?.medium ?? interaction?.medium ?? targetId
+    const canonical = LORE_BY_MEDIUM[medium]
+    if (!canonical) return
+    const supplied = tagged?.id ?? interaction?.lore
+    const ids = supplied == null ? canonical : (Array.isArray(supplied) ? supplied : [supplied])
+    for (const id of ids) {
+      if (!canonical.includes(id)) continue
+      const key = `${id}:${medium}`
+      if (this.heardLore.has(key)) continue
+      this.heardLore.add(key)
+      this.engine.bus.emit('lore:heard', { id, medium })
+    }
+  },
+
   update (dt) {
     const e = this.engine
     if (!e) return
@@ -301,5 +349,5 @@ export default {
     this.grant(id)
   },
 
-  dispose () { this.keyHandler?.() }
+  dispose () { this.keyHandler?.(); this.loreOff?.() }
 }

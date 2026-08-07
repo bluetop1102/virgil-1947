@@ -2904,3 +2904,14 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
 ### [ ] 발주 세션 → 기준선 소유자 (#28 병합) — corridor 샷·기준선 불일치
 - **문제**: `corridor-long` 이 코리도가 아니라 벽 텍스처만 찍는다. **머지 이전 커밋 `b578121` 에서도 동일 재현**되므로 이번 머지와 무관하고, corridor 레벨이 아직 없어 테스트베드 벽을 찍는 #32 계열이다. `shots/_baseline/corridor.png` 도 이 샷과 대응하지 않아 `regress.mjs` 판정이 무의미하다(detail -58.7% 등).
 - **지시**: corridor 레벨(T-P2) 착수 전까지 이 샷을 보류 표기하거나, 기준선을 현 상태로 재동결할지 정하라.
+
+### [x] 발주 세션 — P1 2파 회수·머지 (T-P1-07·T-P1-10, 2026-08-07)
+- **머지**: `src/narrative/cinematics.js`(303줄 신설 · 클론 `5d9747b`) · `src/gameplay/player.js`·`src/gameplay/evidence.js`(qa 하네스 절 · 클론 `6ee2087`). 감사 청정 — 각 소유 파일만 커밋 · `Math.random`/`Date.now` 0.
+- **본체 재검증**: `lobby-wide`·`ui-settings`·`atmo-rooftop-rain` 3샷 gate ok · bootErrors 0 · console 0 · gateFailures 0 · `cinematics` 모듈 자동 등록. **rooftop dark 0.11% 유지** — #51 회귀가 재발하지 않았다.
+- **템플릿 개정 효과 실측**: 1파에서 신설한 §8 판정 3분류가 그대로 작동했다. 07·10 모두 playthrough 항목을 **'대기'로 정확히 분류**하고 부재 증명 출력(MODULE_NOT_FOUND)을 붙였으며, "전건 통과 vs 건너뛰기" 모순 지적이 사라졌다. T-P1-10 에 추가한 lint 수용 기준이 클론 내 유일한 기계 판정으로 실제 기능했다.
+
+### [x] T-P1-05 → [GAMEPLAY] 마우스 감도 결박 — 발주 세션이 처리 (앞선 미해소 항목 종결)
+- **파일**: `src/gameplay/player.js`
+- **처리**: `init` 에 공개 필드 `this.sensitivity = 1` 을 만들고 mousemove 가 `SENS * this.sensitivity` 를 읽도록 했다. `settings.js:153` 이 이미 `player.sensitivity = value` 를 쓰고 있어 이 한 접점으로 결박이 닫힌다.
+- **왜 발주 세션이 했나**: 이 결박은 T-P1-05 회수 시점에 등재됐고 T-P1-10 패킷은 그 이전에 생성돼 담당자에게 전달되지 않았다 — 담당자 누락이 아니다. 통합 게이트의 `--assert-settings` 감도 항목이 이 필드에 걸려 있어 2파 머지와 함께 닫았다.
+- **주**: 패킷은 생성 시점의 HANDOFF 를 담지 않는다. **회수 중 등재된 결박은 그 다음 발주 패킷에 자동으로 실리지 않는다** — 발주 전 HANDOFF 잔여를 매니페스트에 손으로 반영하거나 회수 세션이 직접 닫아야 한다.

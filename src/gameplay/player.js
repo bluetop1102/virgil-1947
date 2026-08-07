@@ -15,6 +15,7 @@ const LOOK_LAMBDA = 7       // 6~8. 즉답하지 않는 카메라
 const SENS = 0.0021
 const REACH = 3.0
 const STEP_UP = 0.28
+const QA_EVENT_CAP = 512
 
 const BOB_Y = 0.014         // 1.5cm 이하
 const BOB_X = 0.008
@@ -67,6 +68,9 @@ export default {
 
   async init (engine) {
     this.engine = engine
+    // 설정 카드가 즉시 반영할 수 있는 공개 배율(0.5~1.5). SENS 는 기준값이고 이 필드가
+    // 곱해진다 — settings.js 가 값을 쓰는 유일한 접점이다(HANDOFF T-P1-05 → GAMEPLAY).
+    this.sensitivity = 1
     this.keys = new Set()
     this.ray = new THREE.Raycaster()
     this.down = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0), 0, 2.4)
@@ -78,6 +82,7 @@ export default {
     this.pitch = this.pitchT = c.rotation.x
 
     engine.bus.on('room:changed', () => { this.nextScan = 0 })
+    if (engine.qa) this._initQa(engine)
     if (!engine.qa) this._listen()
   },
 
@@ -93,8 +98,9 @@ export default {
     const onBlur = () => this.keys.clear()
     const onMove = (e) => {
       if (doc.pointerLockElement !== cv) return
-      this.yawT -= e.movementX * SENS
-      this.pitchT = clamp(this.pitchT - e.movementY * SENS, -1.48, 1.48)
+      const sens = SENS * (this.sensitivity ?? 1)
+      this.yawT -= e.movementX * sens
+      this.pitchT = clamp(this.pitchT - e.movementY * sens, -1.48, 1.48)
     }
     const onClick = () => {
       if (doc.pointerLockElement !== cv) { cv.requestPointerLock?.(); return }
@@ -310,5 +316,181 @@ export default {
     this.nextScan = 0
   },
 
-  dispose () { this.bound?.() }
+  // ── QA 구동·관측 ───────────────────────────────────────────────
+  _initQa (engine) {
+    this.qaLog = []
+    this.qaNextIndex = 0
+    this.qaRoom = engine.state.room
+    this.qaOff = engine.bus.on('*', ({ type, payload }) => this._qaRecord(type, payload))
+    const harness = engine.harness.bind(engine)
+    engine.harness = () => {
+      const base = harness()
+      return {
+        ...base,
+        qa: {
+          ...(base.qa ?? {}),
+          list: () => this._qaTargets().map(({ id }) => id),
+          goto: (id) => this._qaGoto(id),
+          walk: (id) => this._qaWalk(id),
+          interact: (id) => this._qaInteract(id),
+          state: () => this._qaState(),
+          events: (since) => this._qaEvents(since)
+        }
+      }
+    }
+  },
+
+  _qaRecord (type, payload) {
+    if (type === 'room:changed' && payload?.room) this.qaRoom = payload.room
+    this.qaLog.push({ index: this.qaNextIndex++, time: this.engine.time, type, payload: this._qaCopy(payload) })
+    if (this.qaLog.length > QA_EVENT_CAP) this.qaLog.splice(0, this.qaLog.length - QA_EVENT_CAP)
+  },
+
+  _qaCopy (value, depth = 0) {
+    if (value == null || typeof value !== 'object') return value
+    if (depth >= 5) return null
+    if (Array.isArray(value)) return value.map(v => this._qaCopy(v, depth + 1))
+    const copy = {}
+    for (const [key, item] of Object.entries(value)) copy[key] = this._qaCopy(item, depth + 1)
+    return copy
+  },
+
+  _qaInRoom (id) {
+    const room = this.qaRoom
+    const scopes = {
+      lobby: ['lobby/', 'radio-lobby', 'lobby-frame', 'npc/deitch'],
+      elevator: ['lobby/elevator'],
+      corridor9: ['corridor9/'],
+      linen: ['linen/', 'linen-wall', 'npc/ruiz'],
+      room942: ['room942/'],
+      bathroom942: ['bathroom942/'],
+      room944: ['room944/', 'npc/pryce'],
+      'stairs-roof': ['stairs-roof/'],
+      rooftop: ['rooftop/', 'npc/doyle']
+    }
+    const allowed = scopes[room]
+    return !allowed || allowed.some(prefix => id === prefix || id.startsWith(prefix))
+  },
+
+  _qaTargets () {
+    const found = new Map()
+    const visit = (obj) => {
+      if (obj.visible === false) return
+      const id = obj.userData?.qaId
+      if (typeof id === 'string' && this._qaInRoom(id) && !found.has(id)) found.set(id, { id, obj })
+      for (const child of obj.children ?? []) visit(child)
+    }
+    visit(this.engine.scene)
+    return [...found.values()].sort((a, b) => a.id.localeCompare(b.id))
+  },
+
+  _qaTarget (id) { return this._qaTargets().find(target => target.id === id) ?? null },
+
+  _qaGoal (target) {
+    target.obj.getWorldPosition(this._o)
+    let dx = this.pos.x - this._o.x
+    let dz = this.pos.z - this._o.z
+    const len = Math.hypot(dx, dz)
+    if (len < 0.01) { dx = 0; dz = 1 }
+    else { dx /= len; dz /= len }
+    return {
+      pos: new THREE.Vector3(this._o.x + dx * 1.15, this.pos.y, this._o.z + dz * 1.15),
+      aim: this._o.clone()
+    }
+  },
+
+  _qaPlace (goal) {
+    this.pos.copy(goal.pos)
+    this.vel.set(0, 0, 0)
+    this.vy = 0
+    this.body?.setPosition?.(this.pos.x, this.pos.y + BODY_H * 0.5, this.pos.z)
+    const camera = this.engine.camera
+    camera.position.set(this.pos.x, this.pos.y + EYE, this.pos.z)
+    camera.lookAt(goal.aim.x, Math.max(goal.aim.y, this.pos.y + 1.1), goal.aim.z)
+    camera.updateMatrixWorld(true)
+    this.nextScan = 0
+  },
+
+  _qaGoto (id) {
+    const target = this._qaTarget(id)
+    if (!target) return false
+    this._qaPlace(this._qaGoal(target))
+    return true
+  },
+
+  _qaTravel (destination, aim) {
+    const step = 1 / 60
+    let stalled = 0
+    for (let i = 0; i < 12000; i++) {
+      const dx = destination.x - this.pos.x
+      const dz = destination.z - this.pos.z
+      const distance = Math.hypot(dx, dz)
+      if (distance <= 0.12) { this.vel.set(0, 0, 0); return true }
+      const beforeX = this.pos.x
+      const beforeZ = this.pos.z
+      this._move(step, dx / distance, dz / distance)
+      this.engine.frame(step)
+      const camera = this.engine.camera
+      camera.position.set(this.pos.x, this.pos.y + EYE, this.pos.z)
+      camera.lookAt(aim.x, Math.max(aim.y, this.pos.y + 1.1), aim.z)
+      camera.updateMatrixWorld(true)
+      const moved = Math.hypot(this.pos.x - beforeX, this.pos.z - beforeZ)
+      stalled = moved < 0.0001 ? stalled + 1 : 0
+      if (stalled >= 90) return false
+    }
+    return false
+  },
+
+  _qaWalk (id) {
+    const target = this._qaTarget(id)
+    if (!target) return false
+    this._scan()
+    const goal = this._qaGoal(target)
+    if (this._qaTravel(goal.pos, goal.aim)) return true
+    const dx = goal.pos.x - this.pos.x
+    const dz = goal.pos.z - this.pos.z
+    const len = Math.max(Math.hypot(dx, dz), 0.001)
+    const side = [...id].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 2 ? 1 : -1
+    const waypoint = new THREE.Vector3(
+      this.pos.x - dz / len * 1.8 * side,
+      this.pos.y,
+      this.pos.z + dx / len * 1.8 * side
+    )
+    if (this._qaTravel(waypoint, goal.aim) && this._qaTravel(goal.pos, goal.aim)) return true
+    this._qaPlace(goal)
+    this._qaRecord('qa:walk:fallback', { qaId: id })
+    return true
+  },
+
+  _qaInteract (id) {
+    const target = this._qaTarget(id)
+    if (!target) return false
+    const raw = target.obj.userData?.interact
+    const targetId = typeof raw === 'string' ? raw : raw?.id ?? id
+    this.engine.bus.emit('player:interact', { targetId })
+    return true
+  },
+
+  _qaState () {
+    const state = this.engine.state
+    const burned = new Set()
+    for (const npc of state.interrogated.values()) {
+      for (const item of npc.burned ?? []) burned.add(typeof item === 'string' ? item : item?.id)
+    }
+    burned.delete(undefined)
+    return {
+      act: state.act,
+      evidence: [...state.evidence.keys()],
+      burned: [...burned],
+      flags: [...state.flags],
+      room: this.qaRoom
+    }
+  },
+
+  _qaEvents (since) {
+    const start = Number.isFinite(since) ? Math.max(0, since) : -Infinity
+    return this.qaLog.filter(event => event.index >= start).map(event => this._qaCopy(event))
+  },
+
+  dispose () { this.bound?.(); this.qaOff?.() }
 }
