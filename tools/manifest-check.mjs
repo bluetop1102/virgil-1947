@@ -340,7 +340,8 @@ for (const t of tickets) {
       add('R7', 'MANIFEST', t.id, `existing 샷 엔트리가 core/shotlist.js 에 없다 — ${s.name}`)
     }
     if (s.state === 'new') {
-      if (shots.has(s.name)) {
+      // done 티켓은 그 엔트리를 이미 머지한 것이라 존재가 정상이다 — 미완 티켓만 검사한다.
+      if (shots.has(s.name) && t.status !== 'done') {
         add('R7', 'MANIFEST', t.id, `new 샷 엔트리가 이미 존재한다 — ${s.name} (기존 엔트리 수정은 금지, 추가만 허용)`)
       }
       if (newShots.has(s.name)) {

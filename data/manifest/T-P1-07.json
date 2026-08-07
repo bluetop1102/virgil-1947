@@ -101,11 +101,11 @@
   "acceptance": [
     {
       "cmd": "node tools/playthrough.mjs --capture first30 --out shots/p1-07",
-      "expect": "캡처 시퀀스가 E2 §첫 30초 표 5행과 초 단위로 대조 통과(P2) — 0:04 자막 개시, 0:10 페이드인, 0:22 배지, 0:27 조작권 이양·크로스헤어 페이드인"
+      "expect": "캡처 시퀀스가 E2 §첫 30초 표 5행과 초 단위로 대조 통과(P2) — 0:04 자막 개시, 0:10 페이드인, 0:22 배지, 0:27 조작권 이양·크로스헤어 페이드인 — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '대기'로 보고에 표기하고(통과도 면제도 아니다) 부재 증명 출력을 붙인다. 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다"
     },
     {
       "cmd": "node tools/playthrough.mjs --fast --assert-intro",
-      "expect": "cinematic:start{id:\"cin-intro\"} → cinematic:end 발화 · 시퀀스 중 힌트 텍스트 0 · 종료 시점에 플레이어 조작권이 이양된다"
+      "expect": "cinematic:start{id:\"cin-intro\"} → cinematic:end 발화 · 시퀀스 중 힌트 텍스트 0 · 종료 시점에 플레이어 조작권이 이양된다 — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '대기'로 보고에 표기하고(통과도 면제도 아니다) 부재 증명 출력을 붙인다. 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다"
     },
     {
       "cmd": "node tools/lint-contract.mjs",

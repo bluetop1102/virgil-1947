@@ -90,15 +90,19 @@
   "acceptance": [
     {
       "cmd": "node tools/playthrough.mjs --fast --act 1",
-      "expect": "봇이 qa API만으로 1막을 구동 성립 — qa.list()/goto()/walk()/interact()/state()/events()가 전건 동작"
+      "expect": "봇이 qa API만으로 1막을 구동 성립 — qa.list()/goto()/walk()/interact()/state()/events()가 전건 동작 — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '대기'로 보고에 표기하고(통과도 면제도 아니다) 부재 증명 출력을 붙인다. 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다"
     },
     {
       "cmd": "node tools/playthrough.mjs --fast --assert-lore",
-      "expect": "lore:heard 4종(lore.pipes·lore.lightwell·lore.1912·lore.linen)이 골든 패스 도달 지점에서 발화되고 노트 괴담 면에 축적"
+      "expect": "lore:heard 4종(lore.pipes·lore.lightwell·lore.1912·lore.linen)이 골든 패스 도달 지점에서 발화되고 노트 괴담 면에 축적 — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '대기'로 보고에 표기하고(통과도 면제도 아니다) 부재 증명 출력을 붙인다. 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다"
     },
     {
       "cmd": "node tools/playthrough.mjs --no-qa --assert-hidden",
-      "expect": "?qa=1 없이 로드했을 때 window.__CECIL__.qa가 undefined — QA API가 출하 빌드에 노출되지 않는다"
+      "expect": "?qa=1 없이 로드했을 때 window.__CECIL__.qa가 undefined — QA API가 출하 빌드에 노출되지 않는다 — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '대기'로 보고에 표기하고(통과도 면제도 아니다) 부재 증명 출력을 붙인다. 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다"
+    },
+    {
+      "cmd": "node tools/lint-contract.mjs",
+      "expect": "전체 스캔 출력에서 src/gameplay/player.js · src/gameplay/evidence.js 행 0건 — 특히 Math.random()/Date.now() 직호출(qa 구동도 결정론적 스텝). 전체 스캔 종료 코드는 타 소유 파일의 기존 위반 때문에 1일 수 있다 — 그 경우 자기 소유 파일 행이 0건이면 통과이고, 잔여는 docs/HANDOFF.md 하단에 등재한다. **이 티켓의 나머지 수용 기준은 전부 tools/playthrough.mjs 의존이라 클론에서 대기 처리된다 — 클론 내 기계 판정은 이 항목이 유일하다**"
     }
   ],
   "shots": [],

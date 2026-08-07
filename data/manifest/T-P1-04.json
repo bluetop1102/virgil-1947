@@ -125,7 +125,7 @@
     },
     {
       "cmd": "node tools/playthrough.mjs --fast --act 1",
-      "expect": "act:enter{act:2} 발화가 로그에 1회 기록 · interrogation:end{tier} 발화"
+      "expect": "act:enter{act:2} 발화가 로그에 1회 기록 · interrogation:end{tier} 발화 — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '대기'로 보고에 표기하고(통과도 면제도 아니다) 부재 증명 출력을 붙인다. 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다"
     }
   ],
   "shots": [],
