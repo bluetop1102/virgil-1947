@@ -2800,3 +2800,27 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
 - **결정**: Fable 토큰 예산 제약으로 P1 구현을 "Claude 1회전 → codex"가 아니라 **codex 패킷 발주 우선**으로 전환. 회수·게이트 검증·머지·블라인드 채점은 발주 세션(Fable)이 집행, 최종 체험 리뷰만 Fable 1회를 후행. PROMPT-build-p1.md v2의 단일 세션 실행 전제와 다름 — 체험 축 세션 인지용.
 - **발주 순서(의존 그래프 승계)**: 1파 T-P1-01(로비)·03(텔, 리그 done)·05(UI/계측, 독립) → 2파 04·06·07·10 → 3파 08·09. T-P1-02는 마리오네트 정본 머지로 done 처리.
 - **부수 재전사**: STORY·E5 개정으로 깨진 소비 좌표 3건(T-P0-05·T-P1-03·T-P1-04) 재결박. playthrough 의존 수용 기준은 "통합 시 실행" 규약 명시(클론에 T-P1-06 산출 부재).
+
+### [x] 발주 세션 — P1 1파 회수·머지 (T-P1-01·T-P1-03, 2026-08-07)
+- **머지**: `src/world/lobby.js`(376줄, 클론 `9e8c853`) · `src/chars/perf.js`(250줄, 클론 `a3eb500`). 감사 청정 — 소유 파일 1개씩만 커밋 · 소유 밖 status 0 · `Math.random`/`Date.now` 0.
+- **본체 재검증**: `lobby-wide`·`lobby-desk`·`lobby-elevator` 3샷 gate ok(p99.9 202~221 · dark 0.59~6.15%) · bootErrors 0 · console 0 · gateFailures 0 · `performance` 모듈 자동 등록 확인. PNG 3장 육안 검수 — 파탄 0.
+- **수용 기준 결함 2건 반영**(report.md #35·#36): 전역 린트를 완료 조건으로 건 항목을 01·03·06·07 매니페스트에서 "전체 스캔 출력에서 자기 소유 파일 행 0건" 문구로 교체하고 패킷 재생성. 전역 종료 코드 1은 타 소유 잔여 때문이며 허용된다.
+
+### [ ] 발주 세션 → CHARS(perf.js 소유 라운드) — perf.js 의 game:pause 미구독
+- **파일**: `src/chars/perf.js`
+- **루브릭**: ARCH §5 이벤트 계약 / E8 pause 규약
+- **문제**: `engine.frame()`은 pause 개념이 없어 `time`을 항상 전진시키고 전 모듈 update를 호출한다. `rig.js`는 `game:pause`로 자체 차단하지만 `perf.js`는 미구독이라 설정 메뉴(Esc) 중에도 텔 클립이 계속 재생된다. 원인은 매니페스트 `events.listen` 누락이었고(#37), 매니페스트는 이미 고쳤으나 코드는 발주 시점 계약대로 만들어졌다.
+- **지시**: `perf.js` init에 `game:pause` 구독을 추가하고 `paused`일 때 `update`를 조기 반환한다(rig.js:347 패턴 동일).
+- **요청자가 처리한 부분**: `data/manifest/T-P1-03.json` events.listen에 `game:pause` 추가·패킷 재생성 완료. 실제 pause 발화는 T-P1-05 산출이라 통합 게이트에서 함께 검증한다.
+
+### [ ] 발주 세션 → ARCHITECTURE §3 소유자 — 동일 order 모듈의 순서 계약 부재
+- **파일**: `docs/ARCHITECTURE.md` §3 · (현물) `src/chars/rig.js` · `src/chars/perf.js`
+- **루브릭**: ARCH §3 모듈 계약
+- **문제**: `rig.js`(characters)와 `perf.js`(performance)가 둘 다 order 30이다. `engine.js:66`의 정렬은 안정 정렬이라 동률은 glob 경로 순(perf→rig)으로 결정되는데, 이 의존이 계약에 없다.
+- **지시**: 동일 order 허용 여부와 동률 시 순서 규칙(경로 순 명문화 또는 order 재배정)을 §3에 명시한다.
+- **요청자가 처리한 부분**: 머지 후 실측으로 현재 무해함을 확인했다 — `rig.js`의 `update`는 `if (this.paused) return`뿐이고 관절을 기록하는 모듈은 `perf.js` 하나다. 두 번째 기록자가 생기면 즉시 깨진다.
+
+### [ ] 발주 세션 → 계약 린트 잔여 소유자들 (1파 재확인)
+- **파일**: 기존 등재분과 동일 — `src/main.js` · `src/materials/procedural.js` · `src/ui/subtitles.js` · `src/world/atmo/{rain,roof}.js` · `src/world/kit-mat.js` · `src/world/kit.js` · `src/world/props.js` · `src/world/testbed.js` · `tools/ui-selftest.html`
+- **문제**: T-P1-01·T-P1-03 두 에이전트가 독립적으로 같은 15건을 반환했다. 신규 산출(`lobby.js`·`perf.js`)의 위반은 0건이다.
+- **지시**: 이미 등재된 라우팅(#29 답신 대기 · lint-allow 후보 · props.js 분할)을 그대로 따른다. 새 결박은 없다.

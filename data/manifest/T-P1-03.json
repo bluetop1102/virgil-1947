@@ -76,7 +76,8 @@
     "emit": [],
     "listen": [
       "perf:state",
-      "deduction:link"
+      "deduction:link",
+      "game:pause"
     ]
   },
   "acceptance": [
@@ -90,7 +91,7 @@
     },
     {
       "cmd": "node tools/lint-contract.mjs",
-      "expect": "위반 0 — 특히 Date.now()/performance.now() 직호출(클립 타이밍은 engine.time)"
+      "expect": "전체 스캔 출력에서 src/chars/perf.js 행 0건 — 특히 Date.now()/performance.now() 직호출(클립 타이밍은 engine.time). 전체 스캔 종료 코드는 타 소유 파일의 기존 위반 때문에 1일 수 있다 — 그 경우 자기 소유 파일 행이 0건이면 통과이고, 잔여는 docs/HANDOFF.md 하단에 등재한다"
     }
   ],
   "shots": [],
