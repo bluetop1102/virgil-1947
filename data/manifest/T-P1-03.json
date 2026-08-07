@@ -55,7 +55,7 @@
     {
       "label": "STORY §2 인물별 텔",
       "doc": "docs/STORY.md",
-      "heading": "인물별 텔(tell) — CHARACTERS의 perf.js가 구현할 미세신호",
+      "heading": "인물별 텔(tell) — 미세신호 (채널 소유: 신체=perf.js · 음성/대사=script.js — E4 [구현] 텔 채널 분리)",
       "why": "신호 원문 — 이 문장이 클립의 사양이다."
     },
     {
@@ -82,7 +82,7 @@
   "acceptance": [
     {
       "cmd": "node tools/playthrough.mjs --fast --act 1 --assert-perf",
-      "expect": "perf:state 4상태(idle·anxious·lying·breaking)가 전부 최소 1회 발화되고 각각 대응 클립이 재생 — breaking은 deitch.S4의 lieCorrect 직후 정확히 1회"
+      "expect": "perf:state 4상태(idle·anxious·lying·breaking)가 전부 최소 1회 발화되고 각각 대응 클립이 재생 — breaking은 deitch.S4의 lieCorrect 직후 정확히 1회 — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '통합 시 실행 대기'로 보고에 표기하고 건너뛴다(회수·통합 게이트). 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다"
     },
     {
       "cmd": "node tools/factcheck.mjs",

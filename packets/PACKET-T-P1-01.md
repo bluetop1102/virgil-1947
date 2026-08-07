@@ -31,9 +31,7 @@
 아래 티켓의 산출이 이미 트리에 있다고 전제한다. 없으면 착수하지 말고 반환하라.
 
 - `T-P0-01` — 계약 린트 커밋 훅 — grep 5종 · 상태 done
-- `T-P0-02` — 재질·조명 계약 예외 청소 — 팩토리 경유화 · 상태 in-progress
 - `T-P0-03` — script.js v2 이행 — case-graph 정합·소비자 적응 · 상태 done
-- `T-P0-04` — 500줄 초과 4파일 분할 · 상태 in-progress
 - `T-P0-05` — P5 텔 상관 검사기 — factcheck 확장 · 상태 done
 
 ## 4. 소비 계약 — 원문 인라인
@@ -660,14 +658,14 @@ SHOT_PORT=5921 node tools/shoot.mjs --out shots/p1-01 lobby-wide lobby-desk lobb
 ```bash
 node tools/playthrough.mjs --fast --act 1 --room lobby
 ```
-→ room:changed{room:"lobby"} 발화 1회 · qa.list()가 qaId 7종(lobby/front-desk·lobby/behind-desk·lobby/under-desk·radio-lobby·lobby-frame·npc/deitch·lobby/elevator) 전건 반환 · 증거 4종(register·keyrack·flask·pressure-log) 상호작용 성립
+→ room:changed{room:"lobby"} 발화 1회 · qa.list()가 qaId 7종(lobby/front-desk·lobby/behind-desk·lobby/under-desk·radio-lobby·lobby-frame·npc/deitch·lobby/elevator) 전건 반환 · 증거 4종(register·keyrack·flask·pressure-log) 상호작용 성립 — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '통합 시 실행 대기'로 보고에 표기하고 건너뛴다(회수·통합 게이트). 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다
 
 **A3.**
 
 ```bash
 node tools/playthrough.mjs --fast --room lobby --stats
 ```
-→ 프레임 예산 통과 — high 프리셋 60fps · medium 프리셋 30fps (p95 기준)
+→ 프레임 예산 통과 — high 프리셋 60fps · medium 프리셋 30fps (p95 기준) — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '통합 시 실행 대기'로 보고에 표기하고 건너뛴다(회수·통합 게이트). 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다
 
 **A4.**
 

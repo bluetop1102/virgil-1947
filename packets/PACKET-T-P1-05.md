@@ -33,9 +33,7 @@
 아래 티켓의 산출이 이미 트리에 있다고 전제한다. 없으면 착수하지 말고 반환하라.
 
 - `T-P0-01` — 계약 린트 커밋 훅 — grep 5종 · 상태 done
-- `T-P0-02` — 재질·조명 계약 예외 청소 — 팩토리 경유화 · 상태 in-progress
 - `T-P0-03` — script.js v2 이행 — case-graph 정합·소비자 적응 · 상태 done
-- `T-P0-04` — 500줄 초과 4파일 분할 · 상태 in-progress
 - `T-P0-05` — P5 텔 상관 검사기 — factcheck 확장 · 상태 done
 
 ## 4. 소비 계약 — 원문 인라인
@@ -450,21 +448,21 @@ SHOT_PORT=5925 node tools/shoot.mjs --out shots/p1-05 ui-loading ui-title ui-set
 ```bash
 node tools/playthrough.mjs --fast --assert-boot
 ```
-→ boot:progress{done,total}가 total까지 단조 증가 후 타이틀 · 첫 입력 제스처 뒤에야 AudioContext 활성화·포인터록 요청 · 그 직후가 0:00 기점
+→ boot:progress{done,total}가 total까지 단조 증가 후 타이틀 · 첫 입력 제스처 뒤에야 AudioContext 활성화·포인터록 요청 · 그 직후가 0:00 기점 — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '통합 시 실행 대기'로 보고에 표기하고 건너뛴다(회수·통합 게이트). 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다
 
 **A3.**
 
 ```bash
 node tools/playthrough.mjs --fast --assert-settings
 ```
-→ settings:changed가 5항목(품질·FOV·감도·자막·볼륨) 전건 발화 · Esc 1회로 game:pause{on:true} 발화되고 렌더는 지속
+→ settings:changed가 5항목(품질·FOV·감도·자막·볼륨) 전건 발화 · Esc 1회로 game:pause{on:true} 발화되고 렌더는 지속 — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '통합 시 실행 대기'로 보고에 표기하고 건너뛴다(회수·통합 게이트). 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다
 
 **A4.**
 
 ```bash
 node tools/playthrough.mjs --fast --stats
 ```
-→ ?stats=1 오버레이가 frametime p50/p95·드로우콜·메모리를 출력하고 high 60fps / medium 30fps 게이트를 판정한다
+→ ?stats=1 오버레이가 frametime p50/p95·드로우콜·메모리를 출력하고 high 60fps / medium 30fps 게이트를 판정한다 — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '통합 시 실행 대기'로 보고에 표기하고 건너뛴다(회수·통합 게이트). 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다
 
 ## 9. 금지 사항
 

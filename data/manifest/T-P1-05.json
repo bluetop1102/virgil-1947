@@ -109,15 +109,15 @@
     },
     {
       "cmd": "node tools/playthrough.mjs --fast --assert-boot",
-      "expect": "boot:progress{done,total}가 total까지 단조 증가 후 타이틀 · 첫 입력 제스처 뒤에야 AudioContext 활성화·포인터록 요청 · 그 직후가 0:00 기점"
+      "expect": "boot:progress{done,total}가 total까지 단조 증가 후 타이틀 · 첫 입력 제스처 뒤에야 AudioContext 활성화·포인터록 요청 · 그 직후가 0:00 기점 — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '통합 시 실행 대기'로 보고에 표기하고 건너뛴다(회수·통합 게이트). 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다"
     },
     {
       "cmd": "node tools/playthrough.mjs --fast --assert-settings",
-      "expect": "settings:changed가 5항목(품질·FOV·감도·자막·볼륨) 전건 발화 · Esc 1회로 game:pause{on:true} 발화되고 렌더는 지속"
+      "expect": "settings:changed가 5항목(품질·FOV·감도·자막·볼륨) 전건 발화 · Esc 1회로 game:pause{on:true} 발화되고 렌더는 지속 — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '통합 시 실행 대기'로 보고에 표기하고 건너뛴다(회수·통합 게이트). 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다"
     },
     {
       "cmd": "node tools/playthrough.mjs --fast --stats",
-      "expect": "?stats=1 오버레이가 frametime p50/p95·드로우콜·메모리를 출력하고 high 60fps / medium 30fps 게이트를 판정한다"
+      "expect": "?stats=1 오버레이가 frametime p50/p95·드로우콜·메모리를 출력하고 high 60fps / medium 30fps 게이트를 판정한다 — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '통합 시 실행 대기'로 보고에 표기하고 건너뛴다(회수·통합 게이트). 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다"
     }
   ],
   "shots": [
@@ -154,9 +154,7 @@
   "model": "codex",
   "depends": [
     "T-P0-01",
-    "T-P0-02",
     "T-P0-03",
-    "T-P0-04",
     "T-P0-05"
   ],
   "status": "todo"

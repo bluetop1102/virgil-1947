@@ -61,7 +61,7 @@
     {
       "label": "E5 §3 재심문",
       "doc": "docs/design/E5-interrogation.md",
-      "heading": "3. 재심문",
+      "heading": "3. 재심문·중단·재개",
       "why": "deitch.S4만 재심문 가능 — 그 외는 막이 지나면 닫힌다."
     },
     {

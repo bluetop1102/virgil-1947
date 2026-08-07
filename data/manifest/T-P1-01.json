@@ -134,11 +134,11 @@
     },
     {
       "cmd": "node tools/playthrough.mjs --fast --act 1 --room lobby",
-      "expect": "room:changed{room:\"lobby\"} 발화 1회 · qa.list()가 qaId 7종(lobby/front-desk·lobby/behind-desk·lobby/under-desk·radio-lobby·lobby-frame·npc/deitch·lobby/elevator) 전건 반환 · 증거 4종(register·keyrack·flask·pressure-log) 상호작용 성립"
+      "expect": "room:changed{room:\"lobby\"} 발화 1회 · qa.list()가 qaId 7종(lobby/front-desk·lobby/behind-desk·lobby/under-desk·radio-lobby·lobby-frame·npc/deitch·lobby/elevator) 전건 반환 · 증거 4종(register·keyrack·flask·pressure-log) 상호작용 성립 — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '통합 시 실행 대기'로 보고에 표기하고 건너뛴다(회수·통합 게이트). 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다"
     },
     {
       "cmd": "node tools/playthrough.mjs --fast --room lobby --stats",
-      "expect": "프레임 예산 통과 — high 프리셋 60fps · medium 프리셋 30fps (p95 기준)"
+      "expect": "프레임 예산 통과 — high 프리셋 60fps · medium 프리셋 30fps (p95 기준) — tools/playthrough.mjs 는 T-P1-06 산출이라 이 클론에 없을 수 있다. 없으면 §10.1 반환이 아니라 이 항목을 '통합 시 실행 대기'로 보고에 표기하고 건너뛴다(회수·통합 게이트). 나머지 실행 가능한 수용 기준은 전건 클론에서 실행한다"
     },
     {
       "cmd": "node tools/lint-contract.mjs",
@@ -170,9 +170,7 @@
   "model": "opus",
   "depends": [
     "T-P0-01",
-    "T-P0-02",
     "T-P0-03",
-    "T-P0-04",
     "T-P0-05"
   ],
   "status": "todo"

@@ -38,7 +38,7 @@
     {
       "label": "STORY §2 인물별 텔",
       "doc": "docs/STORY.md",
-      "heading": "인물별 텔(tell) — CHARACTERS의 perf.js가 구현할 미세신호",
+      "heading": "인물별 텔(tell) — 미세신호 (채널 소유: 신체=perf.js · 음성/대사=script.js — E4 [구현] 텔 채널 분리)",
       "why": "신호 원문 — 검사기가 세는 대상."
     }
   ],
