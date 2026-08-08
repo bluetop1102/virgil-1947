@@ -185,8 +185,12 @@ const BOLECTION = [
  * 끝벽 매입 패널. 패널 밭 + 볼렉션 틀 + 스티킹 비드로 값 층을 세 개 만든다.
  * bays = [[중심x, 폭], ...], y0/y1 = 패널 상하단.
  */
-export function panelWainscot (bays, y0, y1, z, seed) {
+export function panelWainscot (bays, y0, y1, z, seed, o = {}) {
   const g = group('corridor.endPanels')
+  // 밭·틀 재질은 호출자가 고른다. 로비는 밭을 바니시 목재로 깐다 — 흰 도장 밭은 4m 밖에서
+  // "프레임도 표면 정보도 없는 크림색 슬래브"로 되돌아간다(체험 리뷰 D4와 같은 실패형).
+  const fieldMat = o.field ?? 'wood.painted.white'
+  const frameMat = o.frame ?? 'wood.painted.white'
   const n = noise2D(seed)
   const fg = [], fm = [], frames = []
   for (const [cx, bw] of bays) {
@@ -205,11 +209,11 @@ export function panelWainscot (bays, y0, y1, z, seed) {
   g.add(mesh(paint(merge(fg, fm), (x, y) =>
     clamp(0.70 - 0.20 * Math.exp(-Math.pow((y - y0) / 0.24, 2))
       - 0.16 * (fbm(n, x * 2.6, y * 3.4, 3) * 0.5 + 0.5), 0.28, 0.94)),
-  'wood.painted.white', { vcol: true, cast: false }))
+  fieldMat, { vcol: true, cast: false }))
   g.add(mesh(paint(merge(frames), (x, y) =>
     clamp(0.90 - 0.18 * (fbm(n, x * 3.1 + 13, y * 5.2, 3) * 0.5 + 0.5)
       - 0.14 * smoothstep(clamp((y0 + 0.30 - y) / 0.30, 0, 1)), 0.34, 1.02)),
-  'wood.painted.white', { vcol: true }))
+  frameMat, { vcol: true }))
   return g
 }
 
