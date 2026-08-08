@@ -170,8 +170,17 @@ const settings = {
     for (const [key, target] of this.rows) target.textContent = displayValue(key, this.values[key])
   },
 
+  // 카드가 닫혀 있을 때 Escape 의 1차 동작은 "위에 열린 것을 내리는 것"이다. 이 리스너는
+  // 캡처 단계에서 stopImmediatePropagation 을 하므로, 양보하지 않으면 증거 지목·수사노트·
+  // 사진 스크럽의 Escape 가 전부 삼켜지고 그 위에 설정 카드가 겹쳐 뜬다(리뷰 §0-3).
+  _ceded () {
+    if (this.engine.get('evidence')?.isModal?.()) return true
+    return Boolean(this.engine.get('notebook')?.isOpen?.())
+  },
+
   _key (e) {
     if (e.key !== 'Escape' || e.repeat) return
+    if (!this.opened && this._ceded()) return
     e.preventDefault()
     e.stopImmediatePropagation()
     if (this.opened) this.close()

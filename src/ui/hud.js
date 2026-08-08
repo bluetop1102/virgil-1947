@@ -192,6 +192,9 @@ export default {
 
   _keyChoice (e) {
     if (!this.choicePrompt || this.choiceBusy || e.repeat) return
+    // 수사노트·사진이 위에 열려 있으면 쪽지는 그 뒤에 가려 있다. 안 보이는 선택지가
+    // 숫자 입력을 받아 진술을 소모하던 누수(§0-3 계열)를 여기서 막는다.
+    if (this.engine.get('notebook')?.isOpen?.() || this.engine.get('evidence')?.isModal?.()) return
     const i = Number(e.key) - 1
     if (!Number.isInteger(i) || i < 0 || i >= this.choicePrompt.options.length) return
     e.preventDefault()
