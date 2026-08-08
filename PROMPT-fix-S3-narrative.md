@@ -115,12 +115,19 @@ SHOT_PORT=5603 node tools/shoot.mjs --out shots/s3 hud-prompt notebook-present i
 
 ## 4. 커밋
 
-`git commit -a` · 무인자 `git add -A` 금지:
+**같은 워킹트리에서 4개 세션이 동시에 돈다. git 인덱스는 워킹트리당 하나뿐이라 공유된다** —
+`git add` 후 commit 하기까지의 사이에 다른 세션이 add 하면 그 파일이 네 커밋에 섞인다.
+**`git add` 를 쓰지 말고 pathspec 커밋을 써라:**
 
 ```bash
-git add src/narrative/ src/ui/ src/chars/
-git commit -m "fix: 심문 Escape 1차 동작을 제시 취소로"
+git commit -m "fix: 심문 Escape 1차 동작을 제시 취소로" -- src/narrative/ src/ui/ src/chars/
 ```
+
+- `git commit -a` · 무인자 `git add -A` 금지.
+- `index.lock` 충돌로 실패하면 정상이다 — 2~3초 뒤 재시도.
+- `git status` 에 네 것이 아닌 수정 파일이 보이는 것도 정상이다. **`git stash`·`git checkout .`·
+  `git reset --hard` 금지 — 남의 작업을 지운다.**
+- 커밋 후 `git show --stat HEAD` 로 자기 파일만 들어갔는지 확인.
 
 **이력 재작성 금지**(제출 요건). 작업 단위로 자주.
 

@@ -112,12 +112,19 @@ node tools/pix.mjs crop shots/s1/lobby-wide.png /tmp/z.png <x> <y> <w> <h> 3   #
 
 ## 4. 커밋
 
-**`git commit -a` 와 무인자 `git add -A` 금지.** 자기 소유 경로를 명시해 스테이지한다:
+**같은 워킹트리에서 4개 세션이 동시에 돈다. git 인덱스는 워킹트리당 하나뿐이라 공유된다** —
+`git add` 후 commit 하기까지의 사이에 다른 세션이 add 하면 그 파일이 네 커밋에 섞인다.
+**`git add` 를 쓰지 말고 pathspec 커밋을 써라.** 인덱스를 우회해 지정 경로의 워킹트리 상태만 커밋한다:
 
 ```bash
-git add src/world/lobby.js src/materials/ src/world/props.js
-git commit -m "fix: D3 얼룩 데칼 반복 해제 — 시드·스케일 변주"
+git commit -m "fix: D3 얼룩 데칼 반복 해제 — 시드·스케일 변주" -- src/world/lobby.js src/materials/
 ```
+
+- `git commit -a` · 무인자 `git add -A` 금지.
+- `index.lock` 충돌로 실패하면 정상이다 — 2~3초 뒤 같은 명령을 재시도해라.
+- `git status` 에 네 것이 아닌 수정 파일이 보이는 것도 정상이다. **`git stash`·`git checkout .`·
+  `git reset --hard` 는 남의 작업을 지운다 — 금지.**
+- 커밋 후 `git show --stat HEAD` 로 자기 파일만 들어갔는지 확인해라. 섞였으면 되돌리지 말고 보고.
 
 작업 단위로 자주 커밋해라. 커밋 이력 자체가 제출물(AI 활용 기술 문서)의 재료라 한 커밋에 두 축이
 섞이면 라운드↔변경 대응이 깨진다. **이력 재작성(squash·rebase) 금지 — 제출 요건 위반이다.**
