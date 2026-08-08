@@ -1,1 +1,0 @@
-import{t as e}from"./props-decor-D1TjKRIa.js";export{e as potPlant};
