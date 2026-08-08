@@ -371,7 +371,9 @@ const cinematics = {
     const key = `${row}:${next}`
     if (!next || key === this.typed) return
     this.typed = key
-    this.engine.bus.emit('subtitle', { speaker: '', text: next, dur: 2.05 - local })
+    // dur 하한 0.9 — 행 끝(local≈2)에서 dur 이 0.05까지 줄면 타이핑 줄이 행 전환 전에
+    // 사라져 깜빡인다. 다음 partial 의 show() 가 즉시 대체하므로 하한이 길어도 겹치지 않는다.
+    this.engine.bus.emit('subtitle', { speaker: '', text: next, dur: Math.max(2.05 - local, 0.9) })
     this.engine.bus.emit('sfx', { id: 'ui.tick', gain: 0.13 })
   },
 

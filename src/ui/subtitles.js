@@ -56,10 +56,11 @@ export default {
     this.cur = null
     this.t0 = 0
     this.layer = document.createElement('div')
-    this.layer.className = 'cecil-sub'
-    this.layer.style.cssText = 'position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;pointer-events:none;opacity:0'
-    const root = document.getElementById('ui-root')
-    root?.appendChild(this.layer)
+    this.layer.className = 'virgil-sub'
+    // body 직속 + z-index 93 — 인트로 베일(cinematics, z92)이 ui-root(z10)를 통째로 덮어
+    // 타이핑 자막 4줄이 가려졌던 결함의 수정. 설정(140)·타이틀(120)보다는 아래를 유지한다.
+    this.layer.style.cssText = 'position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;pointer-events:none;opacity:0;z-index:93'
+    document.body.appendChild(this.layer)
     this._layout(engine.size.w, engine.size.h)
 
     engine.bus.on('subtitle', (p) => this.show(p))
@@ -162,9 +163,16 @@ export default {
     const inT = 0.14
     const outT = 0.34
     let a = 1
-    if (t < inT) a = t / inT
-    else if (t > this.cur.dur) a = 1 - (t - this.cur.dur) / outT
-    if (a <= 0) { this.clear(); return }
+    if (t > this.cur.dur) {
+      // 페이드아웃이 끝난 뒤에만 지운다. 예전엔 a<=0 전체를 지웠는데, show()와 같은
+      // 프레임에 update가 돌면 t=0 → a=0 이라 엔진 루프 안에서 발화된 자막(인트로 타이핑·
+      // 로어·심문 반응 대사)이 전부 한 프레임 만에 지워졌다. DOM 이벤트 경로로 발화된
+      // 자막만 살아남아 결함이 기계 게이트에 안 잡혔다.
+      a = 1 - (t - this.cur.dur) / outT
+      if (a <= 0) { this.clear(); return }
+    } else if (t < inT) {
+      a = t / inT
+    }
     a = clamp(a, 0, 1)
     this.layer.style.opacity = String(a)
     this.layer.style.transform = `translateY(${((1 - a) * 5).toFixed(2)}px)`
