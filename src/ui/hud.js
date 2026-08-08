@@ -32,7 +32,8 @@ export default {
 
     // ── T-P1-09 심문 3선택 프롬프트 ─────────────────────────────
     this.choiceWrap = document.createElement('div')
-    this.choiceWrap.style.cssText = 'position:absolute;left:50%;bottom:6.5%;opacity:0;pointer-events:none;transform:translate(-50%,16px) rotate(-.4deg);transition:opacity .2s ease,transform .28s cubic-bezier(.16,1,.3,1);filter:drop-shadow(-8px 13px 15px rgba(0,0,0,.68))'
+    // bottom 13% — 자막(하단 고정)과 같은 자리에 겹쳐 둘 다 판독이 흐려지던 것을 세로 분리
+    this.choiceWrap.style.cssText = 'position:absolute;left:50%;bottom:13%;opacity:0;pointer-events:none;transform:translate(-50%,16px) rotate(-.4deg);transition:opacity .2s ease,transform .28s cubic-bezier(.16,1,.3,1);filter:drop-shadow(-8px 13px 15px rgba(0,0,0,.68))'
     this.layer.appendChild(this.choiceWrap)
     this.choiceWrap.addEventListener('pointerdown', (e) => this._choicePointer(e))
     this._choiceKey = (e) => this._keyChoice(e)
@@ -48,6 +49,9 @@ export default {
 
     engine.bus.on('evidence:collected', ({ id }) => this._noteEvidence(id))
     engine.bus.on('interrogation:prompt', (prompt) => this._showChoicePrompt(prompt))
+    // 심문 사거리 이탈 — 세션이 놓이면 선택지도 함께 내린다 (잔류 쪽지가 자유 이동 중
+    // 입력을 받아 미청취 진술을 소모시키던 결함의 수신측 수정)
+    engine.bus.on('interrogation:left', () => this._hideChoicePrompt())
     engine.bus.on('qa:shot', () => { if (engine.qa) { this.setPrompt(null); this._hideSlip(); this._hideChoicePrompt() } })
     engine.bus.on('qa:state', (s) => {
       if (!engine.qa) return

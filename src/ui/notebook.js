@@ -77,6 +77,9 @@ export default {
     engine.bus.on('act:enter', () => { if (this.vw) this._layout(this.vw, this.vh) })
     // ── T-P1-09 증거 지목 모드·QA 대리 구동 ─────────────────────
     engine.bus.on('interrogation:prompt', (prompt) => { this.interrogationPrompt = prompt })
+    // 심문 사거리 이탈 — 증거 지목(present)이 열려 있었으면 닫는다. close()가 _pick을
+    // null로 해소하므로 hud의 대기 프라미스도 함께 풀린다.
+    engine.bus.on('interrogation:left', () => { if (this.mode === 'present') this.close() })
     engine.bus.on('evidence:collected', () => {
       if (this.mode === 'read' || this.mode === 'present') this._build()
     })

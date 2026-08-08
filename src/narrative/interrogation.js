@@ -20,6 +20,9 @@ export const CHOICES = ['TRUTH', 'DOUBT', 'LIE']
 
 const PHASE = { IDLE: 'idle', LINES: 'lines', CHOICE: 'choice', EVIDENCE: 'evidence' }
 
+// 심문 이탈 사거리. 개시(REACH 3.0)보다 넉넉하게 잡아 경계에서 붙었다 떨어졌다 하지 않는다.
+const LEAVE = 4.2
+
 // STORY 4-2 점수표. 이 함수가 사양이다. 데이터도 UI도 판정에 관여하지 않는다.
 export function judge (truth, choice, evidenceId, correct = []) {
   if (truth) {
@@ -140,6 +143,17 @@ export class Interrogation {
     if (!data) return false
     this.npc = npc
     this.data = data
+    // 이탈 판정 기준점 — NPC 인터랙트 메시의 월드 좌표. 씬이 없는 환경(배터리)에서는
+    // anchorX가 null로 남아 이탈 판정 자체가 꺼진다.
+    this.anchorX = null
+    this.anchorZ = null
+    const anchor = this.engine.scene?.getObjectByName?.(`npc/${npc}`)
+    const v = anchor?.position?.clone?.()
+    if (v && anchor.getWorldPosition) {
+      anchor.getWorldPosition(v)
+      this.anchorX = v.x
+      this.anchorZ = v.z
+    }
     this.list = (data.statements || []).map(s => ({ ...s, reasked: false }))
     this.idx = 0
     this.cur = null
@@ -375,6 +389,24 @@ export class Interrogation {
     this.now = null
   }
 
+  // 사거리 밖 이탈 — 세션을 내려놓는다. 전달만 되고 판정 전인 진술은 presented에서 되돌려
+  // 재접근 때 다시 묻는다(STORY 4-5의 '닫힘'은 판정된 진술에만 적용된다). ended는 건드리지
+  // 않으므로 같은 막의 재접근(start)이 그대로 성립한다 — isModal() false의 계약 유지.
+  _leave () {
+    const rec = this._rec()
+    if (this.cur && rec.answered.indexOf(this.cur.id) < 0) {
+      const i = rec.presented.indexOf(this.cur.id)
+      if (i >= 0) rec.presented.splice(i, 1)
+    }
+    this.cur = null
+    this.queue.length = 0
+    this.now = null
+    this.reasking = false
+    this.phase = PHASE.IDLE
+    this.engine.bus.emit('interrogation:left', { npc: this.npc })
+    this.engine.bus.emit('perf:state', { npc: this.npc, state: 'idle' })
+  }
+
   _prompt () {
     if (!this.cur) return
     this.engine.bus.emit('interrogation:prompt', {
@@ -389,6 +421,9 @@ export class Interrogation {
     if (targetId === 'lobby/elevator' && state.act === 1 && state.npc('deitch').ended) {
       state.setAct(2)
       this._phase('early')
+    } else if (targetId === 'lobby/elevator' && state.act === 1) {
+      // 잠긴 격자문에 무응답이면 입력이 씹힌 것으로 읽힌다 — 거절을 한 줄로 알린다
+      this.engine.bus.emit('subtitle', { speaker: '', text: '격자문이 열리지 않는다. 프런트 쪽 일이 먼저다.', dur: 2.4 })
     }
     if (targetId === 'stairs-roof/door' && state.act === 2 &&
       state.npc('ruiz').ended && state.npc('pryce').ended) {
@@ -409,6 +444,16 @@ export class Interrogation {
     this.t = Number.isFinite(elapsed) ? elapsed : this.t + dt
     if (this.engine.state.act === 1 && this.t >= 420) this._phase('late')
     if (this.engine.state.act === 2 && this.t >= 1800) this._phase('late')
+    // 심문 중 사거리 이탈 감시 — 세션을 열어둔 채 떠나면 잔류 선택지가 입력을 받아
+    // 미청취 진술이 소모되던 결함. anchorX가 null이면(씬 없는 배터리) 꺼진다.
+    if (this.phase !== PHASE.IDLE && this.anchorX != null) {
+      const p = this.engine.get?.('player')
+      if (p?.pos) {
+        const dx = p.pos.x - this.anchorX
+        const dz = p.pos.z - this.anchorZ
+        if (dx * dx + dz * dz > LEAVE * LEAVE) this._leave()
+      }
+    }
     if (this.phase === PHASE.LINES) this._pump()
   }
 
