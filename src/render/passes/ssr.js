@@ -28,8 +28,12 @@ varying vec2 vUv;
 uniform sampler2D uSrc;
 uniform float uClamp;
 void main () {
-  vec3 c = texture2D(uSrc, vUv).rgb;
+  vec3 c = max(texture2D(uSrc, vUv).rgb, vec3(0.0));
   float l = max(c.r, max(c.g, c.b));
+  // HDR 하프플로트 오버플로 방어 — Inf 픽셀은 uClamp/max()가 0이 되어 Inf*0=NaN을 만들고,
+  // 그 NaN이 밉 체인·시간 이력(EMA)을 영구 감염시켜 화면을 잠식한다(타이틀 방치 영구 암흑·
+  // 샷 스위트 t≈55 검은 폴리곤의 기전). NaN은 모든 비교에 실패하므로 !(l<큰값)으로 잡는다.
+  if (!(l < 3.0e38)) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
   gl_FragColor = vec4(c * (uClamp / max(uClamp, l)), 1.0);
 }`
 
@@ -126,9 +130,13 @@ uniform sampler2D uCur, uHist, uVel;
 uniform float uFeedback;
 void main () {
   vec4 c = texture2D(uCur, vUv);
+  // 자가 치유 — 현재 프레임의 NaN/Inf는 버리고, 오염된 이력은 현재 프레임으로 대체한다.
+  // EMA는 NaN을 영원히 물고 가므로 이 관문이 없으면 한 픽셀의 오염이 영구화된다.
+  if (!(dot(abs(c), vec4(1.0)) < 3.0e38)) c = vec4(0.0);
   vec2 vel = texture2D(uVel, vUv).xy;
   vec2 puv = vUv - vel * 0.5;
   vec4 h = texture2D(uHist, puv);
+  if (!(dot(abs(h), vec4(1.0)) < 3.0e38)) h = c;
   float ok = step(0.0, puv.x) * step(puv.x, 1.0) * step(0.0, puv.y) * step(puv.y, 1.0);
   gl_FragColor = mix(c, mix(h, c, 1.0 - uFeedback), ok);
 }`

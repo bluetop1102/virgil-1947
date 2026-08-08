@@ -18,7 +18,12 @@ precision highp float;
 varying vec2 vUv;
 uniform sampler2D uSrc;
 uniform vec2 uTexel;
-vec3 T (vec2 o) { return texture2D(uSrc, vUv + o * uTexel).rgb; }
+vec3 T (vec2 o) {
+  vec3 c = texture2D(uSrc, vUv + o * uTexel).rgb;
+  // HDR Inf/NaN 방어 — Inf는 Karis 가중 1/(1+lum)과 곱해져 NaN이 되고 체인 전체를 감염시킨다.
+  // NaN은 비교에 실패하므로 합이 유한한지로 거른다.
+  return (c.r + c.g + c.b < 3.0e38) ? max(c, vec3(0.0)) : vec3(0.0);
+}
 `
 
 const DOWN = HEAD + `
