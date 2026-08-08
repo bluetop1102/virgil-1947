@@ -8,13 +8,17 @@ import { RECIPES_A_CARPET } from './recipes.a-carpet.js'
 export const RECIPES_A = {
 
   'marble.lobby.floor': {
-    seed: 11, mult: 0.5, bump: 3.2,
+    // 체커 한 칸(31cm)은 유지한 채 텍스처 한 장이 덮는 거리를 1.30m → 2.50m 로 늘렸다.
+    // 옛 값은 4×4=16장 슬래브가 1.30m마다 통째로 되풀이돼, 오블리크 뷰에서 같은 연기무늬가
+    // 화면을 가로질러 11번 반복됐다(체험 리뷰 D3 ①). 8×8=64장 · 주기 2.50m 로 바꾸고
+    // mult 를 올려 슬래브당 텍셀(256px)은 그대로 지킨다.
+    seed: 11, mult: 1.0, bump: 3.2,
     mat: { clearcoat: 0.62, clearcoatRoughness: 0.11, sheen: 0.06, sheenRoughness: 0.55, sheenColor: 0x1a1c22, envMapIntensity: 1.15 },
-    opts: { triplanar: 0.77, grunge: 0.17, grungeScale: 0.30, detail: 0.28, detailTile: 5.0, ao: 0.65, toks: 1.0, damp: 0.34 },
+    opts: { triplanar: 0.40, grunge: 0.17, grungeScale: 0.30, detail: 0.28, detailTile: 5.0, ao: 0.65, toks: 1.0, damp: 0.34 },
     glsl: `
-const vec2 MK = vec2(4.0, 4.0);
+const vec2 MK = vec2(8.0, 8.0);
 float mSeam (vec2 uv) { vec2 g = abs(fract(uv * MK) - 0.5); return smoothstep(0.452, 0.5, max(g.x, g.y)); }
-float mChip (vec2 uv) { return 1.0 - smoothstep(0.0, 0.045, WOR(uv, vec2(26.0), 1.0).x); }
+float mChip (vec2 uv) { return 1.0 - smoothstep(0.0, 0.024, WOR(uv, vec2(50.0), 1.0).x); }
 // 슬래브는 각각 따로 재단된다 — 칸마다 결 좌표를 회전·이동시켜 결이 칸을 넘어 이어지지 않게 한다.
 // 이게 없으면 4x4 체커가 통째로 같은 무늬로 반복돼 D3에 바로 걸린다.
 vec3 mSlab (vec2 uv) {
@@ -27,8 +31,11 @@ vec3 mSlab (vec2 uv) {
 float H (vec2 uv) { return 1.0 - mSeam(uv) * 0.92 - mChip(uv) * 0.10; }
 void SURF (vec2 uv, out vec3 alb, out float rgh, out float mtl, out float ao, out float alp) {
   vec3 sl = mSlab(uv);
-  vec2 w = WRP(sl.xy, vec2(3.0), 0.75, 4);
-  float thin = smoothstep(0.55, 0.96, FBMR(w, vec2(6.0), 5));
+  vec2 w = WRP(sl.xy, vec2(3.0), 0.62, 4);
+  // 결 주파수. 옛 값(6, 5옥타브)은 최저 옥타브가 2.6cm라 결이 아니라 담배연기로 읽혔다
+  // (체험 리뷰 G3 "결이 너무 잘아 연기로 읽힌다"). 4·3옥타브면 최저 16cm — 슬래브를 가로지르는
+  // 굵은 맥이 서고 그 옆에 잔가지가 붙는 실제 대리석 위계가 생긴다.
+  float thin = smoothstep(0.60, 0.98, FBMR(w, vec2(4.0), 3));
   float wide = smoothstep(0.40, 0.86, FBM(w, vec2(2.0), 4));
   float ck = mod(floor(uv.x * MK.x) + floor(uv.y * MK.y), 2.0);
   float tone = 0.84 + 0.30 * sl.z;
@@ -48,7 +55,10 @@ void SURF (vec2 uv, out vec3 alb, out float rgh, out float mtl, out float ao, ou
   float smear = mop * 0.19 + mop2 * 0.09;
   float scuff = smoothstep(0.58, 0.98, FBM(uv, vec2(5.0), 3));
   float heel = smoothstep(0.72, 0.95, FBM(uv, vec2(9.0), 4));
-  rgh = clamp(0.082 + smear + scuff * 0.13 + heel * 0.16 + wide * 0.05 + seam * 0.60 + (sl.z - 0.5) * 0.05, 0.020, 1.0);
+  // 슬래브별 러프니스 ±0.15. 옛 ±0.025 는 clearcoat(0.62)가 유효 러프니스를 38%로 눌러
+  // ±0.01 이 되어 전면 동일 강도 반사로 읽혔다(체험 리뷰 G5 "러프니스 따른 흐림 변주 없음").
+  // 슬래브는 각각 다른 시기에 갈리고 닦였다 — 그 개체차가 SSR의 흐림 폭 차이로 나와야 한다.
+  rgh = clamp(0.082 + smear + scuff * 0.13 + heel * 0.16 + wide * 0.05 + seam * 0.60 + (sl.z - 0.5) * 0.30, 0.020, 1.0);
   mtl = 0.0;
   ao = 1.0 - seam * 0.55 - chip * 0.20;
   alp = 1.0;
@@ -69,21 +79,25 @@ float wRing (vec2 uv) {
   return abs(fract(w.y * 64.0 + FBM(uv, vec2(3.0), 3) * 0.12) - 0.5) * 2.0;
 }
 float wRay (vec2 uv) { return smoothstep(0.82, 0.98, FBM(uv, vec2(60.0, 2.0), 3)); }
-float wPore (vec2 uv) { return 1.0 - smoothstep(0.0, 0.30, WOR(uv, vec2(14.0, 90.0), 1.0).x); }
-float H (vec2 uv) { return 0.80 - (1.0 - wRing(uv)) * 0.10 - wPore(uv) * 0.36; }
+// 도관(pore). 옛 값 (14, 90)은 타일 0.8m 기준 5.7cm × 0.9cm 짜리 대시가 되어, 참나무 결이
+// 아니라 코듀로이 점무늬로 읽혔다 — 체험 리뷰가 "서랍 스펙클"로 지목한 것의 실체다.
+// 박스 투영으로 UV 스케일을 잡아주자 이 대시가 그대로 드러났으므로 주파수 자체를 올린다.
+// (52, 300)이면 같은 타일에서 1.5cm × 0.27cm — 6m 밖에서는 결로, 0.5m에서는 도관으로 읽힌다.
+float wPore (vec2 uv) { return 1.0 - smoothstep(0.0, 0.34, WOR(uv, vec2(52.0, 300.0), 1.0).x); }
+float H (vec2 uv) { return 0.80 - (1.0 - wRing(uv)) * 0.10 - wPore(uv) * 0.26; }
 void SURF (vec2 uv, out vec3 alb, out float rgh, out float mtl, out float ao, out float alp) {
   float ring = wRing(uv), pore = wPore(uv);
   float late = smoothstep(0.22, 0.88, ring);
   float fig = FBM(uv, vec2(4.0, 11.0), 4);
   alb = mix(vec3(0.0132, 0.0065, 0.0032), vec3(0.0498, 0.0248, 0.0112), clamp(late * 0.82 + fig * 0.30, 0.0, 1.0));
   alb = mix(alb, alb * 1.55, wRay(uv) * 0.45);
-  alb *= 1.0 - pore * 0.55;
+  alb *= 1.0 - pore * 0.40;
   float wear = smoothstep(0.44, 0.88, FBM(uv, vec2(3.0), 3));
   // 결을 따라 늘어난 광택 닦임 자국 — 하이라이트가 결 방향 궤적으로 끌린다
   float rub = cFbm(uv * vec2(2.0, 15.0), vec2(2.0, 15.0), 3) - 0.5;
-  rgh = clamp(0.205 + late * 0.11 + pore * 0.34 + wear * 0.15 + rub * 0.22, 0.05, 1.0);
+  rgh = clamp(0.205 + late * 0.11 + pore * 0.26 + wear * 0.15 + rub * 0.22, 0.05, 1.0);
   mtl = 0.0;
-  ao = 1.0 - pore * 0.50;
+  ao = 1.0 - pore * 0.36;
   alp = 1.0;
 }` },
 
@@ -262,14 +276,22 @@ void SURF (vec2 uv, out vec3 alb, out float rgh, out float mtl, out float ao, ou
   alb *= 0.92 + 0.16 * blot2;
   alb *= 0.988 + 0.024 * wRollH(uv);           // 롤마다 인쇄 로트가 다르다
   vec2 gh = wGhost(uv);
-  alb = mix(alb, alb * 1.52 + vec3(0.0038, 0.0052, 0.0030), gh.x * 0.70);
-  alb *= 1.0 - gh.y * 0.42;                    // 액자 테가 앉았던 자리의 먼지선
+  // 액자 자국은 직사각형이라 사람 눈이 가장 잘 잡아내는 형상이다 — 타일 주기마다 같은 자리에
+  // 같은 크기로 두 개씩 찍히면 서사 소품이 아니라 격자 증거가 된다. 톤차만 남기고 낮춘다.
+  alb = mix(alb, alb * 1.52 + vec3(0.0038, 0.0052, 0.0030), gh.x * 0.30);
+  alb *= 1.0 - gh.y * 0.22;                    // 액자 테가 앉았던 자리의 먼지선
   // 습기 얼룩은 가장자리에 갈색 테를 남긴다. 저역으로 깔면 위장무늬처럼 보여 무늬를 덮는다.
-  float sf = FBM(uv, vec2(3.0, 3.0), 4);
-  float stain = smoothstep(0.58, 0.76, sf);
-  float halo = clamp(smoothstep(0.545, 0.585, sf) - smoothstep(0.600, 0.660, sf), 0.0, 1.0);
-  alb = mix(alb, vec3(0.0245, 0.0182, 0.0098), stain * 0.66);
-  alb = mix(alb, vec3(0.0640, 0.0405, 0.0165), halo * 0.66);
+  // 타일당 3주기(=1.1m)로 깔면 얼룩 하나가 트리플래너 주기 3.33m마다 **같은 실루엣**으로
+  // 되풀이돼 로비 뒷벽 14.8m에 동일 형상이 4번 찍힌다 — 체험 리뷰가 "같은 장갑 자국"으로
+  // 지목한 D3의 실체다. 그림자와 구분되지 않아 G4(광원 논리)까지 같이 흐렸다.
+  // 주파수를 3배로 올려 35cm급 무늬로 되돌린다. 미터급 톤 변화는 월드공간 그런지(uCA.z)와
+  // damp(cMacroLow)가 맡는다 — 그 둘은 텍스처 타일 위상과 무관해 반복 실루엣을 못 만든다.
+  vec2 sw = WRP(uv, vec2(9.0, 9.0), 0.22, 3);
+  float sf = FBM(sw, vec2(9.0, 9.0), 4) * 0.66 + FBM(uv, vec2(23.0), 3) * 0.34;
+  float stain = smoothstep(0.555, 0.735, sf);
+  float halo = clamp(smoothstep(0.520, 0.560, sf) - smoothstep(0.575, 0.640, sf), 0.0, 1.0);
+  alb = mix(alb, vec3(0.0245, 0.0182, 0.0098), stain * 0.44);
+  alb = mix(alb, vec3(0.0640, 0.0405, 0.0165), halo * 0.46);
   float drip = wDrip(uv);
   alb = mix(alb, vec3(0.0348, 0.0242, 0.0126), drip * 0.52);
   // 금분 마모 — 셀 단위로 문질러 벗겨진 구역이 다르다
@@ -310,7 +332,7 @@ float pSpall (vec2 uv) {
 }
 float H (vec2 uv) {
   return 0.78 + FBM(uv, vec2(4.0), 4) * 0.12 + FBM(uv, vec2(30.0), 3) * 0.06
-       - pFine(uv) * 0.20 - pHair(uv) * 0.09 - pSpall(uv) * 0.26;
+       - pFine(uv) * 0.13 - pHair(uv) * 0.06 - pSpall(uv) * 0.26;
 }
 void SURF (vec2 uv, out vec3 alb, out float rgh, out float mtl, out float ao, out float alp) {
   float fine = pFine(uv), hair = pHair(uv), spall = pSpall(uv), repaint = pPatch(uv);
@@ -320,8 +342,11 @@ void SURF (vec2 uv, out vec3 alb, out float rgh, out float mtl, out float ao, ou
   vec3 top = vec3(0.222, 0.232, 0.246) * (0.70 + 0.62 * trowel) * (0.88 + 0.24 * skim);
   top = mix(top, vec3(0.166, 0.180, 0.194), repaint * 0.70);
   alb = mix(top, vec3(0.106, 0.098, 0.086), spall * 0.85);
-  alb = mix(alb, alb * 0.48, fine * 0.85);
-  alb = mix(alb, alb * 0.70, hair * 0.60);
+  // 균열망을 알베도로 52%까지 어둡게 찍으면 보로노이 격자가 그대로 드러나 천장·벽이
+  // "마른 진흙 모자이크"가 된다(체험 리뷰 G6 — 확대해도 2차 디테일이 아니라 노이즈).
+  // 값 차를 절반으로 줄이고 균열은 노멀·AO 쪽에서 읽히게 남긴다.
+  alb = mix(alb, alb * 0.66, fine * 0.52);
+  alb = mix(alb, alb * 0.84, hair * 0.32);
   float soot = smoothstep(0.45, 0.90, FBM(uv, vec2(6.0), 5));
   alb *= 1.0 - soot * 0.34;
   // 걸레자국 — 수평 8:1로 늘어난 저주파 띠. 스펙큘러가 점이 아니라 궤적으로 끌리게 하는 항이다.
@@ -330,7 +355,7 @@ void SURF (vec2 uv, out vec3 alb, out float rgh, out float mtl, out float ao, ou
   rgh = clamp(0.615 + fine * 0.14 + spall * 0.16 - repaint * 0.09 + trowel * 0.09 - soot * 0.05
             + wipe * 0.24 - hand * 0.10, 0.22, 1.0);
   mtl = 0.0;
-  ao = 1.0 - fine * 0.44 - hair * 0.18 - spall * 0.28;
+  ao = 1.0 - fine * 0.30 - hair * 0.11 - spall * 0.28;
   alp = 1.0;
 }` },
 
