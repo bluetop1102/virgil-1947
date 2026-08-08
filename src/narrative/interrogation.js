@@ -21,6 +21,10 @@ export const CHOICES = ['TRUTH', 'DOUBT', 'LIE']
 const PHASE = { IDLE: 'idle', LINES: 'lines', CHOICE: 'choice', EVIDENCE: 'evidence' }
 
 // 심문 이탈 사거리. 개시(REACH 3.0)보다 넉넉하게 잡아 경계에서 붙었다 떨어졌다 하지 않는다.
+// 시선 이탈은 이탈로 세지 않는다 — 이 판정이 지키는 계약은 "듣지도 보지도 못한 진술에
+// 판정이 기록되지 않는다"이고, 고개를 돌려도 자막은 화면 좌표에 그대로 남고 진술 음성도
+// 사거리 안이다. 반면 걸어 나가면 둘 다 끊긴다. 시선까지 이탈로 세면 열쇠 걸이를 흘끗 본
+// 순간 세션이 끊겨 진술이 되묻기로 돌아간다 — 계약은 못 지키면서 조작만 적대적이 된다.
 const LEAVE = 4.2
 
 // STORY 4-2 점수표. 이 함수가 사양이다. 데이터도 UI도 판정에 관여하지 않는다.
@@ -76,6 +80,7 @@ export class Interrogation {
     this.name = 'interrogation'
     this.order = 40
     this.script = null
+    this.lore = null
     this.names = {}
     this.engine = null
     this.reason = null
@@ -96,6 +101,7 @@ export class Interrogation {
   }
 
   _useScript (mod) {
+    this.lore = mod.LORE || null
     this.script = mod.INTERROGATIONS ? hydrateInterrogations(mod.INTERROGATIONS) : null
     for (const data of Object.values(this.script || {})) {
       for (const statement of data.statements || []) {
@@ -120,6 +126,13 @@ export class Interrogation {
     this._off.push(b.on('interrogation:start', (p) => this.start(p?.npc)))
     this._off.push(b.on('interrogation:choose', (p) => this._chooseEvent(p)))
     this._off.push(b.on('player:interact', (p) => this._onInteract(p?.targetId)))
+    // 지목 모드 해제(on:false)는 계약상 "제시 취소"인데(ARCH §5) 수신부가 없어 cancel()이
+    // 호출되지 않았다. EVIDENCE 단계로 들어간 세션은 선택지가 화면에 남은 채 숫자 입력만
+    // 죽는 막다른 상태가 된다. 증거를 확정한 경로에서는 choose가 먼저 판정을 끝내
+    // phase가 EVIDENCE를 떠나므로 뒤따르는 이 취소는 무동작이다.
+    this._off.push(b.on('interrogation:aiming', (p) => { if (p && p.on === false) this.cancel() }))
+    // 괴담 접촉 판정은 gameplay 소유(evidence.js), 원문 발화는 대사 소유인 여기서 한다.
+    this._off.push(b.on('lore:heard', (p) => this._lore(p?.id)))
     this.actPhase = null
     this._phase('early')
   }
@@ -404,7 +417,27 @@ export class Interrogation {
     this.reasking = false
     this.phase = PHASE.IDLE
     this.engine.bus.emit('interrogation:left', { npc: this.npc })
+    // 물을 것이 하나도 안 남았는데 마무리 대사 중에 자리를 뜬 것은 이탈이 아니라 종료다.
+    // 여기서 세션을 그냥 버리면 rec.ended 가 서지 않아 막이 열리지 않는다 — E2 골든패스는
+    // 마지막 진술 판정 직후 엘리베이터로 걸어간다(완주 봇 실측: interrogation:end 미발화).
+    if (!rec.ended && this.list.every(s => !this._eligible(s, rec))) {
+      this._finish()
+      this.queue.length = 0            // 자리에 없는 사람에게 마무리 대사를 읽어주지 않는다
+      this.now = null
+      this.phase = PHASE.IDLE
+      return
+    }
     this.engine.bus.emit('perf:state', { npc: this.npc, state: 'idle' })
+  }
+
+  // 괴담 원문 발화 (STORY §7). 매체 접촉은 한 번뿐이라 놓치면 회수할 길이 없다 —
+  // 심문 중이라면 즉시 덮지 않고 큐 뒤에 실어 현재 진술이 끝난 뒤 나오게 한다.
+  _lore (id) {
+    const line = this.lore?.[id]
+    if (!line?.text) return
+    const l = { speaker: line.speaker || '', text: line.text, dur: lineDur(line.text), action: null }
+    if (this.phase !== PHASE.IDLE) { this.queue.push(l); return }
+    this.engine.bus.emit('subtitle', { speaker: l.speaker, text: l.text, dur: l.dur })
   }
 
   _prompt () {

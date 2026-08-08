@@ -93,6 +93,27 @@ export const EVIDENCE = {
     body: '캣워크에 나란히. 젖지 않은 자리에 놓였다. 비는 밤새 왔다.' }
 }
 
+// 괴담 원문 (docs/STORY.md §7). 매체가 화자를 정한다 — 라디오는 심야 방송이고,
+// 낙서·연혁판은 형사가 눈으로 읽는 것이라 화자가 없다. 사건 인과에는 참여하지 않는다.
+export const LORE = {
+  'lore.pipes': {
+    speaker: '라디오',
+    text: '버질 애비뉴의 그 호텔 말입니다. 9층에서 물소리가 나면 이튿날 비가 온다죠. 배관공을 세 번 불렀는데 세 번 다 멀쩡했답니다.'
+  },
+  'lore.lightwell': {
+    speaker: '',
+    text: '9층에서 떨어진 여자는 아직 내려가는 중이래. 채광정 앞을 지날 때 위를 보지 마.'
+  },
+  'lore.1912': {
+    speaker: '',
+    text: '1912년 개업. 지진 해에 지하 저장고를 잠갔다. 열쇠는 강에 버렸다.'
+  },
+  'lore.linen': {
+    speaker: '',
+    text: '말려도 소용없다.'
+  }
+}
+
 const INTERROGATION_SCRIPT = {
   deitch: {
     npc: 'deitch', act: 1, place: 'lobby-desk',
