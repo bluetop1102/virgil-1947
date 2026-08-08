@@ -156,8 +156,8 @@ export const SHOTS = {
     note: '[LOBBY] 벽-천장 접합 — 크라운 몰딩·프리즈·픽처레일·기둥 주두. G10/G6'
   },
   'lobby-sofa': {
-    pos: [1.55, 1.32, 6.15], target: [3.45, 0.62, 4.15], fov: 40, time: 12, act: 1,
-    note: '[LOBBY] 소파 사분면 — 팔걸이 마모 명도차·주변 소품 밀도. N6/G6'
+    pos: [1.05, 1.26, 2.15], target: [3.10, 0.62, 4.05], fov: 44, time: 12, act: 1,
+    note: '[LOBBY] 소파 사분면 정면 — 닳은 팔걸이 명도차·라운지 소품 밀도. N6/G6'
   },
   'lobby-desk-front': {
     pos: [-2.30, 1.22, -1.55], target: [-2.60, 0.72, -3.30], fov: 38, time: 12, act: 1,
