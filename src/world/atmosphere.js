@@ -95,7 +95,11 @@ export function practical (kind, opts = {}) {
   light.castShadow = false
   if (wantShadow) {
     light.shadow.bias = -0.0009
-    light.shadow.normalBias = 0.022
+    // 0.022 → 0.013. normalBias 는 섀도 조회 지점을 노멀 방향으로 미는 값이라 접촉면에서
+    // 그림자를 물체로부터 그만큼 떼어 놓는다(피터패닝). 22mm 는 의자 다리·카트 바퀴 굵기
+    // 규모라 접지가 판독되지 않는 원인이 된다(G4 6점 "전 화면 동일 소프트니스로 접촉면 소실").
+    // VSM 은 체비쇼프 상한이라 acne 내성이 PCF 보다 높아 이 폭까지 내릴 여유가 있다.
+    light.shadow.normalBias = 0.013
     // VSM 블러 반경. 3.5 는 문틀·카트 발치의 컨택트까지 뭉개 접지가 안 읽혔다(G4/D5).
     // VSM 은 반경이 맵 텍셀 고정이라 어차피 거리별 페넘브라를 못 만든다 — 접촉부를 살린다.
     light.shadow.radius = 2.0

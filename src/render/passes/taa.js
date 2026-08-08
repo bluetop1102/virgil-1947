@@ -27,6 +27,12 @@ uniform float uMaxN;
 uniform float uEnabled;
 uniform float uSharpen;
 
+// HDR 하프플로트 오버플로 방어. Inf 픽셀은 반딧불 가중 1/(1+max(c))와 곱해져 NaN이 되고,
+// TAA 히스토리는 EMA라 그 NaN을 영구히 물고 간다 — ssr.js/bloom.js와 같은 기전이고,
+// 여기가 가장 마지막 관문이다(모션블러가 hdr에 되쓴 결과도 전부 이리로 들어온다).
+// NaN은 모든 비교에 실패하므로 합이 유한한지로 거른다.
+vec3 finite3 ( vec3 c ) { return ( c.r + c.g + c.b < 3.0e38 ) ? max( c, vec3( 0.0 ) ) : vec3( 0.0 ); }
+
 vec3 rgb2ycocg ( vec3 c ) {
   return vec3(
     0.25 * c.r + 0.5 * c.g + 0.25 * c.b,
@@ -76,7 +82,7 @@ vec3 historyCatmullRom ( vec2 uv, vec2 res ) {
   r += texture2D( tHist, p12 ).rgb * c;
   r += texture2D( tHist, vec2( p3.x, p12.y ) ).rgb * d;
   r += texture2D( tHist, vec2( p12.x, p3.y ) ).rgb * e;
-  return max( r / max( a + b + c + d + e, 1e-4 ), vec3( 0.0 ) );
+  return finite3( r / max( a + b + c + d + e, 1e-4 ) );
 }
 
 void main () {
@@ -93,7 +99,7 @@ void main () {
   for ( int y = -1; y <= 1; y ++ ) {
     for ( int x = -1; x <= 1; x ++ ) {
       vec2 o = vec2( float( x ), float( y ) ) * uTexel;
-      vec3 s = rgb2ycocg( max( texture2D( tCurr, uv + o ).rgb, vec3( 0.0 ) ) );
+      vec3 s = rgb2ycocg( finite3( texture2D( tCurr, uv + o ).rgb ) );
       m1 += s;
       m2 += s * s;
       mn = min( mn, s );
@@ -120,6 +126,8 @@ void main () {
 
   vec3 histRgb = historyCatmullRom( histUv, uRes );
   float n = texture2D( tHist, histUv ).a;
+  // 누적 카운터도 이력이다. 한 번 NaN이 되면 alpha = 1/n 이 NaN 이라 그 픽셀이 영구히 죽는다.
+  if ( ! ( n >= 0.0 && n < 1.0e30 ) ) n = 0.0;
 
   // 지터 누적이 먹은 고주파를 이웃 범위 안에서만 복원한다(범위 밖으로 나가면 링잉)
   vec3 sharpY = clamp( currY + ( currY - mean ) * uSharpen, mn, mx );

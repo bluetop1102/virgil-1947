@@ -30,6 +30,8 @@ uniform vec3 uGamma;
 uniform vec3 uGain;
 uniform float uSaturation;
 uniform float uContrast;
+uniform vec3 uSplitCool;
+uniform float uSplitPivot;
 uniform float uHalation;
 uniform float uHalGain;
 uniform float uHalNarrow;
@@ -131,7 +133,10 @@ void main () {
   float rn = clamp( length( d ) / 0.5, 0.0, 1.0 );
   float caR = pow( max( rn - 0.40, 0.0 ) / 0.60, 2.5 );
   vec2 ca = normalize( d + 1e-6 ) * min( caR * uChromatic * 260.0, 0.8 ) * uTexel;
-  vec3 c0 = max( texture2D( tSrc, vUv ).rgb, vec3( 0.0 ) );
+  // HDR 하프플로트 오버플로 방어. c0 가 Inf 면 아래 caLim 도 Inf 가 되고 clamp( col - c0, ... )
+  // 에서 Inf - Inf = NaN 이 나와 그 픽셀이 통째로 죽는다(ssr.js/bloom.js 와 같은 기전).
+  vec3 s0 = texture2D( tSrc, vUv ).rgb;
+  vec3 c0 = ( s0.r + s0.g + s0.b < 3.0e38 ) ? max( s0, vec3( 0.0 ) ) : vec3( 0.0 );
   vec3 col;
   col.r = texture2D( tSrc, vUv + ca ).r;
   col.g = c0.g;
@@ -171,6 +176,14 @@ void main () {
 
   float l = dot( col, LUMA );
   col = clamp( mix( vec3( l ), col, uSaturation ), 0.0, 1.0 );
+
+  // 스플릿 톤. uLift 는 전 계조에 상수로 얹히는 가산항이라 키우면 암부가 통째로 들려
+  // 검정이 사라지고(D6 반대 방향), 그래서 지금 값은 색이 갈릴 만큼 크지 못했다 —
+  // 심사 판정이 "청록 그림자 분리 없음"(G7 6점)이었던 이유다. 여기서는 곱셈으로 건다:
+  // 0 은 0 으로 남아 흑점이 보존되고, 암부의 색상비만 호박색 반대편으로 돈다.
+  // 하이라이트(uSplitPivot 이상)는 정확히 1.0 이라 텅스텐 코어의 앰버가 그대로 산다.
+  float sw = 1.0 - smoothstep( 0.0, uSplitPivot, l );
+  col = clamp( col * mix( vec3( 1.0 ), uSplitCool, sw ), 0.0, 1.0 );
 
   // 끝점을 고정하는 S커브. pow 대비는 하이라이트를 날려 D6(블로우아웃)로 간다.
   float k = uContrast - 1.0;
@@ -259,7 +272,9 @@ void main () {
   for ( int j = 0; j < 2; j ++ ) {
     for ( int i = 0; i < 2; i ++ ) {
       vec2 o = ( vec2( float( i ), float( j ) ) * 2.0 - 1.0 ) * uSrcTexel;
-      vec3 t = max( texture2D( tSrc, vUv + o ).rgb, vec3( 0.0 ) ) * uExposure;
+      // Inf 는 Karis 가중 1/(1+lum) 과 곱해져 NaN 이 되고 헐레이션 체인 전체를 감염시킨다.
+      vec3 sp = texture2D( tSrc, vUv + o ).rgb;
+      vec3 t = ( ( sp.r + sp.g + sp.b < 3.0e38 ) ? max( sp, vec3( 0.0 ) ) : vec3( 0.0 ) ) * uExposure;
       float w = 1.0 / ( 1.0 + 0.25 * dot( t, LUMA ) );
       s += t * w;
       wsum += w;
@@ -327,10 +342,14 @@ export default class Composite {
         uGain: { value: new THREE.Vector3(1, 1, 1) },
         uSaturation: { value: 1 },
         uContrast: { value: 1 },
+        // 암부 색상비만 도는 곱셈 틴트. R -8% / B +12% 는 휘도로 -0.8% 라 톤커브를 안 흔든다.
+        uSplitCool: { value: new THREE.Vector3(0.92, 1.00, 1.12) },
+        uSplitPivot: { value: 0.36 },
         uHalation: { value: 0 },
         uHalGain: { value: 0.5 },
         uHalNarrow: { value: 0.62 },
-        uHalWide: { value: 2.00 },
+        // 2.00 → 1.45. 반경을 줄인 만큼 같은 가중을 두면 코어에 밀도가 몰려 오히려 원반이 된다.
+        uHalWide: { value: 1.45 },
         uMidPivot: { value: 0.25 },
         uMidSlope: { value: 1.00 },
         uMidWidth: { value: 1.05 },
@@ -384,7 +403,10 @@ export default class Composite {
     // 수평을 수직의 2.4~2.8배로 잡아 등방 원반이 아니라 가로로 누운 산란으로 읽히게 한다(G8).
     // 넓은 성분의 수평 σ(≈64px)는 돔 등기구 발광판 반폭(≈120px)의 절반을 넘는다 —
     // 이 조건을 만족해야 사각 소스의 등고선에서 직선 구간이 사라진다.
-    this.halStep = { nx: 1.0, ny: 0.42, wx: 5.0, wy: 1.8 }
+    // 라운드6: 넓은 성분 5.0/1.8 → 3.6/1.30 (풀해상도 σ 64×23px → 46×17px).
+    // 64px 로브는 광원 실루엣에서 떨어져 나와 "광원 위에 떠 있는 광구"로 읽혔다(G8 4점).
+    // 헐레이션은 유제 안에서 번지는 것이라 소스에 붙어 있어야 재료로 읽힌다.
+    this.halStep = { nx: 1.0, ny: 0.42, wx: 3.6, wy: 1.30 }
     // 넓은 성분은 임계를 훨씬 높게 잡는다. 어두운 광원은 좁은 성분만 갖고, 밝은 코어만
     // 넓은 로브를 얻는다 — 반경이 광원 밝기에 따라 실제로 달라지는 유일한 경로다.
     this.halWideT = { t0: 12.0, t1: 30.0 }

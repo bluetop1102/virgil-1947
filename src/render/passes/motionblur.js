@@ -54,8 +54,11 @@ varying vec2 vUv;
 uniform sampler2D uSrc, uVel, uNeighbor, uDepth, uNoise;
 uniform mat4 uInvProj;
 uniform vec2 uRes;
-uniform float uShutter, uFrame, uHasNoise, uMaxLen;
+uniform float uShutter, uFrame, uHasNoise, uMaxLen, uRollMin, uRollLo;
 
+// HDR 하프플로트 오버플로 방어. 재구성 필터의 가중 w 는 0 이 될 수 있어 Inf*0 = NaN 이 되고,
+// 이 패스는 결과를 hdr 에 되쓰므로 그 NaN이 TAA 히스토리로 넘어가 영구화된다(ssr 과 같은 기전).
+vec3 fin (vec3 c) { return (c.r + c.g + c.b < 3.0e38) ? max(c, vec3(0.0)) : vec3(0.0); }
 float lin (vec2 uv) {
   float z = texture2D(uDepth, uv).x;
   vec4 c = uInvProj * vec4(uv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0);
@@ -73,13 +76,20 @@ float cyl (float d, float v) { return 1.0 - smoothstep(0.95 * v, 1.05 * v, d); }
 float softZ (float za, float zb) { return clamp(1.0 - 2.0 * (za - zb) / max(min(za, zb), 1e-3), 0.0, 1.0); }
 
 void main () {
-  vec3 c0 = texture2D(uSrc, vUv).rgb;
+  vec3 c0 = fin(texture2D(uSrc, vUv).rgb);
   vec2 vn = texture2D(uNeighbor, vUv).xy;
   float lnp = length(vn * uRes);
   if (lnp < 0.8) { gl_FragColor = vec4(c0, 1.0); return; }
   if (lnp > uMaxLen) { vn *= uMaxLen / lnp; lnp = uMaxLen; }
 
-  vec2 vc = texture2D(uVel, vUv).xy * 0.5 * uShutter;
+  // 셔터 롤오프. 180도 고정은 인트로 트래킹처럼 화면이 통째로 흐르는 구간에서 형체를 뭉개
+  // "필터/결함"으로 읽힌다(G8, 리뷰 15-cin-t14.jpg). 실제 촬영도 빠른 팬에서는 셔터를 닫는다.
+  // 느린 이동(uRollLo 미만)에서는 정확히 1.0 이라 걷는 속도의 블러는 그대로 남는다.
+  float roll = mix(1.0, uRollMin, smoothstep(uRollLo, uMaxLen, lnp));
+  vn *= roll;
+  lnp *= roll;
+
+  vec2 vc = texture2D(uVel, vUv).xy * 0.5 * uShutter * roll;
   float lcp = max(length(vc * uRes), 0.5);
   float z0 = lin(vUv);
   float jit = blue() - 0.5;
@@ -92,12 +102,12 @@ void main () {
     vec2 uv = vUv + vn * t;
     float d = abs(t) * lnp;
     float zs = lin(uv);
-    vec2 vs = texture2D(uVel, uv).xy * 0.5 * uShutter;
+    vec2 vs = texture2D(uVel, uv).xy * 0.5 * uShutter * roll;
     float lsp = max(length(vs * uRes), 0.5);
     float fg = softZ(z0, zs);            // 탭이 앞에 있음 → 탭의 속도로 번짐
     float bg = softZ(zs, z0);            // 탭이 뒤에 있음 → 중앙 속도로 번짐
     float w = fg * cone(d, lsp) + bg * cone(d, lcp) + cyl(d, lsp) * cyl(d, lcp) * 2.0;
-    sum += texture2D(uSrc, uv).rgb * w;
+    sum += fin(texture2D(uSrc, uv).rgb) * w;
     wsum += w;
   }
   gl_FragColor = vec4(sum / max(wsum, 1e-4), 1.0);
@@ -164,7 +174,9 @@ export default class MotionBlur {
       uSrc: { value: null }, uVel: { value: null }, uNeighbor: { value: null },
       uDepth: { value: null }, uNoise: { value: null },
       uInvProj: { value: new THREE.Matrix4() }, uRes: { value: new THREE.Vector2() },
-      uShutter: { value: 0.5 }, uFrame: { value: 0 }, uHasNoise: { value: 0 }, uMaxLen: { value: 90 }
+      uShutter: { value: 0.5 }, uFrame: { value: 0 }, uHasNoise: { value: 0 }, uMaxLen: { value: 90 },
+      // 롤오프 하한(=최소 셔터 배수)과 시작 길이. 0.45 는 180도 → 약 81도다.
+      uRollMin: { value: 0.45 }, uRollLo: { value: 24 }
     }
     this.mBlit = shader(BLIT)
     this.mBlit.uniforms = { uSrc: { value: null } }
@@ -180,7 +192,10 @@ export default class MotionBlur {
     this.tileRT = rt(tw, th)
     this.nbRT = rt(tw, th)
     this.full = rt(w, h)
-    this.mBlur.uniforms.uMaxLen.value = Math.max(16, Math.round(h * 0.07))
+    // 7% → 5.5%. 롤오프와 합쳐 실효 최대 블러가 1440p 기준 100px → 36px 가 된다.
+    const maxLen = Math.max(16, Math.round(h * 0.055))
+    this.mBlur.uniforms.uMaxLen.value = maxLen
+    this.mBlur.uniforms.uRollLo.value = maxLen * 0.30
   }
 
   render (ctx) {

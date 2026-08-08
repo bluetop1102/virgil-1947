@@ -71,7 +71,10 @@ export default class AutoExposure {
     this.pixels = new Uint8Array(TILE * TILE * 4)
     this.hist = new Int32Array(BINS)
 
-    this.key = 0.155        // log-average를 놓을 노출 기준점
+    // 0.155 → 0.132. 심사 판정: 밝은 앵글에서 워시아웃(22-t37 대비 50-s1 낙차, G7 6점).
+    // 밝은 프레임은 e0 = key/logAvg 가 지배하므로 이 값만 내리면 그쪽만 내려오고,
+    // 어두운·평탄한 프레임은 e1 = hiAnchor/p99 가 바닥을 잡고 있어 그대로다(D6 게이트 유지).
+    this.key = 0.132        // log-average를 놓을 노출 기준점
     this.hiAnchor = 0.62    // p99 휘도를 놓을 선형값 — AgX 통과 후 sRGB 0.8 부근
     this.min = 0.015
     this.max = 600
