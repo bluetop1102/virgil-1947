@@ -10,6 +10,9 @@
 > 열거 — E5 [구현] 신설 조항의 계약 측. 신선 테스트 실측 공백의 해소.
 > **v2.4 (2026-08-07)**: §6.5 직접 광원 승인 예외 4건 폐집합 등재(HANDOFF #29 답신 —
 > 비등록 팩토리는 P5 백로그 이월).
+> **v2.5 (2026-08-08)**: §5 `interrogation:left` 등재 — 심문 사거리 이탈 통지(리뷰 §0-3
+> 잔류 UI 누수의 계약측). 구독 어휘 추가분: interrogation ← `interrogation:aiming`(제시
+> 취소 수신)·`lore:heard`(괴담 원문 발화) · ui(hud/notebook/settings) ← `interrogation:left`.
 > 코드 식별자(`__CECIL__` 등)는 내부 코드네임으로 잔존 허용 — 화면 표출 텍스트만 "세실" 0 (계약 린트, P0).
 
 ## 0. 작품 정의
@@ -239,6 +242,7 @@ engine.bus.emit('interrogation:start', {npc: 'deitch'})
 | `interrogation:prompt` | `{npc, sid, options}` | interrogation — UI에 3선택(또는 재질문 2선택) 요구. 렌더는 [UI] 소유 *(v2)* |
 | `interrogation:choose` | `{sid, choice, evidence?}` | ui — 플레이어 선택 반환(단일 발화 — LIE는 증거 확정 시점에만, 판정도 그때만) *(v2)* |
 | `interrogation:aiming` | `{sid, on}` | ui — LIE 증거 지목 모드 진입(on:true)/취소(on:false). 카메라 푸시인·롤백(E7 §1 3행)의 트리거. 판정 아님 *(v2)* |
+| `interrogation:left` | `{npc}` | interrogation — 사거리(4.2m) 이탈로 세션을 내려놓았다는 통지. **ui(hud)가 선택지 쪽지를, ui(notebook)이 증거 지목 모드를 함께 내린다** — 잔류 UI가 입력을 받아 미청취 진술을 소모하던 누수의 계약측(리뷰 §0-3). 판정 아님. 남은 질문이 없는 상태의 이탈은 `interrogation:end`가 뒤따른다 *(v2.5)* |
 | `deduction:present` | `{evidence, claim}` | ui(board) — 증거판 시도 입력: 증거 2개 + 명제(claim id, case-graph `links[].claims`). 어느 링크인지는 UI가 모른다 — 판정·`deduction:link` 발화는 deduction 소유 *(v2.2 — 지목판 개정, E5 §5)* |
 | `deduction:sign` | `{}` | ui(board) — 조서 서명 = 지목 종결 선언. deduction이 성립 링크 수로 엔딩 분기(E5 §5) *(v2)* |
 | `deduction:end` | `{ending, links, flags}` | deduction — 지목 종결 확정 통지(ending ∈ full/partial/cold). cinematics(cin-end-* 개시)·save(**엔딩을 비가역 레코드에 기록, 회차 종결 — "이어서" 소멸, E8 §4**)가 소비 *(v2)* |
