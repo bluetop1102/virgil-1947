@@ -261,7 +261,8 @@ function dress (root, evidence, bindings) {
   couch.userData.observation = OBSERVATIONS.sofa
   interact(couch, 'lobby/sofa-arm', { kind: 'environment', prompt: '팔걸이를 살핀다' })
   root.add(couch)
-  root.add(place(rugRunner(352, { w: 3.6, len: 3.0 }), [4.30, 0, 4.55]))
+  // 러그는 놋쇠 인레이(상단 y=0.011) 위로 올린다 — 바닥에 붙이면 인레이가 러그를 뚫고 나온다
+  root.add(place(rugRunner(352, { w: 3.6, len: 3.0 }), [4.30, 0.010, 4.55]))
   root.add(place(armchair(353, { fabric: 'leather.worn.brown' }), [5.75, 0, 5.30], -1.75))
   const lampTable = place(sideTable(354), [5.55, 0, 3.35], 0.6)
   root.add(lampTable)

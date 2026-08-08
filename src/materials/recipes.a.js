@@ -68,7 +68,10 @@ void SURF (vec2 uv, out vec3 alb, out float rgh, out float mtl, out float ao, ou
     seed: 23, mult: 0.5, bump: 2.4,
     // 바니시 목재는 유약 도자기(clearcoat 1.0/rgh 0.05)와 롭 폭이 달라야 한다 —
     // 같은 조명에서 하이라이트 폭이 육안으로 구분되는 선까지 벌린다(G3).
-    mat: { clearcoat: 0.42, clearcoatRoughness: 0.15, anisotropy: 0.45, anisotropyRotation: 1.5708, specularIntensity: 1.0, envMapIntensity: 1.0 },
+    // clearcoatRoughness 0.15 → 0.30. 0.15는 롭이 너무 좁아 천장 반자틀이 펜던트를 받는 각도에서
+    // 스펙큘러가 한 줄로 뭉쳐 lobby-wide 펜던트 위에 세로 띠로 남았다(S2 실측 — 화염 기둥 잔여).
+    // 0.30에서 lobby-desk 광택 손실 0으로 측정됐다.
+    mat: { clearcoat: 0.42, clearcoatRoughness: 0.30, anisotropy: 0.45, anisotropyRotation: 1.5708, specularIntensity: 1.0, envMapIntensity: 1.0 },
     // 스토캐스틱은 방향성 결에 쓰면 안 된다 — 어긋난 3장의 줄무늬가 간섭해 모래 물결이 생긴다.
     // 목재는 가구·몰딩처럼 작은 조각에 쓰이므로 라지스케일 그런지만으로 반복이 가려진다.
     opts: { grunge: 0.18, grungeScale: 0.58, detail: 0.35, detailTile: 9.0, ao: 0.55, toks: 1.2, damp: 0.22 },
