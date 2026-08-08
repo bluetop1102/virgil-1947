@@ -170,9 +170,29 @@ function makeFlask () {
   return root
 }
 
+// 지배 노멀 축으로 UV를 박스 투영한다. RoundedBox 기본 UV는 면마다 텍스처 전체(0..1)를
+// 욱여넣어 0.5m급 소품에서 나이테가 픽셀 노이즈로 뭉개진다(체험 리뷰 §1 라디오 D4).
+// tile = 텍스처 한 장이 덮을 월드 거리(m).
+function boxUv (geo, tile) {
+  const pos = geo.attributes.position
+  const nrm = geo.attributes.normal
+  const uv = new Float32Array(pos.count * 2)
+  for (let i = 0; i < pos.count; i++) {
+    const nx = Math.abs(nrm.getX(i)), ny = Math.abs(nrm.getY(i)), nz = Math.abs(nrm.getZ(i))
+    let u, v
+    if (nx >= ny && nx >= nz) { u = pos.getZ(i); v = pos.getY(i) }
+    else if (ny >= nz) { u = pos.getX(i); v = pos.getZ(i) }
+    else { u = pos.getX(i); v = pos.getY(i) }
+    uv[i * 2] = u / tile
+    uv[i * 2 + 1] = v / tile
+  }
+  geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
+  return geo
+}
+
 function makeRadio () {
   const root = group('lobby.radio')
-  root.add(mesh(bevelBox(0.58, 0.38, 0.27, 0.045, 4), 'wood.varnished.dark', { pos: [0, 0.19, 0], wear: 0.85, seed: 251 }))
+  root.add(mesh(boxUv(bevelBox(0.58, 0.38, 0.27, 0.045, 4), 0.8), 'wood.varnished.dark', { pos: [0, 0.19, 0], wear: 0.85, seed: 251 }))
   const grille = []
   const transforms = []
   for (let i = 0; i < 9; i++) {
