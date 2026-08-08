@@ -3,7 +3,7 @@
 //   node tools/playthrough.mjs --paced --act 1
 //   node tools/playthrough.mjs --capture first30 --out shots/p1-06
 import { chromium } from 'playwright'
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { dirname, join, resolve } from 'node:path'
@@ -25,14 +25,72 @@ function parseArgs (args) {
     return at >= 0 ? args[at + 1] : null
   }
   const capture = value('--capture')
+  const checkCapture = value('--check-capture')
   const mode = args.includes('--paced') ? 'paced' : args.includes('--fast') ? 'fast' : null
   const act = Number(value('--act') ?? 1)
   const out = value('--out') ?? 'shots/playthrough'
-  if (capture && mode) throw new Error('--capture와 --fast/--paced는 함께 쓸 수 없습니다')
-  if (!capture && !mode) throw new Error('--fast, --paced, --capture 중 하나가 필요합니다')
+  if ([Boolean(capture), Boolean(checkCapture), Boolean(mode)].filter(Boolean).length !== 1) throw new Error('--fast, --paced, --capture, --check-capture 중 하나가 필요합니다')
   if (!capture && act !== 1) throw new Error('현재 수직 슬라이스는 --act 1만 지원합니다')
   if (capture && capture !== 'first30') throw new Error(`알 수 없는 캡처 구간: ${capture}`)
-  return { capture, mode, act, out }
+  return { capture, checkCapture, mode, act, out }
+}
+
+async function analyzePng (page, bytes) {
+  const b64 = Buffer.from(bytes).toString('base64')
+  return page.evaluate(async source => {
+    const image = new Image()
+    image.src = `data:image/png;base64,${source}`
+    await image.decode()
+    const canvas = document.createElement('canvas')
+    canvas.width = image.naturalWidth
+    canvas.height = image.naturalHeight
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    ctx.drawImage(image, 0, 0)
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+    let nonBlack = 0, sum = 0, sum2 = 0, max = 0
+    const count = canvas.width * canvas.height
+    for (let i = 0; i < pixels.length; i += 4) {
+      const luma = 0.2126 * pixels[i] + 0.7152 * pixels[i + 1] + 0.0722 * pixels[i + 2]
+      if (pixels[i] > 2 || pixels[i + 1] > 2 || pixels[i + 2] > 2) nonBlack++
+      if (luma > max) max = luma
+      sum += luma
+      sum2 += luma * luma
+    }
+    const mean = sum / count
+    return {
+      max: +max.toFixed(2),
+      mean: +mean.toFixed(4),
+      variance: +(sum2 / count - mean * mean).toFixed(4),
+      nonBlack,
+      nonBlackPct: +(nonBlack * 100 / count).toFixed(5)
+    }
+  }, b64)
+}
+
+function judgeFirst30 (frames) {
+  const window = frames.filter(frame => frame.t >= 4 && frame.t <= 12)
+  const pureBlack = window.filter(frame => frame.pixels && frame.pixels.nonBlackPct < 0.001 && frame.pixels.variance < 0.1)
+  const visibleInk = window.filter(frame => frame.pixels && frame.pixels.nonBlack >= 20 && frame.pixels.max >= 24)
+  const sameSize = window.length > 0 && new Set(window.map(frame => frame.bytes)).size === 1
+  const failures = []
+  if (window.length !== 9) failures.push(`t=4~12 프레임 ${window.length}/9`)
+  if (pureBlack.length > 4) failures.push(`순흑 프레임 ${pureBlack.length}/9 > 4`)
+  if (visibleInk.length < 4) failures.push(`가시 잉크 프레임 ${visibleInk.length}/9 < 4`)
+  if (sameSize) failures.push('t=4~12 파일 크기 전부 동일')
+  return { pass: failures.length === 0, window: window.length, pureBlack: pureBlack.length, visibleInk: visibleInk.length, sameSize, failures }
+}
+
+async function checkCapture (browser, directory) {
+  const page = await browser.newPage({ viewport: { width: 32, height: 32 } })
+  const frames = []
+  for (const file of readdirSync(directory).filter(name => /^first30-t\d{3}\.png$/.test(name)).sort()) {
+    const png = readFileSync(join(directory, file))
+    frames.push({ t: Number(file.match(/t(\d{3})/)[1]), file, bytes: png.length, pixels: await analyzePng(page, png) })
+  }
+  const gate = judgeFirst30(frames)
+  console.log(JSON.stringify({ directory, gate }, null, 2))
+  await page.close()
+  if (!gate.pass) throw new Error(`첫 30초 순흑 게이트 실패: ${gate.failures.join(' · ')}`)
 }
 
 function section (source, start, end) {
@@ -172,7 +230,9 @@ class QaSession {
   }
 
   async open () {
-    await this.page.goto(`http://127.0.0.1:${PORT}/?qa=1`, { waitUntil: 'load', timeout: 120000 })
+    // 완주 게이트는 상태·이벤트를 판정하고 픽셀은 판정하지 않는다. low 프리셋으로 돌려야
+    // 10분짜리 paced 스케줄을 풀 렌더 비용 때문에 수십 분 기다리지 않고 같은 고정 스텝으로 소비한다.
+    await this.page.goto(`http://127.0.0.1:${PORT}/?qa=1&q=low`, { waitUntil: 'load', timeout: 120000 })
     await this.page.waitForFunction(() => window.__CECIL__?.ready && window.__CECIL__.qa, null, { timeout: 240000 })
     this.base = await this.time()
     await this.sync()
@@ -230,8 +290,20 @@ class QaSession {
   }
 
   async moveAndInteract (id) {
-    await this.qa(this.mode === 'paced' ? 'walk' : 'goto', id)
-    return this.qa('interact', id)
+    const from = this.events.length
+    const moved = await this.qa(this.mode === 'paced' ? 'walk' : 'goto', id)
+    await this.sync()
+    const interacted = await this.qa('interact', id)
+    await this.sync()
+    const observed = this.events.slice(from).filter(event =>
+      event.type === 'player:interact' || event.type === 'act:enter' || event.type === 'interrogation:left' || event.type === 'qa:walk:fallback')
+    if (id === 'lobby/elevator') {
+      console.log(`엘리베이터 추적: move=${moved} interact=${interacted} events=${observed.map(event => `${event.type}(${event.payload?.targetId || ''})@${event.time.toFixed(2)}`).join(',') || '(없음)'}`)
+    }
+    if (!observed.some(event => event.type === 'player:interact')) {
+      throw new Error(`${id} player:interact 이벤트 미발화`)
+    }
+    return interacted
   }
 
   async state () { return this.qa('state') }
@@ -360,21 +432,25 @@ async function runCapture (browser, timeline, out) {
       return cinematic && cinematic.clock >= target
     }, t, { timeout: 5000 })
     const name = `first30-t${String(t).padStart(3, '0')}.png`
-    await page.screenshot({ path: join(out, name), timeout: 120000 })
-    frames.push({ t, file: name })
+    const png = await page.screenshot({ path: join(out, name), timeout: 120000 })
+    frames.push({ t, file: name, bytes: png.length, pixels: await analyzePng(page, png) })
   }
 
   const bootErrors = await page.evaluate(() => window.__CECIL__.errors ?? [])
+  const introGate = judgeFirst30(frames)
   const report = {
     source: 'packets/PACKET-T-P1-06.md E2 first30',
     intervalSeconds: 1,
     segments: timeline.first30,
     frames,
+    introGate,
     console: consoleIssues.concat(bootErrors)
   }
   writeFileSync(join(out, 'first30-report.json'), JSON.stringify(report, null, 2))
   if (report.console.length) throw new Error(`콘솔 문제 ${report.console.join(' | ')}`)
+  if (!introGate.pass) throw new Error(`첫 30초 순흑 게이트 실패: ${introGate.failures.join(' · ')}`)
   console.log(`first30 캡처 PASS: ${frames.length}프레임 · ${timeline.first30.length}행 · ${out}`)
+  console.log(`인트로 픽셀 PASS: 순흑 ${introGate.pureBlack}/9 · 가시 잉크 ${introGate.visibleInk}/9 · 단일크기 ${introGate.sameSize ? 'YES' : 'NO'}`)
   console.log(`파일명 범위: ${frames[0].file} … ${frames[frames.length - 1].file}`)
   console.log('콘솔 PASS: error 0 · warning 0')
   await page.close()
@@ -382,6 +458,11 @@ async function runCapture (browser, timeline, out) {
 
 const options = parseArgs(process.argv.slice(2))
 const timeline = loadTimeline()
+if (options.checkCapture) {
+  const browser = await chromium.launch({ headless: true })
+  try { await checkCapture(browser, resolve(ROOT, options.checkCapture)) } finally { await browser.close() }
+  process.exit(0)
+}
 await acquireLock()
 const server = serve()
 process.on('exit', () => { releaseLock(); killServer(server) })

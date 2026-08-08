@@ -24,28 +24,38 @@ export const SHOTS = {
     pos: [4.2, 1.66, 2.0], target: [6.8, 1.5, -1.2], fov: 38, time: 16, act: 1,
     note: '엘리베이터 로비 — 황동 도어·인디케이터. 볼류메트릭 광축 G2'
   },
+  'lobby-ceiling': {
+    pos: [0, 1.68, 1.2], target: [0, 3.62, -2.0], fov: 46, time: 13, act: 1,
+    note: '로비 천장 앙각 — 펜던트 위 광 기둥 아티팩트 회귀 감시(fable 83-ceiling.jpg). G8/G2'
+  },
   'corridor-long': {
     pos: [0, 1.66, 14.0], target: [0, 1.55, -6], fov: 30, time: 22, act: 2,
+    deferred: 'P2 정식 9층 복도 레벨 미구현',
     note: '9층 복도 원경 — 안개 소멸·벽등 반복 변주. G2/G10 핵심 샷'
   },
   'corridor-942': {
     pos: [1.3, 1.64, 4.2], target: [-1.4, 1.5, 1.4], fov: 40, time: 24, act: 2,
+    deferred: 'P2 정식 9층 복도 레벨 미구현',
     note: '942호 문 앞 — 카펫·문틀 몰딩·번호판. G6'
   },
   'room942-bed': {
     pos: [2.6, 1.55, 2.8], target: [-0.8, 1.0, -1.0], fov: 38, time: 30, act: 2,
+    deferred: 'P2 정식 942호 레벨 미구현',
     note: '942호 침대·창 — 블라인드 광선, 먼지. G1/G2'
   },
   'room942-bath': {
     pos: [0.6, 1.5, 1.4], target: [-1.0, 1.15, -1.6], fov: 44, time: 32, act: 2,
+    deferred: 'P2 정식 942호 욕실 레벨 미구현',
     note: '욕실 — 육각타일·세면대·거울 반사. G3/G5'
   },
   'rooftop-tanks': {
     pos: [-6.5, 2.2, 8.0], target: [1.0, 3.2, -1.0], fov: 36, time: 44, act: 3,
+    deferred: 'P2 정식 옥상 레벨 미구현',
     note: '옥상 물탱크 — 야경·달빛·비. G1/G7/G9'
   },
   'rooftop-ladder': {
     pos: [1.8, 3.4, 3.0], target: [0.4, 4.6, -0.6], fov: 40, time: 46, act: 3,
+    deferred: 'P2 정식 옥상 레벨 미구현',
     note: '탱크 사다리 앙각 — 실루엣·림라이트. G10'
   },
   'interrogation-deitch': {
@@ -134,6 +144,24 @@ export const SHOTS = {
     pos: [0, 1.5, 1.0], target: [0, 1.3, 0], fov: 45, time: 5, act: 1,
     state: { ui: 'resume' },
     note: '[UI QA] 재입장 제스처 · 타자기 두 줄과 놋쇠 벨. P6/D7'
+  },
+  // [LEVEL-LOBBY] 근접 검수 4종. 체험 리뷰의 D3/D4/G6/G10 지적은 전부 원경 샷에서는
+  // 판독 자체가 불가한 거리에 있었다 — 라디오·서랍·팔걸이 마모·몰딩은 이 거리에서만 채점된다.
+  'lobby-radio': {
+    pos: [1.28, 1.06, -0.80], target: [2.02, 0.86, -1.85], fov: 32, time: 12, act: 1,
+    note: '[LOBBY] 라디오 근접 — 놋쇠 다이얼·패브릭 그릴·바니시 캐비닛. D4/G3/G6/N6'
+  },
+  'lobby-cornice': {
+    pos: [0.55, 1.62, 2.20], target: [-2.10, 3.95, -7.10], fov: 42, time: 12, act: 1,
+    note: '[LOBBY] 벽-천장 접합 — 크라운 몰딩·프리즈·픽처레일·기둥 주두. G10/G6'
+  },
+  'lobby-sofa': {
+    pos: [1.55, 1.32, 6.15], target: [3.45, 0.62, 4.15], fov: 40, time: 12, act: 1,
+    note: '[LOBBY] 소파 사분면 — 팔걸이 마모 명도차·주변 소품 밀도. N6/G6'
+  },
+  'lobby-desk-front': {
+    pos: [-2.30, 1.22, -1.55], target: [-2.60, 0.72, -3.30], fov: 38, time: 12, act: 1,
+    note: '[LOBBY] 데스크 전면 근접 — 서랍 패널 목재·놋쇠 풋레일·바닥 마모 매트. D4/G5/G6'
   }
 }
 

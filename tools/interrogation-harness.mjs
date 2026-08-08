@@ -16,10 +16,10 @@ export function fakeCamera () {
   }
 }
 
-export async function fresh ({ camera = null, flags = [], evidence = [], act = 1, mod = SCRIPT, mods = {} } = {}) {
+export async function fresh ({ camera = null, scene = null, flags = [], evidence = [], act = 1, mod = SCRIPT, mods = {} } = {}) {
   const bus = new EventBus()
   const state = new GameState(bus)
-  const engine = { bus, state, camera, qa: true, time: 0, get: (n) => mods[n] }
+  const engine = { bus, state, camera, scene, qa: true, time: 0, get: (n) => mods[n] }
   const m = new Interrogation(mod)
   await m.init(engine)
   state.setAct(act)
@@ -58,4 +58,3 @@ export function walk (ctx, choice = 'TRUTH') {
   while (ctx.m.cur && guard++ < 40) { seen.push(ctx.m.cur.id); ctx.m.choose(choice); pump(ctx.m) }
   return seen
 }
-

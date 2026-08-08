@@ -3,24 +3,38 @@
 //   node tools/shoot.mjs lobby-wide         특정 샷
 //   node tools/shoot.mjs --out shots/r03    출력 디렉터리 지정
 import { chromium } from 'playwright'
-import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, statSync } from 'node:fs'
+import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs'
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
 
 // GPU 락. 2560x1440 시네마틱 파이프라인은 단독이면 프레임당 43ms지만 6중 경합에서 300~500ms로 늘어
 // 첫 샷이 타임아웃으로 죽는다. 에이전트 자율 조정은 신뢰할 수 없으므로 하네스가 기계적으로 직렬화한다.
 const LOCK = new URL('../.shot-lock', import.meta.url).pathname
-const LOCK_STALE_MS = 15 * 60 * 1000
-
 const OWNER_TAG = () => `pid=${process.pid} port=${PORT}`
 let holdsLock = false
+
+function lockOwnerState () {
+  try {
+    const match = readFileSync(`${LOCK}/owner`, 'utf8').match(/^pid=(\d+)/)
+    if (!match) return 'unknown'
+    process.kill(Number(match[1]), 0)
+    return 'alive'
+  } catch (error) {
+    if (error?.code === 'ESRCH') return 'dead'
+    if (error?.code === 'ENOENT') return 'unknown'
+    return 'alive'
+  }
+}
 
 async function acquireLock () {
   for (let i = 0; ; i++) {
     try { mkdirSync(LOCK); writeFileSync(`${LOCK}/owner`, OWNER_TAG()); holdsLock = true; return true } catch {}
     try {
-      if (Date.now() - statSync(LOCK).mtimeMs > LOCK_STALE_MS) {
-        console.log('  stale lock 제거 (15분 초과)')
+      const owner = lockOwnerState()
+      // mkdir 뒤 owner 기록 전에 프로세스가 죽은 경우만 4초 유예 후 회수한다.
+      // PID가 살아 있는 락은 실행 시간이 길어도 절대 제거하지 않는다.
+      if (owner === 'dead' || (owner === 'unknown' && i >= 2)) {
+        console.log(`  ${owner === 'dead' ? '종료된 소유자' : '소유자 없는 고아'} 락 제거`)
         rmSync(LOCK, { recursive: true, force: true })
         continue
       }
@@ -44,6 +58,7 @@ const argv = process.argv.slice(2)
 const outIdx = argv.indexOf('--out')
 const OUT = outIdx >= 0 ? argv[outIdx + 1] : 'shots'
 const abArgIdx = argv.indexOf('--ab')
+const SHARED_SESSION = argv.includes('--shared-session')
 const only = argv.filter((a, i) => !a.startsWith('--') && !(outIdx >= 0 && i === outIdx + 1) && !(abArgIdx >= 0 && i === abArgIdx + 1) && !(argv.indexOf('--off') >= 0 && i === argv.indexOf('--off') + 1))
 const PORT = Number(process.env.SHOT_PORT || (5100 + (process.pid % 700)))
 const W = 1280, H = 720
@@ -87,6 +102,7 @@ async function waitPort (ms = 30000) {
 
 await acquireLock()
 const server = serve()
+let exitCode = 0
 process.on('exit', () => { releaseLock(); killServer(server) })
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { releaseLock(); process.exit(1) })
 
@@ -108,7 +124,8 @@ try {
 
   // --off vol,bloom,dof : 패스를 끄고 찍는다. 워시아웃 같은 증상의 원인을 추측 대신 A/B로 가른다.
   const offIdx = argv.indexOf('--off')
-  if (offIdx >= 0 && argv[offIdx + 1]) {
+  const applyOff = async () => {
+    if (offIdx < 0 || !argv[offIdx + 1]) return
     const names = argv[offIdx + 1].split(',').map(s => s.trim()).filter(Boolean)
     const hit = await page.evaluate(ns => {
       const p = window.__ENGINE__.get('pipeline') || {}
@@ -132,6 +149,7 @@ try {
     }, names)
     console.log(`  passes off: ${hit.join(', ') || '(일치 없음 — 이름 확인 필요)'}`)
   }
+  await applyOff()
 
   // 셰이더 컴파일·재질 베이크를 첫 샷 밖으로 빼낸다. 안 그러면 첫 샷만 타임아웃으로 죽는다.
   const t0w = Date.now()
@@ -202,12 +220,28 @@ try {
 
   const names = only.length ? only : await page.evaluate(() => Object.keys(window.__CECIL__.shots))
   // 여러 에이전트가 기본 출력(shots/)을 공유하므로, 이 리포트가 누구 것인지 식별 가능해야 한다.
-  const report = { runner: `pid=${process.pid} port=${PORT}`, gl: boot.gl, modules: boot.loaded, bootErrors: boot.errors, shots: [], console: [] }
+  const report = { runner: `pid=${process.pid} port=${PORT}`, sessionMode: SHARED_SESSION ? 'shared-fault-injection' : 'isolated', gl: boot.gl, modules: boot.loaded, bootErrors: boot.errors, shots: [], console: [] }
 
+  let isolated = 0
   for (const name of names) {
+    const shot = await page.evaluate(n => window.__CECIL__.shots[n] || null, name)
+    if (shot?.deferred) {
+      report.shots.push({ name, deferred: shot.deferred, gate: null, err: null })
+      console.log(`  ↷ ${name}  보류 — ${shot.deferred}`)
+      continue
+    }
+    // 샷 사이의 시간·모듈 상태를 공유하면 앞 샷의 settle 0.8초와 scene 상태가 다음 샷을
+    // 오염시킨다. 페이지를 다시 부팅해 각 샷이 단독 실행과 같은 engine.time=0 세션에서 시작한다.
+    if (isolated++ > 0 && !SHARED_SESSION) {
+      await page.reload({ waitUntil: 'load', timeout: 120000 })
+      await page.waitForFunction('window.__CECIL__ && window.__CECIL__.ready', null, { timeout: 240000 })
+      await applyOff()
+      await page.evaluate(() => window.__CECIL__.warmup())
+    }
     for (const variant of (AB || [{ tag: '', js: '' }])) {
       const t0 = Date.now()
       const suffix = variant.tag ? `__${variant.tag}` : ''
+      const declaredTime = Number(shot?.time ?? 10)
       let stats = null, lum = null, err = null, applied = null
       try {
         await page.evaluate(n => window.__CECIL__.goto(n), name)
@@ -221,21 +255,31 @@ try {
         await page.screenshot({ path: `${OUT}/${name}${suffix}.png`, timeout: 120000 })
         lum = await page.evaluate(LUM_PROBE)
       } catch (e) { err = e.message }
-      const gate = lum ? (lum.p999 >= 150 && lum.darkPct <= 10) : null
-      report.shots.push({ name: name + suffix, ms: Date.now() - t0, applied, stats, lum, gate, err })
-      const lumTxt = lum ? `  ${gate ? 'gate ok' : 'GATE FAIL'} p99.9=${lum.p999} dark=${lum.darkPct}% ev=${lum.exposure}` : ''
+      const timeDelta = stats ? +(stats.time - declaredTime).toFixed(3) : null
+      const timeGate = timeDelta != null ? timeDelta >= 0 && timeDelta <= 1.05 : null
+      const gate = lum ? (lum.p999 >= 150 && lum.darkPct <= 10 && timeGate) : null
+      report.shots.push({ name: name + suffix, ms: Date.now() - t0, applied, declaredTime, timeDelta, timeGate, stats, lum, gate, err })
+      const lumTxt = lum ? `  ${gate ? 'gate ok' : 'GATE FAIL'} p99.9=${lum.p999} dark=${lum.darkPct}% Δt=${timeDelta}s ev=${lum.exposure}` : ''
       console.log(`  ${err ? '✗' : '✓'} ${name}${suffix}${stats ? `  ${stats.calls} calls` : ''}${lumTxt}${applied ? `  [${JSON.stringify(applied)}]` : ''}${err ? `  ${err}` : ''}`)
     }
   }
   report.gateFailures = report.shots.filter(s => s.gate === false).map(s => s.name)
+  report.summary = {
+    adjudicated: report.shots.filter(s => !s.deferred).length,
+    passed: report.shots.filter(s => !s.deferred && s.gate === true && !s.err).length,
+    failed: report.shots.filter(s => !s.deferred && (s.gate === false || s.err)).length,
+    deferred: report.shots.filter(s => s.deferred).length
+  }
 
   report.console = [...new Set(logs)].slice(0, 60)
   writeFileSync(`${OUT}/report.json`, JSON.stringify(report, null, 2))
+  console.log(`\n판정 ${report.summary.passed}/${report.summary.adjudicated} · 실패 ${report.summary.failed} · 보류 ${report.summary.deferred}`)
   console.log(`\nGL: ${boot.gl}\nmodules: ${(boot.loaded || []).join(', ') || '(none)'}`)
   if (report.console.length) console.log(`console issues (${report.console.length}):\n` + report.console.slice(0, 15).map(s => '  ' + s).join('\n'))
+  if (report.summary.failed || report.console.length || (report.bootErrors || []).length) exitCode = 1
   await browser.close()
 } finally {
   releaseLock()
   killServer(server)
 }
-process.exit(0)
+process.exit(exitCode)

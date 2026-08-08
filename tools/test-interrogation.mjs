@@ -1,5 +1,8 @@
 import { judge } from '../src/narrative/interrogation.js'
 import * as SCRIPT from '../src/narrative/script.js'
+import HUD from '../src/ui/hud.js'
+import NOTEBOOK from '../src/ui/notebook.js'
+import SETTINGS from '../src/ui/settings.js'
 import { fresh, pump, driveTo, FLAGS } from './interrogation-harness.mjs'
 
 const burnMode = process.argv.includes('--burn')
@@ -17,6 +20,64 @@ function equal (actual, expected, message) {
 
 function eventsOf (ctx, type) {
   return ctx.events.filter(event => event.type === type)
+}
+
+function fakeElement () {
+  return {
+    style: {}, children: [],
+    appendChild (child) { this.children.push(child); return child },
+    addEventListener () {}, removeEventListener () {}, remove () {},
+    getBoundingClientRect () { return { left: 0, width: 600 } }
+  }
+}
+
+async function withFakeDom (run) {
+  const previous = { window: globalThis.window, document: globalThis.document }
+  const listeners = new Map()
+  const root = fakeElement()
+  globalThis.window = {
+    addEventListener (type, fn) { const list = listeners.get(type) || []; list.push(fn); listeners.set(type, list) },
+    removeEventListener (type, fn) { listeners.set(type, (listeners.get(type) || []).filter(item => item !== fn)) },
+    dispatch (type, event) { for (const fn of [...(listeners.get(type) || [])]) fn(event) }
+  }
+  globalThis.document = {
+    createElement: () => fakeElement(),
+    getElementById: id => id === 'ui-root' ? root : null
+  }
+  try { return await run(globalThis.window) } finally {
+    if (previous.window === undefined) delete globalThis.window
+    else globalThis.window = previous.window
+    if (previous.document === undefined) delete globalThis.document
+    else globalThis.document = previous.document
+  }
+}
+
+function testScriptIntegrity () {
+  for (const [npc, data] of Object.entries(SCRIPT.INTERROGATIONS)) {
+    ok(Boolean(SCRIPT.CHARACTERS[npc]), `${npc} CHARACTERS 항목 존재`)
+    for (const statement of data.statements || []) {
+      const tag = statement.graphId || `${npc}.${statement.id}`
+      for (const id of statement.evidence || []) ok(Boolean(SCRIPT.EVIDENCE[id]), `${tag} 정답 증거 ${id} 실재`)
+      for (const id of Object.keys(statement.lieVariants || {})) {
+        ok(Boolean(SCRIPT.EVIDENCE[id]), `${tag} lieVariants ${id} 실재`)
+        ok((statement.evidence || []).includes(id), `${tag} lieVariants ${id}는 정답 증거`)
+      }
+      for (const id of Object.keys(statement.wrongVariants || {})) {
+        ok(Boolean(SCRIPT.EVIDENCE[id]), `${tag} wrongVariants ${id} 실재`)
+        ok(!(statement.evidence || []).includes(id), `${tag} wrongVariants ${id}는 오답 증거`)
+      }
+      const branches = [
+        statement.onTruth, statement.onDoubt, statement.onLieCorrect, statement.onLieWrong,
+        ...Object.values(statement.lieVariants || {}), ...Object.values(statement.wrongVariants || {})
+      ]
+      for (const branch of branches) {
+        for (const id of [...(branch?.grants || []), ...(branch?.spawns || [])]) {
+          ok(Boolean(SCRIPT.EVIDENCE[id]), `${tag} 분기 증거 ${id} 실재`)
+        }
+      }
+    }
+  }
+  console.log('PASS  심문 스크립트 증거 참조 무결성')
 }
 
 async function chooseAt (npc, sid, choice, evidence = [], picked = null) {
@@ -189,6 +250,86 @@ async function testProgressionAndResume () {
   console.log('PASS  막 전환·중단 재개')
 }
 
+async function testUiStateMachine () {
+  await withFakeDom(async fakeWindow => {
+    const player = { pos: { x: 0, y: 0, z: 0 } }
+    const mods = { player }
+    const anchor = {
+      position: { clone: () => ({ x: 0, y: 0, z: 0 }) },
+      getWorldPosition (out) { out.x = 0; out.y = 0; out.z = 0; return out }
+    }
+    const scene = { getObjectByName: name => name === 'npc/deitch' ? anchor : null }
+    const ctx = await fresh({ scene, mods })
+    ctx.engine.size = { w: 1280, h: 720 }
+    ctx.engine.harness = () => ({})
+    const hud = Object.assign(Object.create(HUD), {
+      _drawChoicePrompt () {}, _drawPrompt () {}, _drawSlip () {}
+    })
+    const liveNotebook = Object.assign(Object.create(NOTEBOOK), { _layout () {} })
+    mods.notebook = liveNotebook
+    await liveNotebook.init(ctx.engine)
+    await hud.init(ctx.engine)
+
+    ctx.m.start('deitch')
+    pump(ctx.m)
+    equal(ctx.m.getState().phase, 'choice', 'UI 이탈 전 선택 대기')
+    equal(hud.choicePrompt?.sid, 'deitch.S1', 'HUD가 현재 선택지를 표시')
+    let aimResolved = 'pending'
+    liveNotebook.mode = 'present'
+    liveNotebook._pick = { resolve: value => { aimResolved = value } }
+
+    const before = ctx.state.npc('deitch').score
+    player.pos.x = 4.3
+    ctx.m.update(1 / 60, ctx.m.t + 1 / 60)
+    equal(ctx.m.getState().phase, 'idle', '거리 이탈 시 심문 세션 종료')
+    equal(hud.choicePrompt, null, '거리 이탈 시 선택지 해제')
+    equal(hud.choiceWrap.style.pointerEvents, 'none', '거리 이탈 후 선택지 입력 차단')
+    equal(liveNotebook.mode, null, '거리 이탈 시 증거 지목 모드 해제')
+    equal(aimResolved, null, '거리 이탈 시 대기 중 지목 Promise 취소')
+    ok(eventsOf(ctx, 'interrogation:left').length === 1, '거리 이탈 이벤트 1회')
+
+    fakeWindow.dispatch('keydown', { key: '2', repeat: false, preventDefault () {} })
+    ctx.bus.emit('interrogation:choose', { sid: 'deitch.S1', choice: 'DOUBT' })
+    equal(ctx.state.npc('deitch').score, before, '세션 밖 숫자·choose 입력은 점수를 만들지 않음')
+    ok(!Object.hasOwn(ctx.state.npc('deitch').scores, 'S1'), '미청취 진술 판정 기록 없음')
+    hud.dispose()
+    liveNotebook.dispose()
+  })
+
+  let notebookClosed = false
+  let settingsOpened = false
+  const notebook = Object.assign(Object.create(NOTEBOOK), {
+    mode: 'present',
+    scrub: { el: { style: { display: 'none' } } },
+    close () { notebookClosed = true; this.mode = null }
+  })
+  const settings = Object.assign(Object.create(SETTINGS), {
+    opened: false,
+    engine: { get: name => name === 'notebook' ? notebook : undefined },
+    open () { settingsOpened = true; this.opened = true },
+    close () { this.opened = false }
+  })
+  const escape = {
+    key: 'Escape', repeat: false, stopped: false,
+    preventDefault () {}, stopImmediatePropagation () { this.stopped = true }
+  }
+  settings._key(escape)
+  if (!escape.stopped) notebook._key(escape)
+  ok(notebookClosed, '증거 지목 중 Escape는 지목을 먼저 취소')
+  equal(settingsOpened, false, '증거 지목 중 Escape는 설정 카드를 열지 않음')
+
+  let tabClosed = false
+  const tabNotebook = Object.assign(Object.create(NOTEBOOK), {
+    mode: 'present', scrub: { el: { style: { display: 'none' } } },
+    close () { tabClosed = true; this.mode = null },
+    open () { this.mode = 'read' }
+  })
+  tabNotebook._key({ key: 'Tab', preventDefault () {} })
+  ok(tabClosed, '증거 지목 중 Tab은 지목 노트를 먼저 닫음')
+  equal(tabNotebook.mode, null, 'Tab 취소 후 지목 모드 해제')
+  console.log('PASS  심문 UI 이탈·입력·Escape/Tab 우선순위')
+}
+
 async function testBurn () {
   const deitch = await driveTo('deitch', 'S1', { evidence: ['flask'] })
   deitch.m.choose('LIE', 'flask')
@@ -223,11 +364,13 @@ async function testBurn () {
 if (burnMode) {
   await testBurn()
 } else {
+  testScriptIntegrity()
   await testSevenOutcomes()
   await testDoubtReplacement()
   await testTierAndEvents()
   await testReinterrogation()
   await testProgressionAndResume()
+  await testUiStateMachine()
 }
 
 console.log(`\n${failures.length ? 'FAIL' : 'PASS'}  ${passed} passed, ${failures.length} failed`)
