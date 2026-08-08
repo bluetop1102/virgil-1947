@@ -11,6 +11,7 @@ import {
 export * from './props-fixtures.js'
 export * from './props-detail.js'
 export { potPlant } from './props-decor.js'
+import { rubbedTop } from './props-decor.js'
 
 // util.kelvin은 선형 RGB를 반환하고 three의 워킹 색공간도 선형이므로 그대로 넣는다.
 export const K = (k) => new THREE.Color().setRGB(...kelvin(k))
@@ -235,7 +236,11 @@ export function armchair (seed = 1, o = {}) {
   back.rotation.x = -0.10
   root.add(frame, cushion, back)
   for (const s of [-1, 1]) {
-    const arm = mesh(crumple(bevelBox(0.13, 0.20, 0.62, 0.05, 3), { amp: 0.008, freq: 8, seed: seed + 3 }), fabric, { wear: 0.5, seed: seed + 3 })
+    const worn = o.wornArm === s
+    const armGeo = crumple(bevelBox(0.13, 0.20, 0.62, 0.05, 3), { amp: 0.008, freq: 8, seed: seed + 3 })
+    const arm = worn
+      ? mesh(rubbedTop(armGeo, seed + 3), fabric, { vcol: true })
+      : mesh(armGeo, fabric, { wear: 0.5, seed: seed + 3 })
     arm.position.set(s * (w * 0.5 - 0.055), seatY + 0.19, -0.02)
     const post = mesh(bevelBox(0.08, 0.24, 0.10, 0.014, 2), 'wood.varnished.dark', { wear: 0.8, seed: seed + 4 })
     post.position.set(s * (w * 0.5 - 0.055), seatY + 0.03, 0.26)
@@ -254,13 +259,15 @@ export function armchair (seed = 1, o = {}) {
   return { root, anchors: { seat: [0, seatY + 0.14, 0.02] } }
 }
 
-export function sofa (seed = 1) {
+// o.wornArm = -1 | 1 — 그쪽 끝의 바깥 팔걸이만 파일이 벗겨진다. clone은 지오메트리를 공유해
+// 양끝에 같은 마모가 찍히므로, 요구받았을 때만 반대쪽을 별도 시드의 개체로 세운다.
+export function sofa (seed = 1, o = {}) {
   const root = group('sofa')
   const w = 1.94
-  const a = armchair(seed, { w: 0.66 })
+  const a = armchair(seed, { w: 0.66, wornArm: o.wornArm === -1 ? -1 : 0 })
   root.add(a.root)
   a.root.position.x = -w * 0.5 + 0.33
-  const b = clone(a.root, seed + 3)
+  const b = o.wornArm === 1 ? armchair(seed + 3, { w: 0.66, wornArm: 1 }).root : clone(a.root, seed + 3)
   b.position.set(w * 0.5 - 0.33, 0, 0)
   root.add(b)
   const mid = mesh(crumple(bevelBox(w - 1.0, 0.16, 0.64, 0.05, 3), { amp: 0.013, freq: 6, seed: seed + 11 }),

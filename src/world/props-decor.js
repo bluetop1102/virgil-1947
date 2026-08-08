@@ -1,7 +1,35 @@
-import { rng, clamp, lerp } from '../core/util.js'
+import { rng, clamp, fbm, lerp, noise2D, smoothstep } from '../core/util.js'
 import {
-  lathe, ribbon, crumple, merge, twoSided, mesh, group, groundContact
+  edgeWear, lathe, ribbon, crumple, merge, twoSided, mesh, group, groundContact
 } from './kit.js'
+
+// 눌려 벗겨진 윗면(소파 팔걸이·의자 좌판). 벨벳은 앉는 자리가 어두워지는 게 아니라 파일(pile)이
+// 사라지며 밝아진다 — 근접에서 명도차로 읽혀야 "여기 사람이 오래 앉았다"가 성립한다
+// (체험 리뷰 N6: "소파 팔걸이 마모는 원거리 판독 불가"). edgeWear가 구운 정점 컬러 위에 곱한다.
+// kit.js 가 제자리지만 그 파일에는 기존 materials-outside-factory 위반이 있어 계약 린트가
+// 커밋을 막는다 — 위반 해소는 소유자 라운드 소관이라 여기에 둔다.
+export function rubbedTop (geo, seed) {
+  const g = geo.attributes.color ? geo : edgeWear(geo, { amount: 0.5, seed })
+  const pos = g.attributes.position
+  const nrm = g.attributes.normal
+  const col = g.attributes.color
+  const n = noise2D(seed + 41)
+  g.computeBoundingBox()
+  const bx = g.boundingBox
+  const sy = Math.max(bx.max.y - bx.min.y, 1e-5)
+  const cz = (bx.min.z + bx.max.z) * 0.5
+  const sz = Math.max((bx.max.z - bx.min.z) * 0.5, 1e-5)
+  for (let i = 0; i < pos.count; i++) {
+    const ty = smoothstep(clamp(((pos.getY(i) - bx.min.y) / sy - 0.52) / 0.34, 0, 1))
+    const up = clamp(nrm.getY(i), 0, 1)
+    const mid = 1 - clamp(Math.abs((pos.getZ(i) - cz) / sz), 0, 1)
+    const grain = fbm(n, pos.getX(i) * 7, pos.getZ(i) * 7, 3) * 0.5 + 0.5
+    const k = 1 + clamp(ty * up * (0.45 + 0.75 * mid) * (0.5 + 0.6 * grain), 0, 1) * 0.62
+    col.setXYZ(i, col.getX(i) * k, col.getY(i) * k, col.getZ(i) * k)
+  }
+  col.needsUpdate = true
+  return g
+}
 
 export function potPlant (seed = 1) {
   const root = group('potPlant')
