@@ -33,10 +33,13 @@ function glyphs (ctx, text, x, y, size, alpha, seed, ink) {
     if (ch === ' ') { cx += w; continue }
     const jy = (r() - 0.5) * size * 0.028
     const d = 0.86 + 0.14 * r()
-    ctx.fillStyle = `rgba(6,5,4,${alpha * 0.55})`
-    ctx.filter = `blur(${(size * 0.09).toFixed(2)}px)`
+    // 밝은 벽·바닥 위에서 글자가 묻히던 것(사용자 체험 피드백)의 대비 보강. 배경 박스를 두지
+    // 않는다는 원칙은 유지하고, 글자 뒤 어둠을 넓고 진하게 깔아 배경과 분리한다.
+    ctx.fillStyle = `rgba(6,5,4,${alpha * 0.78})`
+    ctx.filter = `blur(${(size * 0.16).toFixed(2)}px)`
     ctx.fillText(ch, cx + 0.6, y + jy + 1.4)
-    ctx.fillStyle = `rgba(${ink},${alpha * 0.22})`
+    ctx.fillText(ch, cx + 0.6, y + jy + 1.4)
+    ctx.fillStyle = `rgba(${ink},${alpha * 0.24})`
     ctx.fillText(ch, cx, y + jy)
     ctx.filter = 'none'
     ctx.fillStyle = `rgba(${ink},${alpha * d})`
@@ -98,12 +101,16 @@ export default {
   show (p) {
     const text = strip(p?.text)
     if (!text) return
+    // 타이핑 자막은 글자마다 show 가 다시 불린다. 그때마다 t0 를 리셋하면 페이드인(0.14s)이
+    // 매번 처음부터 다시 시작돼 행이 끝날 때까지 반투명에 머문다 — 인트로 자막이 흐리게
+    // 읽히던 진짜 원인이다. 앞 텍스트의 연장이면 같은 행의 이어쓰기로 보고 t0 를 유지한다.
+    const typing = this.cur && text !== this.cur.text && text.startsWith(this.cur.text)
     this.cur = {
       speaker: p.speaker ? (NAME[p.speaker] || p.speaker) : '',
       text,
       dur: p.dur ?? Math.max(1.8, text.length * 0.11)
     }
-    this.t0 = this.engine.time
+    if (!typing) this.t0 = this.engine.time
     this._draw()
   },
 
@@ -115,7 +122,9 @@ export default {
   _draw () {
     const { ctx } = this.s
     ctx.clearRect(0, 0, this.cw, this.ch)
-    const size = clamp(Math.round(this.vw * 0.0168), 15, 27)
+    // 상한 27px 는 1920·2560 어느 쪽에서도 걸려 실제 표시가 늘 27px 였다 — 1080p 에서 판독이
+    // 흐리다는 체험 피드백의 직접 원인. 계수와 상한을 함께 올린다.
+    const size = clamp(Math.round(this.vw * 0.0195), 17, 36)
     const lines = wrap(ctx, this.cur.text, this.cw - 40, { size, font: FONT.serif })
     const lh = size * 1.66
     const nameSize = Math.round(size * 0.64)
