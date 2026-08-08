@@ -30,7 +30,7 @@
 
 | 대상 | URL | 상태 |
 |---|---|---|
-| 플레이 | https://bluetop1102.github.io/virgil-1947/ | **가동 · P1 반영본(8/8)** — 실배포 검증 PASS |
+| 플레이 | https://bluetop1102.github.io/virgil-1947/ | **가동 · 병렬 4세션 회수본(8/9, `b3c5bc4`)** — 실배포 검증 PASS(부팅 성립·캔버스 1280×720·요청 실패 0·콘솔 0). 체험 리뷰 지적 5건 수정 + D3/D4·G축·N축 개선 반영 |
 | 소스 | https://github.com/bluetop1102/virgil-1947 | **공개** — public, 123커밋 |
 | 영상 | *(미촬영 — [video-plan.md](video-plan.md))* | 1번 콘텐츠 완성 후 |
 
