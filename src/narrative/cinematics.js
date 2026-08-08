@@ -37,7 +37,9 @@ const INTERROGATION = Object.freeze({
   truthBack: 0.5,
   doubtTrack: 0.4,
   liePush: 0.5,
-  wrongBack: 0.38,
+  // 반 발짝. 푸시인(0.5)을 넘기지 않아야 오답이 반복돼도 사거리(4.2m) 밖으로 밀려나지 않는다
+  wrongBack: 0.55,
+  wrongLens: 35,          // 물러나며 방이 열린다 — 거리로 못 채운 진폭을 화각으로 채운다
   breakDrop: 0.08,
   dofBias: 1,
   dofMs: 650
@@ -202,8 +204,8 @@ class InterrogationCamera {
     }
     this._start({
       pos: pose.pos.clone().addScaledVector(forward, -INTERROGATION.wrongBack),
-      lens: INTERROGATION.baseLens
-    }, 0.72)
+      lens: INTERROGATION.wrongLens
+    }, 0.8)
     this.lieBase = null
     this.engine.bus.emit('camera:dof', { bias: 0, ms: 500 })
   }
