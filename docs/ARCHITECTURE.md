@@ -90,6 +90,7 @@ src/
     perf.js        [CHARACTERS] 미세신호(tell) 연기 시스템 (E4 §3 계약)
   gameplay/
     player.js      [GAMEPLAY] 컨트롤러·카메라·상호작용 레이캐스트
+    player-qa.js   [GAMEPLAY] QA 로그·상태 덤프 분권 (500줄 상한 — 엔진 상수 무사용, 모듈 계약 불변)
     evidence.js    [GAMEPLAY] 증거 모델·수집
     save.js        [GAMEPLAY] ※ P2 신설 예정 — 체크포인트 역직렬화 (E8 §4)
   narrative/
@@ -97,10 +98,11 @@ src/
     interrogation.js [INTERROGATION] 심문 상태기계 (규칙: docs/design/E5-interrogation.md)
     deduction.js   [INTERROGATION] 증거판
     cinematics.js  [CINEMATICS] ※ P1 신설 예정(T-P1-07·08) — 카메라 시퀀스·타임라인·심문 카메라 (E7 §1·§2)
+    camera.js      [INTERROGATION] 심문 진술 단위 카메라 — 5점 차폐 레이캐스트·회피각 폴백·역산 렌즈
     case-graph-loader.js [NARRATIVE] ※ P0 신설 허용(T-P0-03) — case-graph.json 관계 데이터 로더
   audio/
     engine.js      [AUDIO] WebAudio 그래프·공간 리버브·발소리
-    dsp.js graph.js ir.js  [AUDIO] 분권
+    dsp.js graph.js ir.js music.js cues.js radio.js  [AUDIO] 분권
   ui/
     hud.js         [UI] 크로스헤어·프롬프트
     notebook.js    [UI] 수사노트 (+ board.js casebook.js casefile.js paper.js photos.js sketch.js type.js wall.js 분권)
@@ -225,7 +227,7 @@ engine.bus.emit('interrogation:start', {npc: 'deitch'})
 | `flag:set` | `{id}` | interrogation — 플래그 발생 통지(two-voices 등). 레벨이 구독해 조건 스폰(footprints), 노트가 구독해 기록. 판정 상태는 engine.state가 진실원 — 이 이벤트는 통지 전용 *(v2.3)* |
 | `evidence:presented` | `{id, npc, correct}` | interrogation |
 | `interrogation:start` | `{npc}` | gameplay |
-| `interrogation:statement` | `{npc, line, truth}` | interrogation |
+| `interrogation:statement` | `{npc, line, truth, camera}` | interrogation — `camera`는 script.js의 진술별 push/pull/slide 지시(가산 필드, 기존 소비자 무영향) *(v2.4)* |
 | `interrogation:verdict` | `{npc, choice, correct}` | interrogation |
 | `interrogation:end` | `{npc, score, tier}` | interrogation — tier ∈ 만점/부분/실패(E5 §2.4 상태식). 노트 인물 면이 소비 *(v2에서 tier 추가)* |
 | `player:interact` | `{targetId}` | gameplay |

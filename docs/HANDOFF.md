@@ -3245,7 +3245,7 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
   씬 프로브 한정이라 본편 경로에는 영향이 없다.
 - **지시**: main.js 가 `room:changed` 를 같이 쏘는 편이 계약상 옳다. 그때 AUDIO 쪽 우회를 지운다.
 
-### [ ] S-A 오디오 세션 → [UI] 소유 — 인게임 크레딧 노출 경로가 없으면 BGM 라이선스가 미이행이다
+### [x] S-A 오디오 세션 → [UI] 소유 — 인게임 크레딧 노출 경로가 없으면 BGM 라이선스가 미이행이다
 
 - **파일**: `src/ui/settings.js`(Esc 카드) 또는 타이틀 하단.
 - **근거**: 로비 라디오에 Kevin MacLeod CC BY 4.0 트랙 3곡을 태웠다(`docs/credits.md` §1.2,
@@ -3273,7 +3273,7 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
   넘긴다(`_radioReturn`). 룸톤·물은 건드리지 않으므로 0:27–0:30 "룸톤만 남는다"도 성립한다.
 - **CINEMATICS 는 조치 불필요.** 시각을 바꾸려면 `engine.js` 의 `introFadeAt` 상수(22초)를 고친다.
 
-### [ ] S-A 오디오 세션 → [제출 체크리스트 소유자] — `docs/submission/checklist.md` 46~48행이 낡았다
+### [x] S-A 오디오 세션 → [제출 체크리스트 소유자] — `docs/submission/checklist.md` 46~48행이 낡았다
 
 - **현재 문구**: "빌드 경로의 바이너리 에셋은 AI 생성 타이틀 배경 1장뿐 — `git ls-files … | grep -icE …` → **1**".
 - **바뀐 사실**: 로비 라디오 BGM 3곡이 추가돼 **4** 가 맞다(`assets/radio-1~3-*.mp3`,
@@ -3282,7 +3282,7 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
 - **지시**: 46~48행의 기대값을 1 → 4 로, 참조를 "§1.1" → "§1.1·§1.2" 로 고친다.
   체크 명령 자체는 그대로 쓸 수 있다(`grep -icE` 결과가 4).
 
-### [ ] S-D 길잡이 세션 → [ARCH 문서] 소유 — `src/gameplay/player-qa.js` 신설 등재 요청
+### [x] S-D 길잡이 세션 → [ARCH 문서] 소유 — `src/gameplay/player-qa.js` 신설 등재 요청
 
 - **파일**: `docs/ARCHITECTURE.md:92` 모듈 트리(`player.js [GAMEPLAY] …` 줄 아래)
 - **내용**: `player.js` 가 500줄 상한에 **정확히 닿아 있어서**(HEAD 기준 500/500) J5 수정분
@@ -3324,7 +3324,7 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
 
 ---
 
-### [ ] S-B(심문 카메라) → 오케스트레이터 (ARCHITECTURE 문서)
+### [x] S-B(심문 카메라) → 오케스트레이터 (ARCHITECTURE 문서)
 - **파일**: `docs/ARCHITECTURE.md` (버스 계약표 · 모듈 소유권 목록)
 - **루브릭**: 계약 문서 정합
 - **문제**: 이번 라운드에서 두 가지가 문서와 어긋났다. ①`interrogation:statement` 페이로드에
@@ -3336,7 +3336,7 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
 - **요청자가 처리한 부분**: 코드 양쪽(interrogation.js 발화·camera.js 구독) 완료. 분리 사유는
   500줄 계약(cinematics.js가 591줄이 됐다).
 
-### [ ] S-B(심문 카메라) → STORY 소유자
+### [x] S-B(심문 카메라) → STORY 소유자
 - **파일**: `docs/STORY.md` §2 인물별 텔 표 (deitch 거짓 시)
 - **루브릭**: N2 텔 가독성
 - **문제**: 사양은 "오른손이 데스크 아래로 내려간다(플라스크)"인데 **이 동작은 세트 기하상
@@ -3351,7 +3351,7 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
   후퇴 + 어깨 스윙 + 시선 회피(머리 yaw −0.30rad)로 채웠다. 블라인드 판독 3회차에서
   "양손 보임 · 가리는 물체 없음" 확인.
 
-### [ ] S-B(심문 카메라) → S-F(게이트·shotlist)
+### [x] S-B(심문 카메라) → S-F(게이트·shotlist)
 - **파일**: `src/core/shotlist.js` — `interrogation-deitch` · `rig-ground-check`
 - **루브릭**: N2/N5 (해당 샷의 존재 이유)
 - **문제**: 두 엔트리의 카메라가 **로비 실배치와 안 맞는다.** `interrogation-deitch`는
@@ -3377,3 +3377,22 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
   카메라 회피가 현재 위치를 전제로 맞춰져 있다.
 - **요청자가 처리한 부분**: 얼굴·양손·양어깨 5점 + 손 좌우 16cm 여유까지 레이캐스트로 재서
   램프가 겹치지 않는 각을 고르게 했다. 차폐는 해소, 역광만 잔존.
+
+
+---
+
+## 회수 블록 — JUDGE 라운드 (게이트 S-F, 2026-08-10 00:5x)
+
+**들어온 것**: S-A 커밋 2(da42f4c·c3923d0) · S-B 커밋 7(755f3a0·4693599·9c80a27·0dc15bc·80131f1·60da6b2·2f8f274·84558eb) ·
+S-C 커밋 4(9705ad5·f9d5b96·9cb16ec·2393620) · S-D 커밋 3(6e4b4dd·f3d79d6·724d19b). 전건 소유 단일 축.
+통합 게이트: 심문 108/0·burn 유지·unlocks 10/0·factcheck 전 게이트·완주 봇 PASS(act2 @1:04)·
+전체 샷 33 게이트 실패 0·콘솔 0. 회귀: base-r2 대비 REGRESS 2건은 승인된 타이틀 개편(의도 하향 판독 3조건 충족).
+
+**처리한 것**: shotlist 심문 샷 프레이밍(위 S-B 등재분 — core 예외) · ARCHITECTURE 4건 ·
+STORY §2 deitch 텔 문안 · 제출 체크리스트 바이너리 1→4 · 크레딧 풋 라인은 S-D 724d19b.
+
+**감사 기록**: da42f4c(S-A)·f2659a1(S-B)이 HANDOFF를 커밋에 포함 — 규약 이탈·실해 없음(순수 추가,
+유실 0). f2659a1에는 S-D·S-C 등재 2건이 혼입. 이후 규칙: 문서는 append만, 게이트가 일괄 커밋.
+
+**미처리(다음 라운드)**: wood.varnished.dark 소유 반환(S1) · 램프 역광 실루엣(S-C — 램프 위치 이동 금지
+제약 유지) · 엣지 스펙큘러 AA 처방 · E2 0:22 종결 통지(CINEMATICS) · main.js room:changed.

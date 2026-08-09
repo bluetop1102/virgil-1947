@@ -43,9 +43,10 @@ node tools/serve-check.mjs --url https://bluetop1102.github.io/virgil-1947/   # 
       번들에 남은 3건은 인게임 문자열이라 **플레이 중에 보인다**: 수사노트 표지 "세실 호텔",
       미제 엔딩 캡션·자막 "세실은 계속 영업했다". `src/**` 소유자 몫 — `docs/HANDOFF.md` 등재분.)*
 - [ ] 시작 화면에 허구 고지문이 표시된다.
-- [ ] 빌드 경로의 바이너리 에셋은 AI 생성 타이틀 배경 1장뿐 —
-      `git ls-files src assets index.html | grep -icE '\.(png|jpg|jpeg|hdr|mp3|wav|glb|woff2?|ttf)$'` → 1.
-      그 1장의 도구·모델·프롬프트가 `docs/credits.md` §1.1 에 적혀 있다(요강 필수 기재).
+- [ ] 빌드 경로의 바이너리 에셋은 4개 — AI 생성 타이틀 배경 1장(§1.1) + 라디오 BGM 3곡
+      (Kevin MacLeod CC BY 4.0, §1.2 — 사용자 승인 2026-08-09, AGENTS 예외 ②).
+      `git ls-files src assets index.html | grep -icE '\.(png|jpg|jpeg|hdr|mp3|wav|glb|woff2?|ttf)$'` → 4.
+      각각의 출처·라이선스 전문·후처리가 `docs/credits.md` 에 적혀 있다(요강 필수 기재).
 - [ ] `docs/credits.md` 의 의존성 표가 `npm ls --omit=dev --depth=0` 실제 출력과 일치한다.
 
 ## D. 저장소
