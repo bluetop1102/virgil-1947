@@ -76,13 +76,15 @@ function armPose (side, fwd, down, base, swing = 0, roll = 0, follow = false) {
 // STORY §2의 텔은 전부 손에서 시작한다("숙박부 모서리를 맞춘다" · 오른손 하강) —
 // 손이 안 보이면 재생돼도 관찰되지 않는다. 이 자세가 텔의 전제조건이다.
 const REST_FWD = 0.400
-const REST_DOWN = 0.245
+const REST_DOWN = 0.235
 
 // 두 팔을 같은 자리에 얹으면 카운터 위에서 좌우대칭이 되고, 그것이 스틸에서 마네킹으로
-// 읽힌다(블라인드 판독: "양손이 좌우 대칭에 가깝게 나란히 얹혀 있고 상체 축이 완전히
-// 수직"). 오른팔을 더 뻗고 왼팔을 당겨 상체에 비틀림을 준다. 두 손목 모두 상판(1.09)
-// 위에 남는다 — 오른손 y≈1.172 · 왼손 y≈1.150.
-const REST_SKEW = { fwd: 0.055, down: -0.012 }
+// 읽힌다(블라인드 판독: "양팔이 거울상에 가깝게 똑같다").
+// **비대칭은 화면에서 읽히는 축에 줘야 한다.** 앞뒤(fwd)로만 벌리면 정면 카메라에서는
+// 깊이 차라 거의 안 보인다 — 1차 수정이 그래서 같은 판정을 다시 받았다. 높이(down)를
+// 주축으로 쓰고 앞뒤·팔꿈치 벌림을 얹는다. 두 손목 모두 상판(1.09) 위에 남는다 —
+// 오른손 y≈1.200 · 왼손 y≈1.143 (손끝 1.171 / 1.114).
+const REST_SKEW = { fwd: 0.055, down: -0.030 }
 
 function rest (side) {
   const k = side > 0 ? 1 : -0.9
@@ -92,9 +94,9 @@ function rest (side) {
 // 팔 비틀림에 맞춘 상체 비틀림. 카운터 자세를 쓰는 모든 상태가 같이 얹어야 진술이
 // 시작될 때 몸통이 풀렸다 다시 잡히는 팝이 안 생긴다.
 const COUNTER_TWIST = Object.freeze({
-  head: [0, 0.10, 0.03],
-  leftShoulder: [-0.05, 0, 0],
-  rightShoulder: [0.06, 0, 0]
+  head: [0, 0.16, 0.06],
+  leftShoulder: [-0.05, 0, -0.07],
+  rightShoulder: [0.06, 0, 0.02]
 })
 
 function counterRest (base, side = 0) {
