@@ -53,6 +53,15 @@ export function wireCues (a, bus) {
     a.playOrDefer('desk.bell', { gain: 0.2, rate: 1.008, delay: 0.185 })
   })
 
+  // 종이를 쥐는 소리는 한 겹이 아니다. 획득 경로가 내는 타격(evidence:pickup → paper.pickup)
+  // 위에 손가락이 섬유를 쓸며 나는 마찰을 겹친다 — 가로채지 않고 같은 사건에 얹는다.
+  // 두 번째 겹은 종이가 손에서 자리를 잡는 자리다(검분 컷이 올라오는 구간과 겹친다).
+  bus.on('sfx', (p) => {
+    if (p?.id !== 'evidence:pickup') return
+    a.play('paper.friction', { gain: 0.34, delay: 0.035 })
+    a.play('paper.friction', { gain: 0.17, rate: 0.84, delay: 0.21 })
+  })
+
   bus.on('ui:open', () => a.play('notebook.open', { gain: 0.45 }))
   bus.on('ui:close', () => a.play('notebook.close', { gain: 0.42 }))
 

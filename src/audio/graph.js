@@ -2,6 +2,7 @@
 // 파일당 500줄 제한 때문에 분리했다 — 계약상 오디오 모듈은 여전히 engine.js 하나다.
 
 import { renderWaterSource } from './ir.js'
+import { buildSwell } from './ambience.js'
 
 export function buildGraph (a) {
   const c = a.ctx
@@ -66,13 +67,19 @@ export function buildGraph (a) {
     a.wetG[i].connect(a.wet)
   }
 
+  // 룸톤 스웰 전단(ambience.js). 느린 요동을 toneBus.gain 에 직접 걸면 _levels()가 세운 방별
+  // 레벨과 합산돼 값이 뒤집힌다 — 험이 밟은 함정이라 여기서도 상시값 1인 배율 노드로 받는다.
+  a.toneSwell = c.createGain()
+  a.toneSwell.connect(a.toneBus)
+
   a.toneG = [c.createGain(), c.createGain()]
   a.toneG[0].gain.value = 1
   a.toneG[1].gain.value = 0
-  for (const g of a.toneG) g.connect(a.toneBus)
+  for (const g of a.toneG) g.connect(a.toneSwell)
 
   buildHum(a)
   buildWater(a)
+  buildSwell(a)
 }
 
 // 형광등 험 60Hz + 2고조파, 그리고 기계실 저역. 방마다 세기가 다르다.

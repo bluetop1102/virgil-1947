@@ -11,13 +11,13 @@ import { rng, clamp } from '../core/util.js'
 import { footBuffer, sfxBuffer, footKey, sfxKey } from './dsp.js'
 import { renderIR, renderBed, renderRadioSource, roomKey, ROOM_MIX } from './ir.js'
 import { buildGraph } from './graph.js'
+import { ambienceTick, ACT_WATER } from './ambience.js'
 import { wireCues } from './cues.js'
 import { musicCue } from './music.js'
 import { tune, radioDispose } from './radio.js'
 
 const FOOT_VARIANTS = 6
 const SFX_VARIANTS = 3
-const ACT_WATER = { 1: 0.34, 2: 0.66, 3: 1.0 }
 
 function ramp (param, to, now, dur) {
   param.cancelScheduledValues(now)
@@ -48,7 +48,9 @@ const audio = {
     this.act = engine.state?.act ?? 1
     this.room = roomKey(engine.state?.room ?? 'lobby')
     this.mix = ROOM_MIX[this.room]
-    this.next = { drip: 5, tick: 11, knock: 27 }
+    this.next = { drip: 5, tick: 11, knock: 27, far: 9 }
+    this.roam = false      // 조작을 넘겨받은 뒤에만 원거리 단발음이 돈다(ambience.js)
+    this.lastFar = -1
     this.tone = [null, null]
     this.toneI = 0
     this.convI = 0
@@ -64,7 +66,7 @@ const audio = {
   update () {
     if (!this.ctx || this.silent) return
     this._listener()
-    this._sched(this.engine.time)
+    ambienceTick(this, this.engine.time)
     // E2 0:22 — 배지가 데스크에 닿고 "라디오가 잦아든다". 시네마틱 파일을 건드리지 않고
     // 오디오 쪽에서 시각만 세어 처리한다(HANDOFF 등재분의 오디오측 해결). engine.time 기준이라
     // 일시정지에도 어긋나지 않고, ctx 생성 시점과 무관하다.
@@ -434,8 +436,11 @@ const audio = {
     bus.on('cinematic:end', (p) => {
       if (p?.id !== 'cin-intro') return
       this.introFadeAt = null
+      this.roam = true
       this._radioReturn()
     })
+    // 재입장(제스처 화면 통과)은 시네마틱을 거치지 않는다 — 배회층은 그때도 열려야 한다.
+    bus.on('title:proceed', (p) => { if (p?.mode === 'wake') this.roam = true })
     // ARCH §이벤트: 일시정지 시 디제틱 감쇠. 카드 뒤 화면은 계속 도는데 방 소리만 물러난다.
     bus.on('game:pause', (p) => this._pause(!!p?.on))
   },
@@ -455,23 +460,6 @@ const audio = {
     })
   },
 
-  // 정적 소음층만으로는 공간이 죽는다. 방마다 다른 간격으로 이산 사건을 흩뿌린다.
-  _sched (t) {
-    const m = this.mix
-    if (t > this.next.drip) {
-      this.next.drip = t + 1.8 + this.rand() * 7 * (1.2 - m.drip)
-      if (m.drip > 0.03) this.play('water.drip', { gain: m.drip * (0.35 + this.rand() * 0.5), rate: 0.8 + this.rand() * 0.45 })
-    }
-    if (t > this.next.tick) {
-      this.next.tick = t + 6 + this.rand() * 16
-      if (m.hum > 0.08) this.play('radiator.tick', { gain: 0.1 + this.rand() * 0.14, rate: 0.85 + this.rand() * 0.4 })
-    }
-    if (t > this.next.knock) {
-      this.next.knock = t + 18 + this.rand() * 40
-      const lvl = m.water * (ACT_WATER[this.act] ?? 1)
-      if (lvl > 0.25) this.play('pipe.knock', { gain: 0.08 + lvl * 0.16, rate: 0.8 + this.rand() * 0.35 })
-    }
-  },
 
   _listener () {
     const l = this.ctx.listener
