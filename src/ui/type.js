@@ -72,18 +72,32 @@ export function measureTyped (ctx, text, o = {}) {
   return w
 }
 
+// 어절 경계에서 끊는다. 글자 단위로 끊으면 "2주치"가 "2 / 주치"로 갈라져 종이가 아니라
+// 텍스트 박스로 읽힌다 — 제출 프레임에 실제로 찍혔다(HANDOFF S-E 등재분). 자막은 같은 결함을
+// subtitles.js 의 wrapWords 로 먼저 닫았고, 이 함수는 종이 소품 전체가 쓰는 조판기다.
 export function wrap (ctx, text, maxW, o = {}) {
   ctx.save()
   setFont(ctx, { ...o, size: o.size ?? 13 })
   const track = o.track ?? 0
+  const fits = t => ctx.measureText(t).width + track * t.length <= maxW
   const out = []
-  let line = ''
-  for (const ch of text) {
-    if (ch === '\n') { out.push(line); line = ''; continue }
-    const test = line + ch
-    if (ctx.measureText(test).width + track * test.length > maxW && line) { out.push(line); line = ch === ' ' ? '' : ch } else line = test
+  for (const para of String(text).split('\n')) {
+    let line = ''
+    for (const word of para.split(/\s+/)) {
+      if (!word) continue
+      const test = line ? `${line} ${word}` : word
+      if (fits(test)) { line = test; continue }
+      if (line) { out.push(line); line = '' }
+      if (fits(word)) { line = word; continue }
+      // 한 어절이 폭보다 길면 그 어절만 글자 단위로 쪼갠다 — 종이 밖으로 넘기지 않는 것이 먼저다
+      let chunk = ''
+      for (const ch of word) {
+        if (chunk && !fits(chunk + ch)) { out.push(chunk); chunk = ch } else chunk += ch
+      }
+      line = chunk
+    }
+    if (line) out.push(line)
   }
-  if (line) out.push(line)
   ctx.restore()
   return out
 }
