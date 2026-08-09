@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://virgil.local/schema/manifest.schema.json",
-  "title": "VIRGIL 컴포넌트 매니페스트 — 티켓 1장",
+  "title": "HOTEL VIRGIL 컴포넌트 매니페스트 — 티켓 1장",
   "description": "E10 §2 티켓 보드의 기계 소비형 표현. 정본은 docs/design/E10-production.md 이고 이 파일은 전사(轉寫)다 — 어긋나면 표가 정본이며, 해석이 갈리는 지점은 docs/HANDOFF.md 큐로 간다. 검증기: tools/manifest-check.mjs. 소비자: tools/packet-gen.mjs.",
   "type": "object",
   "additionalProperties": false,

@@ -3,9 +3,11 @@
 > NAN 2026 제출물 4번(AI 활용 기술 문서)의 **필수 항목**이다. 누락은 심사 제외 사유가 된다.
 > 이 파일이 진실원이고, 제출 PDF는 여기서 파생한다. 의존성을 추가하면 **같은 커밋에서** 여기도 고친다.
 
-## 1. 외부 에셋 — 0건
+## 1. 외부 에셋 — 다운로드 0건 · AI 생성 1건
 
-이 프로젝트는 **텍스처·지오메트리·오디오·폰트를 하나도 내려받지 않는다.** 전부 런타임 절차 생성이다.
+이 프로젝트는 **텍스처·지오메트리·오디오·폰트를 하나도 내려받지 않는다.** 게임 안에서 보이는
+것은 전부 런타임 절차 생성이다. **예외는 타이틀 화면 배경 1장**으로, 내려받은 것이 아니라
+AI로 생성했다(§1.1). 게임 월드 안에는 들어가지 않는다.
 
 | 종류 | 조달 방식 | 근거 |
 |---|---|---|
@@ -17,12 +19,52 @@
 | 폰트 | 시스템 폰트 스택만(`ui-serif, Georgia, serif`) — 웹폰트 파일 없음 | `index.html` |
 | 인물 리그 | 절차 휴머노이드 + 스키닝, 모션 파일 없음 | 계약: E4 §3 |
 
-검증: `git ls-files` 에 이미지·오디오·폰트·모델 바이너리가 없다.
-`git ls-files | grep -icE '\.(png|jpg|hdr|exr|mp3|wav|ogg|glb|gltf|fbx|woff2?|ttf)$'` → 0
-(과거 커밋의 `scratchpad/` 스크린샷은 QA 진단 산출물이고 게임 에셋이 아니다.)
+검증: 빌드에 실리는 경로(`src` · `assets` · `index.html`)의 이미지·오디오·폰트·모델
+바이너리는 §1.1 의 배경 1장뿐이다.
+
+```bash
+git ls-files src assets index.html \
+  | grep -icE '\.(png|jpg|jpeg|hdr|exr|mp3|wav|ogg|glb|gltf|fbx|woff2?|ttf)$'   # → 1
+```
+
+(`assets/title-bg.jpg`. `docs/reviews/**` 의 jpg 는 체험 리뷰 증거 스크린샷이고, 과거 커밋의
+`scratchpad/` 스크린샷은 QA 진단 산출물이다 — 둘 다 게임 에셋도 빌드 대상도 아니다.)
 
 **왜 이 제약을 걸었나**: 오프라인 재현성과 라이선스 리스크 0. 심사자가 어떤 계정·키·네트워크
 없이 링크만으로 실행할 수 있어야 한다는 요건과 같은 방향이다.
+
+### 1.1 AI 생성 에셋 — 1건
+
+| 항목 | 내용 |
+|---|---|
+| 파일 | `assets/title-bg.jpg` (2048×1152 · 270 KB · JPEG q72) |
+| 용도 | 타이틀·재입장 화면 배경. **게임 월드 안에는 쓰이지 않는다** |
+| 생성 도구 | Codex CLI 0.147.0 내장 `image_gen` 도구 |
+| 모델 | `gpt-image-2` · quality high · size 2048×1152 |
+| 후처리 | macOS `sips` 로 PNG(2.6 MB) → JPEG q72(270 KB) 변환. 그 외 편집 없음 |
+| 생성일 | 2026-08-09 |
+| 라이선스 | OpenAI 이미지 생성물 — 생성자에게 귀속. 제3자 저작물 차용 없음 |
+
+생성 프롬프트 전문:
+
+```text
+Exterior of a 1940s Art Deco hotel facade at night in the rain, Los Angeles 1947,
+film noir. Wet asphalt street reflecting a dim amber marquee and a few lit windows;
+the rest of the building falls into deep near-black shadow. Streetlight haze,
+drifting rain, iron fire escape, low fog at street level. Heavy vignette, 35mm film
+grain, muted sepia-amber and cold slate-grey palette only. Wide cinematic
+street-level shot. The upper third of the frame is almost empty and very dark,
+reserved for a title overlay. No people, no figures, no text, no letters, no logos,
+no signage, no watermark.
+```
+
+인물을 금지한 것은 인게임 인물이 마리오네트 인형 스타일이라 사실적 인물이 들어가면 아트
+디렉션이 어긋나기 때문이고, 문자를 금지한 것은 제목 조판을 이미지가 아니라 UI 레이어가
+담당하기 때문이다. 채택 전 같은 조건으로 6장을 생성해 타이틀 UI를 얹은 상태로 비교했다
+(로비·대로비·복도·엘리베이터·옥상·외관).
+
+**폴백**: 이 파일이 없거나 `?titlebg=render` 로 열면 타이틀 배경은 **인게임 로비 실렌더**로
+떨어진다(`src/ui/title.js`). 즉 외부 에셋 없이도 게임은 완전한 타이틀 화면을 갖는다.
 
 ## 2. 오픈소스 의존성
 

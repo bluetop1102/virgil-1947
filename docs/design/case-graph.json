@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": "2.0",
-    "title": "VIRGIL — 사건·사실 그래프",
+    "title": "HOTEL VIRGIL — 사건·사실 그래프",
     "truthSource": "타임라인 셀·증거 원산지·반박 관계의 진실원은 이 파일이다. 대사 원문은 docs/STORY.md, 판정 규칙은 docs/design/E5-interrogation.md.",
     "schema": "노드 4종: facts(FACT — kind: event|standing) · evidence · statements · lore(검증 제외, 사건 인과 참여 금지). 엣지는 필드로 인코딩: evidence.supports(증거→명제) · evidence.refutes(증거→거짓 진술) · statements[].hides(거짓 진술→명제) · statements[].unlocks(진술 결과→증거/플래그) · links[].proves(지목 링크→명제). links[].claims = 명제 후보(정답 1 + 오답 ≥2, E5 §5 — 플레이어가 증거 2개와 명제 1개를 골라 링크를 성립시킨다). 오답 명제는 fact(사건의 다른 실제 사실 참조) 또는 kind:'misread'(그럴듯한 오독)여야 한다 — 들러리 금지(J2). 검증기: tools/factcheck.mjs (F1~F4 + J1~J3 + R1~R3)."
   },

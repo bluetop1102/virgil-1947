@@ -115,6 +115,8 @@
 
 ## 5. 출처
 
-[`docs/credits.md`](../credits.md) 참조 — **외부 에셋 0건**(텍스처·지오메트리·오디오·IBL·폰트
-전부 절차 생성), 런타임 의존성 2개(three MIT · rapier Apache-2.0), 개발 의존성 2개,
-AI 도구 사용 내역, 런타임 AI 없음(무키 실행).
+[`docs/credits.md`](../credits.md) 참조 — **다운로드한 외부 에셋 0건**(텍스처·지오메트리·
+오디오·IBL·폰트 전부 절차 생성), **AI 생성 에셋 1건**(타이틀 배경 `assets/title-bg.jpg` —
+gpt-image-2, 프롬프트 전문은 credits §1.1. 게임 월드에는 미사용이며 없으면 인게임 렌더로
+폴백), 런타임 의존성 2개(three MIT · rapier Apache-2.0), 개발 의존성 2개, AI 도구 사용 내역,
+런타임 AI 없음(무키 실행).

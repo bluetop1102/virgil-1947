@@ -1,4 +1,4 @@
-# VIRGIL — 사건 성서 v2 (NARRATIVE / INTERROGATION 구현 명세)
+# HOTEL VIRGIL — 사건 성서 v2 (NARRATIVE / INTERROGATION 구현 명세)
 
 > 이 문서는 **사양**이다. `src/narrative/script.js`는 여기 있는 데이터를 그대로 옮긴 것이어야 하고,
 > `src/narrative/interrogation.js`는 여기 정의된 규칙을 그대로 구현해야 한다.

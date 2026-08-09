@@ -1,4 +1,4 @@
-# VIRGIL(가제) — 종합 기획 v1 (구 CECIL 확장)
+# HOTEL VIRGIL — 종합 기획 v1 (구 CECIL 확장)
 
 > **지위**: 상위 기획. 이 문서가 승인되면 `STORY.md` v2 · `ARCHITECTURE.md` v2 · `AAA-RUBRIC.md` v2 개정이
 > 이 문서를 따른다. 개별 사양의 진실원은 여전히 각 문서이며, 이 문서는 방향·게이트·공정을 고정한다.

@@ -1,4 +1,4 @@
-# VIRGIL — 아키텍처 계약 v2 (모든 에이전트 필독)
+# HOTEL VIRGIL — 아키텍처 계약 v2 (모든 에이전트 필독)
 
 > 이 문서는 **계약**이다. 병렬 작업자는 자기 소유 파일만 수정하고, 여기 정의된 시그니처를 절대 바꾸지 않는다.
 > 계약 변경이 필요하면 코드를 고치지 말고 결과 보고에 `CONTRACT_CHANGE_REQUEST`로 적어 반환한다.
@@ -17,7 +17,7 @@
 
 ## 0. 작품 정의
 
-**VIRGIL(가제 확정) — 1947 · Room 942**
+**HOTEL VIRGIL — 1947** (사건 좌표는 Room 942)
 1947년 로스앤젤레스. LAPD 강력계 형사가 버질 애비뉴의 호텔 버질에서 9일간 실종된 투숙객 아이리스 밴스(Iris Vance, 22)를 수사한다.
 투숙객들의 수도에서 검은 물이 나오고, 압력이 떨어진다. 답은 옥상 물탱크에 있다.
 
@@ -321,6 +321,7 @@ setMood('corridor-night')   // 안개 밀도·볼류메트릭 세기·IBL을 한
 ## 7. 텍스처 규약
 
 - 모든 텍스처는 절차 생성. 외부 에셋 다운로드 금지(오프라인 재현성).
+  예외 1건은 타이틀 배경 `assets/title-bg.jpg`(AI 생성 · 월드 밖 · 폴백 있음 — credits §1.1).
 - 반복 타일링 금지 — 트리플래너 또는 스토캐스틱 샘플링, 그리고 라지스케일 그런지 오버레이 필수 (루브릭 D3).
 - 해상도: `engine.quality.texRes` (cinematic=2048, high=1024, medium=512).
 - 색공간: albedo만 `SRGBColorSpace`, normal/roughness/ao는 `NoColorSpace`.
