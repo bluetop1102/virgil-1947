@@ -74,6 +74,10 @@ const title = {
       .virgil-glass{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 62%,rgba(168,112,44,.14),rgba(120,74,26,.05) 42%,transparent 66%),linear-gradient(180deg,rgba(2,3,5,.95) 0%,rgba(2,3,5,.90) 17%,rgba(2,3,5,.52) 33%,rgba(2,3,5,.20) 52%,rgba(2,3,5,.44) 74%,rgba(1,2,3,.92) 100%),radial-gradient(ellipse at 50% 56%,rgba(3,4,6,0) 18%,rgba(2,3,5,.52) 60%,rgba(1,2,3,.94) 100%),repeating-linear-gradient(92deg,rgba(187,170,126,.02) 0 1px,transparent 1px 73px)}
       .virgil-glass:before,.virgil-glass:after{content:'';position:absolute;top:-12%;bottom:-12%;width:1px;background:rgba(179,151,91,.2);box-shadow:0 0 0 1px rgba(20,17,12,.8)}
       .virgil-glass:before{left:18%}.virgil-glass:after{right:18%}
+      /* B안: 이미지가 이미 자기 비네트를 갖고 있으므로 스크림을 얕게 깐다. 유리 멀리언은
+         정문 안쪽에서 보는 A안의 논리라 사진 위에서는 지운다 */
+      .virgil-glass[data-bg="image"]{background:linear-gradient(180deg,rgba(2,3,5,.86) 0%,rgba(2,3,5,.54) 20%,rgba(2,3,5,.10) 44%,rgba(2,3,5,.06) 62%,rgba(1,2,3,.60) 100%),radial-gradient(ellipse at 50% 52%,rgba(3,4,6,0) 30%,rgba(2,3,5,.22) 68%,rgba(1,2,3,.64) 100%)}
+      .virgil-glass[data-bg="image"]:before,.virgil-glass[data-bg="image"]:after{display:none}
       .virgil-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 46%}
       .virgil-title-mark{position:absolute;left:50%;top:16%;transform:translateX(-50%);font-family:${DISPLAY};font-size:clamp(54px,9vw,126px);letter-spacing:.29em;text-indent:.29em;color:#c2a668;text-shadow:0 1px #efe0a9,0 -1px #392f1d,0 0 24px rgba(176,143,75,.2),0 8px 34px rgba(0,0,0,.9);white-space:nowrap}
       .virgil-title-sub{position:absolute;left:50%;top:31%;transform:translateX(-50%);font-family:${DISPLAY};font-size:clamp(12px,1.2vw,18px);letter-spacing:.52em;text-indent:.52em;color:#8d7b56;text-shadow:0 2px 12px rgba(0,0,0,.9);white-space:nowrap}
@@ -165,6 +169,8 @@ const title = {
     this.resumeScreen.style.display = which === 'resume' ? 'block' : 'none'
     this.active = which
     if (this.photo) this.photo.style.display = this.bg === 'image' && which !== 'loading' ? 'block' : 'none'
+    this.titleScreen.dataset.bg = this.bg
+    this.resumeScreen.dataset.bg = this.bg
     if (which === 'title') this._paintTitle(forceChoices)
     if (which !== 'loading') this._frameCamera(this.qa ? QA_PHASE : this.engine.time)
   },
