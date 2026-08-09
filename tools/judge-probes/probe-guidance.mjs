@@ -36,7 +36,9 @@ const settingsTexts = await visibleText(page)
 await shot(page, 'guide-01-settings')
 await page.keyboard.press('Escape')
 await sleep(800)
-await page.keyboard.down('w'); await sleep(1000); await page.keyboard.up('w')
+// 2.2초 보행 — 경합 시 엔진 시계가 0.2배까지 떨어져 1초 보행이 0.19m(임계 미달)로 오탐하던
+// 것(S-D 실측)의 여유분. 비경합 실측 0.30~1.13m.
+await page.keyboard.down('w'); await sleep(2200); await page.keyboard.up('w')
 const p2 = (await stats(page)).pos
 const resumed = Math.hypot(p2[0] - p1[0], p2[2] - p1[2])
 
