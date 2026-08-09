@@ -159,7 +159,10 @@ export default class MotionBlur {
     const q = ctx.quality ?? {}
     this.enabled = q.motionBlur !== false
     this.tile = 8
-    this.taps = (q.name === 'cinematic') ? 16 : 10
+    // 18탭. 10탭에서는 인트로 트래킹의 긴 궤적이 이산 사본으로 갈라져 인형 셔츠·엘리베이터
+    // 아치에 계단 띠가 생겼다(t=14 프레임 실측). 프리셋 medium·low 는 motionBlur=false 라
+    // 이 비용은 cinematic·high 에만 든다.
+    this.taps = 18
     this.quad = new Quad()
     this.w = 0; this.h = 0
 
@@ -175,8 +178,8 @@ export default class MotionBlur {
       uDepth: { value: null }, uNoise: { value: null },
       uInvProj: { value: new THREE.Matrix4() }, uRes: { value: new THREE.Vector2() },
       uShutter: { value: 0.5 }, uFrame: { value: 0 }, uHasNoise: { value: 0 }, uMaxLen: { value: 90 },
-      // 롤오프 하한(=최소 셔터 배수)과 시작 길이. 0.45 는 180도 → 약 81도다.
-      uRollMin: { value: 0.45 }, uRollLo: { value: 24 }
+      // 롤오프 하한(=최소 셔터 배수)과 시작 길이. 0.30 은 180도 → 54도다.
+      uRollMin: { value: 0.30 }, uRollLo: { value: 24 }
     }
     this.mBlit = shader(BLIT)
     this.mBlit.uniforms = { uSrc: { value: null } }
@@ -192,8 +195,8 @@ export default class MotionBlur {
     this.tileRT = rt(tw, th)
     this.nbRT = rt(tw, th)
     this.full = rt(w, h)
-    // 7% → 5.5%. 롤오프와 합쳐 실효 최대 블러가 1440p 기준 100px → 36px 가 된다.
-    const maxLen = Math.max(16, Math.round(h * 0.055))
+    // 5.5% → 4.0%. 롤오프 0.30 과 합쳐 실효 최대 블러가 1440p 기준 36px → 17px 가 된다.
+    const maxLen = Math.max(16, Math.round(h * 0.040))
     this.mBlur.uniforms.uMaxLen.value = maxLen
     this.mBlur.uniforms.uRollLo.value = maxLen * 0.30
   }
