@@ -12,6 +12,7 @@ import {
   ledger, luggageCart, potPlant, registerBook, rugRunner, sconce, sideTable, sofa, telephone
 } from './props.js'
 import { ambientRig, practical, setMood } from './atmosphere.js'
+import { rng } from '../core/util.js'
 
 // 서랍·패널 테두리 비드
 const BEAD_PROFILE = [
@@ -55,25 +56,45 @@ function makeDesk () {
   // 서랍 전면 5짝. 옛 판은 0.82×0.68 면에 텍스처 한 장이라 도관이 스펙클 노이즈로 뭉갰다
   // (체험 리뷰 D4 "데스크 서랍 전면도 같은 스펙클"). 박스 투영 패널 밭 + 볼렉션 비드 +
   // 놋쇠 손잡이·열쇠구멍으로 값 층을 셋 세운다.
-  const fields = [], fieldM = [], beads = [], brass = [], brassM = []
+  // 칸마다 메시를 따로 세운다. 5짝을 한 번에 merge 하면 edgeWear 의 모서리 마스크가 다섯 짝을
+  // 통째로 감싼 바운딩박스(폭 4.6m)로 정규화돼 **안쪽 네 짝의 좌우 모서리에 마모가 아예 안
+  // 앉는다** — 같은 패널이 0.92m 간격으로 다섯 번 복제된 것으로 읽히던 실체가 이것이다(J2).
+  // 칸을 쪼개면 짝마다 자기 bbox 로 네 변이 다 닳고, seed·wear 를 갈라 명도층이 따로 선다.
+  const r = rng(207)
   for (let i = 0; i < 5; i++) {
     const x = -4.2 + i * 0.92
-    fields.push(bb(0.74, 0.60, 0.030, 0.010, 2, 0.80)); fieldM.push(xf([x, 0.53, -3.172]))
-    const hx = 0.405, hy = 0.325
+    // 1947년 목재 서랍은 레일이 닳아 같은 높이·같은 깊이로 서지 않는다. 처짐 ±4mm,
+    // 한 짝(3번)만 11mm 튀어나와 그림자 결이 끊긴다 — 반복을 깨는 것은 값보다 정렬이다.
+    const sag = (r() - 0.5) * 0.008
+    const proud = i === 3 ? 0.011 : (r() - 0.5) * 0.004
+    const y = 0.53 + sag
+    const z = -3.172 + proud
+    root.add(mesh(bb(0.74, 0.60, 0.030, 0.010, 2, 0.80), 'wood.varnished.dark',
+      { pos: [x, y, z], wear: 0.74 + r() * 0.22, seed: 203 + i * 7 }))
+
+    const hx = 0.405, hy = 0.325, bz = z + 0.014
+    const beads = []
     for (const [a, b] of [
-      [[x - hx, 0.53 + hy, -3.158], [x + hx, 0.53 + hy, -3.158]],
-      [[x + hx, 0.53 + hy, -3.158], [x + hx, 0.53 - hy, -3.158]],
-      [[x + hx, 0.53 - hy, -3.158], [x - hx, 0.53 - hy, -3.158]],
-      [[x - hx, 0.53 - hy, -3.158], [x - hx, 0.53 + hy, -3.158]]
+      [[-hx, hy, 0], [hx, hy, 0]],
+      [[hx, hy, 0], [hx, -hy, 0]],
+      [[hx, -hy, 0], [-hx, -hy, 0]],
+      [[-hx, -hy, 0], [-hx, hy, 0]]
     ]) beads.push(profile(BEAD_PROFILE, [a, b], { up: [0, 0, 1] }))
+    root.add(mesh(merge(beads), 'wood.varnished.dark',
+      { pos: [x, y, bz], wear: 0.62 + r() * 0.20, seed: 205 + i * 11 }))
+
+    // 손잡이는 나사가 풀려 조금씩 다르게 걸린다. 열쇠 escutcheon 은 2·5번 칸에 없다 —
+    // 잠기는 칸과 안 잠기는 칸이 섞여 있는 것이 프런트 데스크의 실물 상태다.
+    const brass = [], brassM = []
     brass.push(tube([[-0.068, 0, 0], [-0.056, 0, 0.030], [0.056, 0, 0.030], [0.068, 0, 0]], 0.0075, 16, 7))
-    brassM.push(xf([x, 0.545, -3.15]))
-    brass.push(lathe([[0, 0], [0.017, 0.002], [0.019, 0.009], [0.009, 0.011]], 14))
-    brassM.push(xf([x, 0.345, -3.15], [-Math.PI / 2, 0, 0]))
+    brassM.push(xf([0, 0.015, 0.022], [0, 0, (r() - 0.5) * 0.14]))
+    if (i !== 1 && i !== 4) {
+      brass.push(lathe([[0, 0], [0.017, 0.002], [0.019, 0.009], [0.009, 0.011]], 14))
+      brassM.push(xf([0, -0.185, 0.022], [-Math.PI / 2, 0, 0]))
+    }
+    root.add(mesh(merge(brass, brassM), 'brass.polished',
+      { pos: [x, y, z], wear: 0.42 + r() * 0.26, seed: 206 + i * 13 }))
   }
-  root.add(mesh(merge(fields, fieldM), 'wood.varnished.dark', { wear: 0.88, seed: 203 }))
-  root.add(mesh(merge(beads), 'wood.varnished.dark', { wear: 0.72, seed: 205 }))
-  root.add(mesh(merge(brass, brassM), 'brass.polished', { wear: 0.55, seed: 206 }))
   root.add(mesh(tube([[-4.65, 0.24, -3.08], [-0.05, 0.24, -3.08]], 0.025, 8, 8), 'brass.tarnished', { wear: 0.9, seed: 204 }))
   groundContact(root, { radius: 2.8, radiusZ: 0.62, strength: 0.54 })
   return root
