@@ -169,7 +169,7 @@ const title = {
     signage.append(
       el('div', 'virgil-title-kind', 'HOTEL'),
       el('div', 'virgil-title-mark', 'VIRGIL'),
-      el('div', 'virgil-title-sub', '1947 · ROOM 942')
+      el('div', 'virgil-title-sub', '1947')
     )
     this.titleScreen.appendChild(signage)
     this.actions = el('div', 'virgil-actions')
