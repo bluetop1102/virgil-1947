@@ -71,7 +71,15 @@ void SURF (vec2 uv, out vec3 alb, out float rgh, out float mtl, out float ao, ou
     // clearcoatRoughness 0.15 → 0.30. 0.15는 롭이 너무 좁아 천장 반자틀이 펜던트를 받는 각도에서
     // 스펙큘러가 한 줄로 뭉쳐 lobby-wide 펜던트 위에 세로 띠로 남았다(S2 실측 — 화염 기둥 잔여).
     // 0.30에서 lobby-desk 광택 손실 0으로 측정됐다.
-    mat: { clearcoat: 0.42, clearcoatRoughness: 0.30, anisotropy: 0.45, anisotropyRotation: 1.5708, specularIntensity: 1.0, envMapIntensity: 1.0 },
+    //
+    // anisotropy 0.45 → 0. clearcoatRoughness 0.30 을 적용한 뒤에도 lobby-wide 펜던트 위 세로 띠가
+    // 남았고, 등록된 A/B(같은 좌표·같은 expo 15.3)에서 남은 기전이 이방성으로 갈렸다 —
+    // 코퍼 보 스트립 speckle 기준 0.45→14.12 · 0.15→8.24 · 0→3.53, 0 에서만 보 아래 흰 필라멘트
+    // 두 줄이 사라진다. anisotropyRotation 을 0 으로 돌린 변종은 speckle 14.12 로 기준과 동일해
+    // 축 방향은 무관했다 — 코퍼 보는 merge 된 지오메트리라 접선이 없어 이방성 축 자체가
+    // 임의로 잡힌다. 바니시(셸락)는 광학적으로 등방 피막이라 물리적으로도 0 이 맞다.
+    // 결 방향성이 필요한 재질은 접선이 살아 있는 쪽에서 rotation 0 규약으로 쓴다(brass.polished).
+    mat: { clearcoat: 0.42, clearcoatRoughness: 0.30, specularIntensity: 1.0, envMapIntensity: 1.0 },
     // 스토캐스틱은 방향성 결에 쓰면 안 된다 — 어긋난 3장의 줄무늬가 간섭해 모래 물결이 생긴다.
     // 목재는 가구·몰딩처럼 작은 조각에 쓰이므로 라지스케일 그런지만으로 반복이 가려진다.
     opts: { grunge: 0.18, grungeScale: 0.58, detail: 0.35, detailTile: 9.0, ao: 0.55, toks: 1.2, damp: 0.22 },
