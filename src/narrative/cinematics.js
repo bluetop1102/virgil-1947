@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { bevelBox, group, mesh } from '../world/kit.js'
-import { EYE, InterrogationCamera, smooth, yawTo } from './camera.js'
+import { EYE, HAND_AMP, InterrogationCamera, smooth, yawTo } from './camera.js'
 
 export const INTRO_DURATION = 30
 
@@ -29,7 +29,6 @@ const SOFA_LOOK = new THREE.Vector3(2.85, 0.92, 3.72)
 const DESK_LOOK = new THREE.Vector3(-1.35, 1.08, -3.18)
 const DEITCH_LOOK = new THREE.Vector3(-3.35, 1.70, -4.25)
 const BADGE_POS = new THREE.Vector3(-1.35, 1.105, -3.18)
-const HAND_AMP = THREE.MathUtils.degToRad(0.15)
 
 
 function makeBadge () {

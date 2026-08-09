@@ -214,8 +214,10 @@ function addGlasses (head, seed) {
         scale: [0.033, 0.014, 0.033], cast: false, seed })
     addPart(head, new THREE.TorusGeometry(0.034, 0.0030, 7, 24), METAL,
       { pos: [side * 0.039, 0.137, 0.132], wear: 0.60, seed: seed + side + 2 })
-    addPart(head, bevelBox(0.010, 0.041, 0.003, 0.0015, 2), 'glass.frosted',
-      { pos: [side * 0.047, 0.142, 0.136], rot: [0, 0, -0.66], cast: false, seed: seed + 4 })
+    // 렌즈 위 반사 줄. 종전 4.1cm 는 지름 6.8cm 렌즈의 절반을 덮어 눈이 통째로 묻혔다
+    // (블라인드 판독 5장 전부 "안경 렌즈 때문에 눈동자 안 보임"). 눈은 J3 그 자체다.
+    addPart(head, bevelBox(0.007, 0.024, 0.003, 0.0012, 2), 'glass.frosted',
+      { pos: [side * 0.052, 0.148, 0.136], rot: [0, 0, -0.66], cast: false, seed: seed + 4 })
     addPart(head, tube([[side * 0.073, 0.141, 0.128], [side * 0.112, 0.140, 0.082]],
       0.003, 6, 6), METAL, { wear: 0.58, seed: seed + side + 4 })
   }

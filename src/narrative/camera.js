@@ -5,24 +5,27 @@ import * as THREE from 'three'
 // 여기 산다 — 두 곳 다 이 파일에서 가져다 쓴다.
 
 export const EYE = 1.68
+// 손떨림 진폭 — 인트로 트래킹과 심문 컷이 같은 값을 쓴다.
+export const HAND_AMP = THREE.MathUtils.degToRad(0.15)
 
 const INTERROGATION = Object.freeze({
   // 컷 종류별 정위치 사거리(얼굴 기준). push 는 얼굴로 들어가고 pull 은 방을 보여주며 물러난다.
   // 하한은 물리 몸이 카운터(앞면 z=-3.04)에 끼지 않는 거리다.
-  range: { push: 1.94, slide: 2.18, pull: 2.50 },
+  range: { push: 1.82, slide: 2.04, pull: 2.34 },
   // 진입 각 흡수 — 이 각들을 차례로 재서 얼굴·양손이 다 열리는 첫 자리를 고른다.
   // 데스크 램프(-2.75, 1.54, -3.18)가 정면 진입 각의 시선을 정확히 먹는다(2차 판정 §0-6).
   // 플레이어가 어디서 들어오든 카메라가 각을 흡수해야 복불복이 사라진다.
-  arcDeg: [0, 10, -10, 19, -19, 28, -28],
+  arcDeg: [0, 10, -10, 19, -19, 28, -28, 36, -36],
   headroom: 0.13,         // 정수리 위 여백(m)
-  cover: 1.80,            // 피사체 세로 폭 대비 프레임 세로 배수
+  cover: 2.20,            // 피사체 세로 폭 대비 프레임 세로 배수
+  margin: 0.16,           // 손 옆 여유 — 이만큼 떨어진 곳까지 비어 있어야 손이 산다
   lensMin: 27,
   lensMax: 58,
   clear: 0.12,            // 차폐 판정에서 표적 앞 여유(m)
   // 조준점을 손 쪽으로 내린 만큼 인물이 프레임 위로 올라온다. 0.5(정중앙)면 손이 자막
   // 띠와 겹쳐 "손이 안 보인다"로 읽힌다 — 실측 후 상향.
-  bias: 0.62,
-  reactBias: 0.70,        // 반응 컷은 더 — 카운터가 프레임 하단 전경에 물린다
+  bias: 0.78,
+  reactBias: 0.80,        // 반응 컷은 더 — 카운터가 프레임 하단 전경에 물린다
   reactDrop: 0.09,
   doubtTurn: 0.30,
   breakDrop: 0.08,
@@ -135,6 +138,19 @@ export class InterrogationCamera {
     return false
   }
 
+  // 표적과 그 좌우 margin 만큼 떨어진 두 점까지 함께 재서 "옆에 바짝 붙은 것"도 센다.
+  _crowded (from, to, ignore, margin = INTERROGATION.margin) {
+    let hits = this._blocked(from, to, ignore) ? 2 : 0
+    const side = new THREE.Vector3(-(to.z - from.z), 0, to.x - from.x)
+    if (side.lengthSq() < 1e-6) return hits
+    side.normalize().multiplyScalar(margin)
+    for (const s of [1, -1]) {
+      const probe = to.clone().addScaledVector(side, s)
+      if (this._blocked(from, probe, ignore)) hits += 1
+    }
+    return hits
+  }
+
   // 심문 컷의 정위치를 만든다. 진입 각에서 출발해 arcDeg를 차례로 재고, 얼굴·양손이
   // 전부 열리는 첫 각을 쓴다. 렌즈는 피사체 세로 폭에서 역산해 얼굴과 손이 같이 남는다.
   _stage (npc, kind = 'slide', opts = {}) {
@@ -152,7 +168,9 @@ export class InterrogationCamera {
       const pos = new THREE.Vector3(
         pts.face.x + Math.sin(az) * radius, eyeY, pts.face.z + Math.cos(az) * radius)
       let score = this._blocked(pos, pts.face, pts.root) ? 6 : 0
-      for (const p of pts.hands) if (this._blocked(pos, p, pts.root)) score += 1
+      // 손은 여유를 두고 잰다. 시선을 딱 비껴간 자리는 램프 볼이 손 바로 옆에 붙은 채로
+      // "통과"하고, 아웃포커스 번짐이 손 윤곽을 먹는다(블라인드 판독 5장 전부 "일부 가림").
+      for (const p of pts.hands) score += this._crowded(pos, p, pts.root)
       for (const p of pts.torso) if (this._blocked(pos, p, pts.root)) score += 1
       if (!best || score < best.score) best = { pos, score }
       if (score === 0) break
