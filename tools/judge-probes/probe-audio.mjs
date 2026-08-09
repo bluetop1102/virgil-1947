@@ -1,6 +1,10 @@
 // S-A 검증 — J6. ①인트로 드론이 실제로 울리는가(musicOn 타임라인) ②심문 구간이 자유 배회보다
 // 조용한 역전이 해소됐는가(RMS 비교) ③콘솔 0. 톤 품질은 기계가 못 본다 — 사람 귀 항목은
 // docs/submission/audio-listen-check.md 로.
+//
+// 시계 주의(S-A 실측 2026-08-09): 헤드리스에서 engine.time 은 실시간의 약 0.4배로 흐른다
+// (부하 무관). 로그의 t 축은 engine 시계고 오디오 스케줄은 AudioContext 시계(실시간)다 —
+// 두 축을 섞어 읽으면 오판한다. 지속시간 판정은 사건 결박(cinematic:end 등)으로 한다.
 import { boot, shot, stats, sleep, saveLog, aim, findTarget, walkTo,
   armAudioTap, startAudioLog, fetchAudioLog, startEventLog, fetchEventLog, verdict } from './common.mjs'
 
@@ -43,6 +47,8 @@ const freeTo = (await stats(page)).t
 
 // 심문 진입 → S1 lines 구간 측정
 let interroMean = null
+let interroFrom = null
+let interroTo = null
 let interroDetail = '심문 진입 실패 — 수동 확인 필요'
 try {
   const register = await findTarget(page, 'lobby/front-desk')
@@ -61,7 +67,12 @@ try {
   const iFrom = (await stats(page)).t
   await sleep(9000)                        // S1 낭독 9초 — 긴장층이 얹힐 자리
   const iTo = (await stats(page)).t
+  interroFrom = iFrom
+  interroTo = iTo
   await shot(page, 'audio-interro-lines')
+  // 낭독이 끝나 interrogation:prompt 가 이벤트 로그에 남을 때까지 기다린다 — §4b 블라인드
+  // 판독자가 심문 시작점을 대리 이벤트로 고르게 만들던 창 문제(S-A 지적)의 수정.
+  await waitIg(s => s.phase === 'choice', 30000, 's1-choice').catch(() => {})
   const aud = await fetchAudioLog(page)
   const win = aud.filter(s => s.rms != null && s.t >= iFrom && s.t <= iTo)
   interroMean = win.length ? win.reduce((p, c) => p + c.rms, 0) / win.length : null
@@ -72,7 +83,14 @@ try {
 
 const aud = await fetchAudioLog(page)
 const evts = await fetchEventLog(page)
-saveLog('probe-audio', { audio: aud, events: evts, issues })
+// windows: 판독자용 구간 마커(engine 시계 축) — 블라인드 질문 ②의 기준점을 대리 이벤트가
+// 아니라 실측 창으로 준다.
+saveLog('probe-audio', {
+  windows: { intro: [t0, t0 + 31], freeRoam: [freeFrom, freeTo], interroLines: interroFrom != null ? [interroFrom, interroTo] : null },
+  audio: aud,
+  events: evts,
+  issues
+})
 
 const active = aud.filter(s => s.rms != null)
 const introMusic = active.filter(s => s.musicOn && s.t - t0 < 31)
