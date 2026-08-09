@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>CECIL — UI selftest</title>
+<title>HOTEL VIRGIL — UI selftest</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body { height:100%; background:#05060a; overflow:hidden; }
@@ -27,7 +27,10 @@
       size: { w: window.innerWidth, h: window.innerHeight, dpr: 2 },
       bus, state, quality: {}, look: {},
       modules: new Map(),
-      get (n) { return this.modules.get(n) }
+      get (n) { return this.modules.get(n) },
+      // hud 가 qa 모드에서 감싸는 대상. 실제 엔진에는 있고 이 가짜 엔진에는 없어서
+      // hud.init 이 여기서 죽어 있었다(하네스 전체가 부팅 불가).
+      harness () { return {} }
     }
     const mods = [hud, notebook, subtitles]
     for (const m of mods) engine.modules.set(m.name, m)
@@ -47,7 +50,8 @@
           'notebook-present': { ui: 'present' },
           'notebook-photos': { ui: 'photos' },
           'hud-prompt': { ui: 'prompt' },
-          'subtitle-line': { interrogating: 'deitch' }
+          'subtitle-line': { interrogating: 'deitch' },
+          'controls-card': { ui: 'controls' }
         }
         if (map[name]) bus.emit('qa:state', map[name])
         for (let i = 0; i < 6; i++) { engine.time += 1 / 60; for (const m of mods) m.update?.(1 / 60, engine.time) }

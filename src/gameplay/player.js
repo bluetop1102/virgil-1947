@@ -3,6 +3,7 @@
 
 import * as THREE from 'three'
 import { clamp, damp } from '../core/util.js'
+import { playerQa } from './player-qa.js'
 
 const EYE = 1.68
 const WALK = 1.2            // m/s. 슈터가 아니다
@@ -15,13 +16,15 @@ const LOOK_LAMBDA = 7       // 6~8. 즉답하지 않는 카메라
 const SENS = 0.0021
 const REACH = 3.0
 const STEP_UP = 0.28
-const QA_EVENT_CAP = 512
 
 const BOB_Y = 0.014         // 1.5cm 이하
 const BOB_X = 0.008
 const BOB_ROLL = 0.0062     // rad, 약 0.36도
 const BREATH_HZ = 0.4
 const BREATH_Y = 0.003
+
+const DIP_T = 0.2           // 증거를 집어들 때의 상체 하강. 진폭은 화면에서 몇 픽셀 — 넘기면 멀미다
+const DIP_Y = 0.013
 
 // 바닥 재질명 → 발소리 카테고리. library.js의 명명 규약을 문자열로만 참조한다(직접 import 금지).
 const FLOOR_KINDS = [
@@ -62,6 +65,7 @@ export default {
   solids: [], hot: [], nextScan: 0,
   floorY: 0,   // 레이캐스트가 바닥을 못 찾았을 때의 최종 바닥. 대기 프로브(y=-500)에서는 이 값을 옮긴다
   focus: null, focusDist: 0,
+  paused: false, dipT0: -9,
   ray: null, down: null,
   body: null, physFail: false, floorHit: null,
   _o: new THREE.Vector3(), _d: new THREE.Vector3(), _n: new THREE.Vector3(),
@@ -82,8 +86,20 @@ export default {
     this.pitch = this.pitchT = c.rotation.x
 
     engine.bus.on('room:changed', () => { this.nextScan = 0 })
+    // 설정 카드가 열려 있는 동안 이동·상호작용을 죽인다. 포인터락이 풀려도 키 리스너는
+    // document 에 그대로 붙어 있어서, 카드 뒤로 계속 걸어갔다 — JUDGE J5 실측 1.52m.
+    engine.bus.on('game:pause', ({ on }) => this._pause(!!on))
+    if (!engine.qa) engine.bus.on('evidence:collected', () => { this.dipT0 = engine.time })
     if (engine.qa) this._initQa(engine)
     if (!engine.qa) this._listen()
+  },
+
+  _pause (on) {
+    this.paused = on
+    if (!on) return
+    this.keys.clear()
+    this.vel.set(0, 0, 0)
+    this._setFocus(null, 0)
   },
 
   _listen () {
@@ -248,7 +264,7 @@ export default {
   },
 
   _interact (target = this.focus) {
-    if (!target) return
+    if (!target || this.paused) return
     if (this.engine.get('evidence')?.isModal?.() || this.engine.get('interrogation')?.isModal?.()) return
     this.engine.bus.emit('player:interact', { targetId: target.id })
     if (target.data?.kind === 'npc' && target.data.npc) this.engine.bus.emit('interrogation:start', { npc: target.data.npc })
@@ -257,6 +273,7 @@ export default {
   update (dt, elapsed) {
     const e = this.engine
     if (!e || e.qa) return
+    if (this.paused) return
 
     if (elapsed >= this.nextScan) { this._scan(); this.nextScan = elapsed + 1.0 }
 
@@ -299,11 +316,15 @@ export default {
       this.pitch = damp(this.pitch, this.pitchT, LOOK_LAMBDA, dt)
     }
 
+    // 증거를 집는 순간의 상체 하강. 반주기 사인 한 번 — 내려갔다 제자리로 돌아온다
+    const dipAge = elapsed - this.dipT0
+    const dip = dipAge >= 0 && dipAge < DIP_T ? Math.sin(dipAge / DIP_T * Math.PI) * DIP_Y : 0
+
     const cam = e.camera
-    cam.rotation.set(this.pitch + driftP, this.yaw, roll + driftR, 'YXZ')
+    cam.rotation.set(this.pitch + driftP - dip * 0.25, this.yaw, roll + driftR, 'YXZ')
     cam.position.set(
       this.pos.x + Math.cos(this.yaw) * bobX,
-      this.pos.y + EYE + bobY + breathY,
+      this.pos.y + EYE + bobY + breathY - dip,
       this.pos.z - Math.sin(this.yaw) * bobX
     )
   },
@@ -340,36 +361,6 @@ export default {
       }
     }
   },
-  _qaRecord (type, payload) {
-    if (type === 'room:changed' && payload?.room) this.qaRoom = payload.room
-    this.qaLog.push({ index: this.qaNextIndex++, time: this.engine.time, type, payload: this._qaCopy(payload) })
-    if (this.qaLog.length > QA_EVENT_CAP) this.qaLog.splice(0, this.qaLog.length - QA_EVENT_CAP)
-  },
-  _qaCopy (value, depth = 0) {
-    if (value == null || typeof value !== 'object') return value
-    if (depth >= 5) return null
-    if (Array.isArray(value)) return value.map(v => this._qaCopy(v, depth + 1))
-    const copy = {}
-    for (const [key, item] of Object.entries(value)) copy[key] = this._qaCopy(item, depth + 1)
-    return copy
-  },
-  _qaInRoom (id) {
-    const room = this.qaRoom
-    const scopes = {
-      lobby: ['lobby/', 'radio-lobby', 'lobby-frame', 'npc/deitch'],
-      elevator: ['lobby/elevator'],
-      corridor9: ['corridor9/'],
-      linen: ['linen/', 'linen-wall', 'npc/ruiz'],
-      room942: ['room942/'],
-      bathroom942: ['bathroom942/'],
-      room944: ['room944/', 'npc/pryce'],
-      'stairs-roof': ['stairs-roof/'],
-      rooftop: ['rooftop/', 'npc/doyle']
-    }
-    const allowed = scopes[room]
-    return !allowed || allowed.some(prefix => id === prefix || id.startsWith(prefix))
-  },
-
   _qaTargets () {
     const found = new Map()
     const visit = (obj) => {
@@ -475,26 +466,7 @@ export default {
     return observed ? evidence.has(observed.id) : true
   },
 
-  _qaState () {
-    const state = this.engine.state
-    const burned = new Set()
-    for (const npc of state.interrogated.values()) {
-      for (const item of npc.burned ?? []) burned.add(typeof item === 'string' ? item : item?.id)
-    }
-    burned.delete(undefined)
-    return {
-      act: state.act,
-      evidence: [...state.evidence.keys()],
-      burned: [...burned],
-      flags: [...state.flags],
-      room: this.qaRoom
-    }
-  },
-
-  _qaEvents (since) {
-    const start = Number.isFinite(since) ? Math.max(0, since) : -Infinity
-    return this.qaLog.filter(event => event.index >= start).map(event => this._qaCopy(event))
-  },
+  ...playerQa,
 
   dispose () { this.bound?.(); this.qaOff?.() }
 }

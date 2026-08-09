@@ -1,7 +1,7 @@
 // 자막. 배경 박스 없음, 색 구분 없음, 지문 없음.
 // 필름 프린트에 태워 넣은 글자처럼 — 미세한 헐레이션과 불균일 농도만 남긴다.
 import { surface } from './paper.js'
-import { FONT, wrap } from './type.js'
+import { FONT, wrap, penLine } from './type.js'
 import { rng, clamp } from '../core/util.js'
 
 const NAME = {
@@ -136,21 +136,33 @@ export default {
       const track = nameSize * 0.34
       const nw = ctx.measureText(this.cur.speaker).width + track * (this.cur.speaker.length - 1)
       ctx.restore()
-      let nx = (this.cw - nw) / 2
+      const nx0 = (this.cw - nw) / 2
+      let nx = nx0
       const ny = y - lh - nameSize * 0.35
       const r = rng(7)
       ctx.save()
       ctx.font = `400 ${nameSize}px ${FONT.serif}`
       ctx.textBaseline = 'alphabetic'
+      // 밝은 데스크·벽 위에서 화자명이 통째로 묻히던 것(2차 N8 소형)의 수정. 본문 글자가
+      // 쓰는 것과 같은 어둠(넓은 블러 2패스)을 이름에도 깔고, 잉크 농도를 본문 쪽으로 올린다.
       for (const ch of this.cur.speaker) {
-        ctx.fillStyle = `rgba(4,3,2,0.5)`
-        ctx.filter = `blur(${(nameSize * 0.1).toFixed(2)}px)`
-        ctx.fillText(ch, nx + 0.5, ny + 1.2)
+        ctx.fillStyle = 'rgba(5,4,3,0.66)'
+        ctx.filter = `blur(${(nameSize * 0.2).toFixed(2)}px)`
+        ctx.fillText(ch, nx + 0.6, ny + 1.3)
+        ctx.fillText(ch, nx + 0.6, ny + 1.3)
         ctx.filter = 'none'
-        ctx.fillStyle = `rgba(206,192,166,${0.62 + r() * 0.16})`
+        ctx.fillStyle = `rgba(214,199,171,${0.82 + r() * 0.14})`
         ctx.fillText(ch, nx, ny)
         nx += ctx.measureText(ch).width + track
       }
+      ctx.restore()
+      // 이름 아래 잉크 밑줄 — 배경이 밝을 때 이름 덩어리를 배경에서 떼는 마지막 한 겹
+      const uy = ny + nameSize * 0.44
+      ctx.save()
+      ctx.filter = `blur(${(nameSize * 0.24).toFixed(2)}px)`
+      penLine(ctx, nx0 - 2, uy + 1.3, nx0 + nw - track + 2, uy + 1.3, { w: 2.4, alpha: 0.6, ink: '5,4,3', seed: 11 })
+      ctx.filter = 'none'
+      penLine(ctx, nx0, uy, nx0 + nw - track, uy, { w: 0.9, alpha: 0.52, ink: '206,192,166', seed: 11 })
       ctx.restore()
     }
     let s = 31

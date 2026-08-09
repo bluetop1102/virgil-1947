@@ -69,6 +69,8 @@ const settings = {
       .virgil-file:before{content:'';position:absolute;left:28px;right:28px;top:28px;bottom:28px;border:1px solid rgba(57,42,26,.36);pointer-events:none}.virgil-file:after{content:'ROOM 942 · GUEST SERVICES';position:absolute;right:54px;top:21px;font-size:9px;letter-spacing:.22em;color:#67533b}
       .virgil-settings-title{font-size:21px;letter-spacing:.34em;text-indent:.34em;text-align:center;padding-bottom:22px;border-bottom:2px solid rgba(54,39,24,.58);text-shadow:0 1px rgba(255,244,208,.45)}
       .virgil-setting-row{height:67px;display:grid;grid-template-columns:1fr 34px 160px 34px;align-items:center;border-bottom:1px solid rgba(67,49,30,.31);font-size:13px;letter-spacing:.12em}
+      .virgil-setting-note{height:46px;display:grid;grid-template-columns:1fr auto;align-items:center;border-bottom:1px solid rgba(67,49,30,.31);font-size:13px;letter-spacing:.12em}
+      .virgil-setting-keys{padding-right:9px;font-size:12px;letter-spacing:.15em;color:#3f3020}
       .virgil-setting-label{padding-left:9px}.virgil-setting-value{text-align:center;font-size:14px;letter-spacing:.13em;color:#34271a}.virgil-setting-turn{height:30px;line-height:28px;text-align:center;border:1px solid #6f5733;background:linear-gradient(145deg,#a2864d,#614923);color:#21170b;cursor:pointer;box-shadow:inset 0 1px rgba(239,213,151,.5),0 2px 3px rgba(45,29,14,.35);user-select:none}
       .virgil-setting-turn:hover,.virgil-setting-turn:focus{filter:brightness(1.14);outline:1px solid #3d2b18}.virgil-settings-foot{display:flex;justify-content:space-between;align-items:flex-end;padding:26px 8px 0;color:#665239;font-size:10px;letter-spacing:.09em}
       .virgil-settings-close{padding:10px 22px 9px;border:1px solid #705631;background:linear-gradient(155deg,#9d814a,#5d4524);box-shadow:0 4px 8px rgba(50,32,15,.38),inset 0 1px rgba(238,212,151,.48);color:#24190d;font-size:12px;letter-spacing:.2em;cursor:pointer}
@@ -99,6 +101,13 @@ const settings = {
       card.appendChild(row)
       this.rows.set(key, value)
     }
+    // 값이 없는 표시 전용 행. 조작을 알려주는 곳이 게임 안에 벨보이 카드 한 번뿐이라,
+    // 놓친 사람이 되돌아와 확인할 자리를 여기 하나 둔다.
+    const note = node('div', 'virgil-setting-note')
+    note.appendChild(node('div', 'virgil-setting-label', '조작'))
+    note.appendChild(node('div', 'virgil-setting-keys', '이동 W·A·S·D   조사 E   수첩 Tab'))
+    card.appendChild(note)
+
     const foot = node('div', 'virgil-settings-foot')
     foot.appendChild(node('div', '', '변경 사항은 프런트 원장에 자동 기록됩니다.'))
     const close = node('div', 'virgil-settings-close', '카드 닫기')

@@ -9,11 +9,21 @@ const argv = process.argv.slice(2)
 const outIdx = argv.indexOf('--out')
 const OUT = outIdx >= 0 ? argv[outIdx + 1] : 'shots/ui'
 const only = argv.filter((a, i) => !a.startsWith('--') && !(outIdx >= 0 && i === outIdx + 1))
-const NAMES = only.length ? only : ['notebook-open', 'deduction-board', 'notebook-present', 'notebook-photos', 'hud-prompt', 'subtitle-line']
+const NAMES = only.length ? only : ['notebook-open', 'deduction-board', 'notebook-present', 'notebook-photos', 'hud-prompt', 'subtitle-line', 'controls-card']
 const PORT = Number(process.env.SHOT_PORT || 5480)
 
-const server = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], { stdio: 'ignore', env: { ...process.env, SHOT: '1' } })
-process.on('exit', () => { try { server.kill('SIGKILL') } catch {} })
+// shoot.mjs 와 같은 이유로 vite 바이너리를 직접·detached 로 띄운다. `npx vite` 는 kill 이 npx 만
+// 죽이고 vite 자식이 고아로 남아 포트를 쥔다 — 그러면 --strictPort 라 새 vite 가 죽고, 하네스는
+// **워처가 꺼진 옛 서버**에 붙어 옛 소스를 받는다. 이 세션에서 실제로 이 함정을 밟았다:
+// subtitles.js 의 새 코드가 "안 그려진다"고 나온 원인이 전부 이것이었다.
+const bin = new URL('../node_modules/.bin/vite', import.meta.url).pathname
+const server = spawn(bin, ['--port', String(PORT), '--strictPort'], { stdio: 'ignore', detached: true, env: { ...process.env, SHOT: '1' } })
+server.unref()
+const killServer = () => {
+  try { process.kill(-server.pid, 'SIGKILL') } catch {}
+  try { server.kill('SIGKILL') } catch {}
+}
+process.on('exit', killServer)
 
 async function waitPort (ms = 30000) {
   const t0 = Date.now()
@@ -48,6 +58,6 @@ try {
   if (errs.length) console.log('errors:\n' + errs.join('\n'))
   await browser.close()
 } finally {
-  try { server.kill('SIGKILL') } catch {}
+  killServer()
 }
 process.exit(0)
