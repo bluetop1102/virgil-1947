@@ -93,10 +93,14 @@ function rest (side) {
 
 // 팔 비틀림에 맞춘 상체 비틀림. 카운터 자세를 쓰는 모든 상태가 같이 얹어야 진술이
 // 시작될 때 몸통이 풀렸다 다시 잡히는 팝이 안 생긴다.
+// **어깨 x 회전은 여기에 두지 않는다.** armPose 가 REST_SKEW 로 만든 좌우 높이차를
+// 정확히 상쇄해서, 의도한 5.7cm 가 렌더에서 1.2cm 로 죽어 있었다(실측). 블라인드 판독
+// 3회가 연속으로 "양팔 대칭"이라고 한 것이 맞았다 — 두 레이어가 서로를 지우고 있었다.
+// 벌림(z)과 고개만 남긴다.
 const COUNTER_TWIST = Object.freeze({
   head: [0, 0.16, 0.06],
-  leftShoulder: [-0.05, 0, -0.07],
-  rightShoulder: [0.06, 0, 0.02]
+  leftShoulder: [0, 0, -0.07],
+  rightShoulder: [0, 0, 0.02]
 })
 
 function counterRest (base, side = 0) {
