@@ -22,6 +22,10 @@
 export const MOODS = {
   'lobby-night': {
     exposure: 1.00,
+    // 0.58 유지. 0.34 로 내려봤으나(등록 A/B shots/sh-ab2·sh-ab3, 게이트 shots/sh-p01)
+    // 자동노출이 되받아 올라(lobby-desk-front 노출 23.9→29.6) 카운터 몰딩의 피팅 노멀이
+    // 대비를 얻어 국소 반딧불 +25 @(1920,640) REGRESS 를 만들었다. 광량 항은 전부 노출에
+    // 되먹혀 이 프레임에서는 순이득이 없다 — 암부는 아래 비네트(톤매퍼 뒤)로만 만든다.
     envIntensity: 0.58,
     shaftScale: 0,
     background: false,
@@ -33,7 +37,11 @@ export const MOODS = {
     },
     look: {
       lift: [-0.010, 0.002, 0.020], gamma: [1.00, 0.99, 0.965], gain: [1.10, 1.00, 0.88],
-      saturation: 0.90, contrast: 1.14, halation: 0.28, vignette: 0.44,
+      // 0.44 → 0.62. 로비는 기둥 사이가 뚫려 있어 프레임 가장자리까지 균일하게 밝다 —
+      // 코너를 38%까지 떨어뜨려야 와이드에 암부 끝이 생긴다. 자동노출은 프레임 전역 배율이라
+      // 광원을 줄이면 오히려 되받아 올리지만(펜던트 6%에서 와이드 95→115.6), 비네트는
+      // 톤매퍼 뒤 공간 변조라 되받지 않는다. 인화지 베이스 농도가 뒤에 깔려 순흑(D6)은 불가.
+      saturation: 0.90, contrast: 1.14, halation: 0.28, vignette: 0.62,
       grainAmount: 0.042, chromatic: 0.0022, volumetricIntensity: 1.10
     },
     hemi: { sky: [0.024, 0.019, 0.015], ground: [0.010, 0.007, 0.005], intensity: 0.45 },
