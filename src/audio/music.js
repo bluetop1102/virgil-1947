@@ -16,8 +16,13 @@ const D1 = 36.71     // 엔딩 — 온음 하강. 고조가 아니라 물이 빠
 
 // sub = 정현파 드론(악기로 들리면 안 된다) · bass = 콘트라베이스 한 음(3막·엔딩 전용)
 const CUES = {
-  // 인트로 30초. 수압 파열음(0~4초) 아래로 4초에 걸쳐 올라와, 크로스헤어가 뜨기 전에 빠진다.
-  intro: { kind: 'sub', root: E1, peak: 0.085, at: 4.2, hold: 16, rel: 5.5 },
+  // 인트로. 수압 파열음(0~4초) 아래로 4초에 걸쳐 올라와, **조작 이양에서** 빠진다.
+  // hold 를 시각으로 못 박지 않고 sustain(상한 90초)으로 두는 이유: 드론의 스케줄은 AudioContext
+  // 시계(실시간)인데 시네마틱은 engine.time 으로 흐른다. 헤드리스 실측에서 engine.time 이 실시간의
+  // 0.4배로 가서, 16초 hold 로는 인트로 30초의 앞 1/3만 덮고 나머지가 무음이 됐다(판정 배포본의
+  // musicOn 103샘플도 같은 구간이다). 이양(cinematic:end)에 결박하면 기계 속도와 무관하게
+  // "크로스헤어가 뜰 즈음 빠진다"가 성립한다.
+  intro: { kind: 'sub', root: E1, peak: 0.085, at: 4.2, rel: 5.5, sustain: 90 },
   // 도일이 렌치를 들고 로비를 지나간다(7:00, E2 V1 "이 게임은 무르지 않는다"). 같은 음이 짧게 되돌아온다.
   phase: { kind: 'sub', root: E1, peak: 0.10, at: 2.6, hold: 4.5, rel: 4.0 },
   act3: { kind: 'bass', root: E1, peak: 0.17, at: 3.2, hold: 0, rel: 9.8 },
@@ -35,17 +40,34 @@ export function musicCue (a, kind) {
   if (!c) { if (!a.pendingMusic) a.pendingMusic = kind; return true }
   a.musicOn = true
   const now = c.currentTime
-  const total = spec.at + spec.hold + spec.rel
+  const hold = spec.sustain ?? spec.hold          // sustain 은 방치됐을 때의 상한이다
+  const total = spec.at + hold + spec.rel
   const nodes = []
+  const envG = []                                 // 포락선을 그리는 게인만. LFO 깊이 게인은 여기 없다
   const done = () => {
     for (const n of nodes) { try { n.disconnect() } catch (e) { /* 이미 해제 */ } }
     a.musicOn = false
+    a.musicRelease = null
   }
   const env = (g, peak) => {
+    envG.push(g)
     g.gain.setValueAtTime(0.0001, now)
     g.gain.exponentialRampToValueAtTime(peak, now + spec.at)
-    g.gain.setValueAtTime(peak, now + spec.at + spec.hold)
+    g.gain.setValueAtTime(peak, now + spec.at + hold)
     g.gain.exponentialRampToValueAtTime(0.0001, now + total)
+  }
+  // 지속 큐는 스케줄이 아니라 **사건**으로 끝난다. 호출부(cues.js)가 조작 이양에서 부른다.
+  if (spec.sustain) {
+    a.musicRelease = (dur = spec.rel) => {
+      a.musicRelease = null
+      const n = c.currentTime
+      for (const g of envG) {
+        g.gain.cancelScheduledValues(n)
+        g.gain.setValueAtTime(Math.max(g.gain.value, 0.0001), n)
+        g.gain.exponentialRampToValueAtTime(0.0001, n + dur)
+      }
+      for (const node of nodes) { try { node.stop?.(n + dur + 0.3) } catch (e) { /* 이미 정지 */ } }
+    }
   }
 
   if (spec.kind === 'sub') {

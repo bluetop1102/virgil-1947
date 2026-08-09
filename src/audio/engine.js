@@ -41,6 +41,7 @@ const audio = {
     this.breaking = false
     this.musicOn = false
     this.pendingMusic = null
+    this.musicRelease = null
     this.tension = null
     this.radioDuck = 1
     this.introFadeAt = null

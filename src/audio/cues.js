@@ -70,6 +70,8 @@ export function wireCues (a, bus) {
     if (id.includes('ending')) musicCue(a, 'ending')
     else if (id === 'cin-intro') musicCue(a, 'intro')
   })
+  // 조작 이양 = 드론이 빠지는 자리(E2 0:27–0:30 "룸톤만 남는다"). 시각이 아니라 사건에 결박한다.
+  bus.on('cinematic:end', (p) => { if (p?.id === 'cin-intro') a.musicRelease?.() })
   bus.on('act:enter', (p) => { if (p?.act === 3) musicCue(a, 'act3') })
   bus.on('act:phase', (p) => { if (p?.act === 1 && p?.phase === 'late') musicCue(a, 'phase') })
 
