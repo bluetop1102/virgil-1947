@@ -33,18 +33,24 @@ export const ROOM_MIX = {
   elevator: { wet: 0.26, tone: 0.60, hum: 0.22, water: 0.30, drip: 0.06 }
 }
 
+// RT60 은 E7 §3 사양이 진실원이다(로비 1.6 · 복도 0.9 · 942호 0.5 · 엘리베이터 0.3 · 옥상 잔향 없음).
+// 구판은 로비 2.4 · 복도 1.5 로 사양보다 젖어 있었다. 1947년 대리석 로비의 실제 잔향은 2초를
+// 넘길 수 있지만 이 게임은 대사로 판정이 갈리는 게임이라 자음 명료도가 사실성보다 앞선다 —
+// 방의 크기를 귀에 알리는 것은 꼬리가 아니라 초기 반사(taps)이므로 탭은 그대로 두고 꼬리만 줄인다.
+// 욕실(사양 없음)은 타일·도기라 카펫 복도보다 길게 울리는 것이 물리적으로 옳다 — 서열은 복도보다 위.
 const IR = {
   lobby: {
-    rt60: 2.4, pre: 0.019, damp: 5200, hp: 90,
+    rt60: 1.6, pre: 0.019, damp: 5200, hp: 90,
     taps: [[0.011, 0.62], [0.019, 0.5], [0.027, 0.41], [0.038, 0.33], [0.052, 0.27], [0.071, 0.2], [0.094, 0.15]]
   },
   corridor: {
-    rt60: 1.5, pre: 0.008, damp: 3400, hp: 120,
+    rt60: 0.9, pre: 0.008, damp: 3400, hp: 120,
     taps: [[0.006, 0.7], [0.013, 0.52], [0.021, 0.38]],
-    flutter: { p: 0.0212, n: 40, g: 0.55 }
+    // 플러터 열이 꼬리보다 길면 꼬리가 아니라 플러터가 RT60 을 정한다. 0.9s 안에 들어오게 26회로 끊는다.
+    flutter: { p: 0.0212, n: 26, g: 0.55 }
   },
   room: {
-    rt60: 0.4, pre: 0.005, damp: 1700, hp: 110,
+    rt60: 0.5, pre: 0.005, damp: 1700, hp: 110,
     taps: [[0.004, 0.4], [0.009, 0.26], [0.015, 0.16]]
   },
   bath: {
@@ -58,7 +64,7 @@ const IR = {
     taps: [[0.004, 0.16], [0.011, 0.09]]
   },
   elevator: {
-    rt60: 0.33, pre: 0.002, damp: 2200, hp: 150,
+    rt60: 0.3, pre: 0.002, damp: 2200, hp: 150,
     taps: [[0.0022, 0.85], [0.0041, 0.7], [0.0063, 0.55]],
     flutter: { p: 0.0034, n: 26, g: 0.6 }
   }
@@ -206,6 +212,68 @@ function renderBedChannel (spec, seed, sr) {
 export function renderBed (room, sr) {
   const spec = BED[roomKey(room)]
   return { dur: spec.dur, ch: [renderBedChannel(spec, 3319, sr), renderBedChannel(spec, 5477, sr)] }
+}
+
+// 로비 라디오의 디제틱 방송 루프(E7 §4). 괴담의 말은 자막이 옮기고, 여기서 만드는 것은
+// 그 말을 싣고 오는 전파다 — AM 대역(300~3400Hz) 반송 잡음 · 음절 포먼트 · 정전기 · 60Hz 누설.
+// 알아들을 수 있으면 안 된다. 포먼트는 음절마다 바뀌되 자모를 이루지 않는 난수열이다.
+export function renderRadioSource (sr, dur = 7) {
+  const n = Math.round(dur * sr)
+  const xf = Math.round(0.35 * sr)
+  const raw = new Float32Array(n + xf)
+  const r = rng(21107)
+
+  // 반송 잡음 — 대역 밖을 잘라내야 라디오지 히스가 아니다
+  const band = biquad('bp', 1250, 0.5, sr)
+  const top = biquad('lp', 3400, 0.7, sr)
+  for (let i = 0; i < n + xf; i++) {
+    const drift = 1 + 0.35 * Math.sin(TAU * 0.23 * i / sr)
+    raw[i] += top(band(r() * 2 - 1)) * 0.16 * drift
+  }
+
+  // 음절 — 두 포먼트 공진기를 음절 단위로 새로 세운다. 어절 6~11음절, 어절 사이 0.5~1.4초 침묵.
+  let t = 0.3
+  while (t < dur) {
+    const syllables = 6 + Math.floor(r() * 6)
+    for (let s = 0; s < syllables && t < dur; s++) {
+      const len = 0.13 + r() * 0.12
+      const off = Math.round(t * sr)
+      const f1 = 380 + r() * 420
+      const f2 = 1150 + r() * 900
+      const a = biquad('bp', f1, 4.5, sr)
+      const b = biquad('bp', f2, 6.5, sr)
+      const cnt = Math.min(raw.length - off, Math.round(len * sr))
+      // 공진 Q 가 높으면 백색 노이즈의 대부분이 잘려나간다 — 반송 잡음에 묻히지 않게 크게 준다
+      const g = 1.15 + r() * 0.5
+      for (let i = 0; i < cnt; i++) {
+        const p = i / cnt
+        const env = Math.sin(Math.PI * p) ** 1.4
+        const x = r() * 2 - 1
+        raw[off + i] += (a(x) * 1.0 + b(x) * 0.55) * g * env
+      }
+      t += len + 0.02 + r() * 0.05
+    }
+    t += 0.5 + r() * 0.9
+  }
+
+  // 정전기 — 성기고 짧게. 이게 없으면 1947년이 아니라 스트리밍으로 들린다.
+  for (let k = 0; k < 64; k++) {
+    const off = Math.round(r() * (n - sr * 0.02))
+    const f = biquad('hp', 2400 + r() * 2600, 0.8, sr)
+    const cnt = Math.round(sr * (0.002 + r() * 0.01))
+    const g = 0.08 + r() * 0.26
+    for (let i = 0; i < cnt; i++) raw[off + i] += f(r() * 2 - 1) * g * Math.exp(-i / (sr * 0.0012))
+  }
+
+  // 60Hz 전원 누설. 루프 길이의 정수배가 되도록 반올림해 이음매에서 위상이 튀지 않게 한다.
+  const hz = Math.round(60 * dur) / dur
+  for (let i = 0; i < n + xf; i++) raw[i] += Math.sin(TAU * hz * i / sr) * 0.012
+
+  const out = new Float32Array(n)
+  for (let i = 0; i < n; i++) out[i] = raw[i]
+  for (let i = 0; i < xf; i++) { const w = i / xf; out[i] = raw[i] * w + raw[n + i] * (1 - w) }
+  for (let i = 0; i < n; i++) out[i] = clamp(out[i], -1, 1)
+  return { dur, ch: [out] }
 }
 
 // 배관 흐름·공기 혼입용 광대역 소스. 루프 소스로 한 번만 만들고 필터로 성격을 바꾼다.

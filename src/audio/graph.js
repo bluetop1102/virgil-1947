@@ -34,8 +34,12 @@ export function buildGraph (a) {
   a.tilt.Q.value = 0.5
   a.tilt.connect(a.comp)
 
+  // 일시정지 감쇠 전용. duck() 와 같은 노드를 쓰면 카드를 여는 동안 대사 더킹 스케줄이 덮인다.
+  a.pauseG = c.createGain()
+  a.pauseG.connect(a.tilt)
+
   a.duckG = c.createGain()
-  a.duckG.connect(a.tilt)
+  a.duckG.connect(a.pauseG)
 
   a.dry = c.createGain()
   a.wet = c.createGain()

@@ -8,9 +8,10 @@
 //               렌더를 시작하지 않으므로 소리도, 경고도, CPU 비용도 없다.
 
 import { rng, clamp } from '../core/util.js'
-import { footBuffer, sfxBuffer, footKey, SFX } from './dsp.js'
-import { renderIR, renderBed, roomKey, ROOM_MIX } from './ir.js'
+import { footBuffer, sfxBuffer, footKey, sfxKey } from './dsp.js'
+import { renderIR, renderBed, renderRadioSource, roomKey, ROOM_MIX } from './ir.js'
 import { buildGraph } from './graph.js'
+import { wireCues } from './cues.js'
 
 const FOOT_VARIANTS = 6
 const SFX_VARIANTS = 3
@@ -44,7 +45,11 @@ const audio = {
     this.tone = [null, null]
     this.toneI = 0
     this.convI = 0
+    this.radio = null
+    this.radioReq = null
+    this.pending = []
     this._wire(engine.bus)
+    wireCues(this, engine.bus)
     if (this.silent) { this._open(this._offlineCtx()); return }
     this._arm()
   },
@@ -56,6 +61,8 @@ const audio = {
   },
 
   dispose () {
+    try { this.radio?.src.stop() } catch (e) { /* 이미 정지 */ }
+    this.radio = null
     try { this.ctx?.close?.() } catch (e) { /* 이미 닫힌 컨텍스트 */ }
     this.ctx = null
   },
@@ -70,11 +77,23 @@ const audio = {
       const v = Math.floor(this.rand() * FOOT_VARIANTS)
       buf = this._cache(`f:${m}:${v}`, () => footBuffer(m, v, c.sampleRate))
     } else {
-      const key = SFX[id] ? id : 'ui.tick'
+      // null = 명시 무음(다른 경로가 이미 소리를 낸다) · undefined = 미등록.
+      // 구판은 미등록을 조용히 ui.tick 으로 흡수해서 라디오도 소각도 사진도 같은 딸깍이 됐다.
+      // 폴백은 남기되 미등록 자체를 test-audio 가 실패로 잡는다.
+      const key = sfxKey(id)
+      if (key === null) return null
       const v = Math.floor(this.rand() * SFX_VARIANTS)
-      buf = this._cache(`s:${key}:${v}`, () => sfxBuffer(key, v, c.sampleRate))
+      const k = key ?? 'ui.tick'
+      buf = this._cache(`s:${k}:${v}`, () => sfxBuffer(k, v, c.sampleRate))
     }
     return this._voice(buf, opts)
+  },
+
+  // 첫 제스처와 같은 프레임에 오는 소리(프런트 벨)는 컨텍스트보다 빠를 수 있다. 열릴 때 흘려보낸다.
+  playOrDefer (id, opts = {}) {
+    if (this.ctx) return this.play(id, opts)
+    if (this.pending.length < 4) this.pending.push([id, opts])
+    return null
   },
 
   setRoom (name, dur = 0.9) {
@@ -106,6 +125,7 @@ const audio = {
     const fading = this.tone[this.toneI]
     if (fading && changed) { try { fading.stop(now + dur + 0.4) } catch (e) { /* 이미 정지 */ } }
     this.toneI = j
+    if (changed && key !== 'lobby') this._radio(false)
     this._levels(changed ? dur : 0.05)
   },
 
@@ -183,6 +203,11 @@ const audio = {
     this.ctx = ctx
     try { buildGraph(this) } catch (e) { this.ctx = null; return }
     this.setRoom(this.room, 0.02)
+    // 로비 라디오는 레벨 로드(=부팅) 때 발화한다. 그때는 아직 컨텍스트가 없어서 구판은 통째로 유실됐다.
+    if (this.radioReq) this._radio(true, this.radioReq)
+    const q = this.pending
+    this.pending = []
+    for (const [id, opts] of q) this.play(id, opts)
     if (!this.silent) this._prewarm()
   },
 
@@ -212,6 +237,45 @@ const audio = {
     ramp(this.waterG.flow.gain, lvl * 0.16 * quiet, now, dur)
     ramp(this.waterG.air.gain, lvl * 0.055 * quiet, now, dur)
     ramp(this.waterG.tank.gain, lvl * 0.2 * quiet, now, dur)
+    // 라디오는 룸톤 버스에 물려 있다 — 오답 -6dB 딥과 심문 감쇠를 같이 받는다(E7 §3).
+    if (this.radio) ramp(this.radio.gain.gain, this.radio.level * quiet, now, dur)
+  },
+
+  // ── 로비 라디오 (디제틱 루프, E7 §4) ────────────────────────────────
+  _radio (on, req) {
+    const c = this.ctx
+    if (!c) { this.radioReq = on ? req : null; return }
+    if (!on) {
+      const r = this.radio
+      if (!r) return
+      this.radio = null
+      const now = c.currentTime
+      ramp(r.gain.gain, 0, now, 1.1)
+      try { r.src.stop(now + 1.4) } catch (e) { /* 이미 정지 */ }
+      r.src.onended = () => { for (const n of r.nodes) { try { n.disconnect() } catch (e) { /* 이미 해제 */ } } }
+      return
+    }
+    if (this.radio || this.silent) return
+    const buf = this._cache('radio:src', () => renderRadioSource(c.sampleRate).ch[0])
+    const src = c.createBufferSource()
+    src.buffer = buf
+    src.loop = true
+    const g = c.createGain()
+    g.gain.value = 0.0001
+    const p = c.createPanner()
+    p.panningModel = 'HRTF'
+    p.distanceModel = 'inverse'
+    p.refDistance = 2.2
+    p.maxDistance = 30
+    p.rolloffFactor = 1.3
+    const pos = req?.pos ?? [2, 0.9, -1.85]
+    if (p.positionX) { p.positionX.value = pos[0]; p.positionY.value = pos[1]; p.positionZ.value = pos[2] }
+    const wet = c.createGain()
+    wet.gain.value = 0.8
+    src.connect(g); g.connect(p); p.connect(this.toneBus); p.connect(wet); wet.connect(this.send)
+    src.start(c.currentTime + 0.01)
+    this.radio = { src, gain: g, level: clamp(req?.gain ?? 0.38, 0, 1), nodes: [src, g, p, wet] }
+    this._levels(2.2)
   },
 
   // ── 보이스 ──────────────────────────────────────────────────────────
@@ -294,21 +358,35 @@ const audio = {
   _wire (bus) {
     if (!bus) return
     bus.on('room:changed', (p) => this.setRoom(p?.room))
+    // ?scene= 프로브는 room:changed 를 발화하지 않는다(main.js). 그래서 복도를 걸어도 로비
+    // 잔향이 났다 — 공간별 리버브를 사람 귀로 대조할 유일한 빠른 경로가 막혀 있던 셈이다.
+    bus.on('qa:state', (p) => { if (p?.scene === 'atmo-probe' && p.mood) this.setRoom(p.mood, 0.35) })
     bus.on('act:enter', (p) => {
       this.act = p?.act ?? this.act
       this._levels(2.5)
-      if (this.act === 3) this._music('act3')
     })
     bus.on('player:footstep', (p) => this._footstep(p))
-    bus.on('sfx', (p) => { if (p?.id) this.play(p.id, { pos: p.pos, gain: p.gain }) })
-    bus.on('evidence:collected', () => this.play('paper.pickup', { gain: 0.55 }))
+    bus.on('sfx', (p) => {
+      if (!p?.id) return
+      if (p.id === 'radio:lobby-loop') { this._radio(true, p); return }   // 원샷이 아니라 루프다
+      this.play(p.id, { pos: p.pos, gain: p.gain })
+    })
+    // 증거는 집든 관찰하든 노트에 적힌다 — 물건 소리는 sfx `evidence:<mode>` 가 따로 낸다.
+    bus.on('evidence:collected', () => this.play('note.scribble', { gain: 0.42 }))
     bus.on('interrogation:start', () => { this.interro = true; this._levels(0.9); this.duck(0.22, 1.4) })
     bus.on('interrogation:end', () => { this.interro = false; this._levels(2.6) })
     bus.on('interrogation:verdict', (p) => {
       if (p?.choice === 'LIE' && p.correct === false) this.roomtoneDip(3, -6)
     })
     bus.on('perf:state', (p) => this._setBreaking(p?.state === 'breaking'))
-    bus.on('cinematic:start', (p) => { if (String(p?.id ?? '').includes('ending')) this._music('ending') })
+    // ARCH §이벤트: 일시정지 시 디제틱 감쇠. 카드 뒤 화면은 계속 도는데 방 소리만 물러난다.
+    bus.on('game:pause', (p) => this._pause(!!p?.on))
+  },
+
+  _pause (on) {
+    const c = this.ctx
+    if (!c || this.silent) return
+    ramp(this.pauseG.gain, on ? 0.22 : 1, c.currentTime, on ? 0.2 : 0.45)
   },
 
   _footstep (p) {
@@ -346,57 +424,10 @@ const audio = {
     l.positionX.value = e[12]; l.positionY.value = e[13]; l.positionZ.value = e[14]
     l.forwardX.value = -e[8]; l.forwardY.value = -e[9]; l.forwardZ.value = -e[10]
     l.upX.value = e[4]; l.upY.value = e[5]; l.upZ.value = e[6]
-  },
-
-  // 음악은 3막 진입과 엔딩에만. 콘트라베이스 한 음과 현의 하모닉스.
-  _music (kind) {
-    const c = this.ctx
-    if (!c || this.silent || this.musicOn) return
-    this.musicOn = true
-    const now = c.currentTime
-    const root = kind === 'ending' ? 36.71 : 41.2
-    const nodes = []
-    const bass = c.createOscillator()
-    bass.type = 'sawtooth'
-    bass.frequency.value = root
-    const lp = c.createBiquadFilter()
-    lp.type = 'lowpass'
-    lp.frequency.value = 210
-    lp.Q.value = 0.8
-    const body = c.createBiquadFilter()
-    body.type = 'peaking'
-    body.frequency.value = root * 3
-    body.Q.value = 3
-    body.gain.value = 7
-    const bg = c.createGain()
-    bg.gain.value = 0.0001
-    bass.connect(lp); lp.connect(body); body.connect(bg); bg.connect(this.musicBus)
-    bg.gain.setValueAtTime(0.0001, now)
-    bg.gain.exponentialRampToValueAtTime(0.17, now + 3.2)
-    bg.gain.exponentialRampToValueAtTime(0.0001, now + 13)
-    bass.start(now)
-    bass.stop(now + 13.4)
-    nodes.push(bass, lp, body, bg)
-    ;[[root * 8, 0.03, 2.6], [root * 12, 0.018, 5.2]].forEach(([f, g, at]) => {
-      const o = c.createOscillator()
-      o.type = 'sine'
-      o.frequency.value = f
-      const og = c.createGain()
-      og.gain.value = 0.0001
-      o.connect(og)
-      og.connect(this.musicBus)
-      og.gain.setValueAtTime(0.0001, now)
-      og.gain.exponentialRampToValueAtTime(g, now + at + 2)
-      og.gain.exponentialRampToValueAtTime(0.0001, now + 12.6)
-      o.start(now + at)
-      o.stop(now + 13.2)
-      nodes.push(o, og)
-    })
-    bass.onended = () => {
-      for (const n of nodes) { try { n.disconnect() } catch (e) { /* 이미 해제 */ } }
-      this.musicOn = false
-    }
   }
 }
+
+// 시계추·괘종 같은 상시 사건은 붙이지 않았다 — 로비에 시계 소품이 없어서 물질 원점 없는
+// 소리가 된다(E7 불변 금지 3종). PROPS 가 시계를 놓으면 그때 온다(HANDOFF 등재).
 
 export default audio

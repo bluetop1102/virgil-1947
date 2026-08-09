@@ -317,7 +317,112 @@ export const SFX = {
       { k: 'n', ft: 'bp', f: 2200, q: 5, d: 0.009, g: 0.6 },
       { k: 'n', ft: 'bp', f: 700, q: 4, d: 0.012, g: 0.25 }
     ]
+  },
+  // 게임의 첫 소리. "프런트 벨을 누르십시오"라고 써 놓고 벨이 울리지 않았다.
+  // 누름종 돔은 배음이 정수배가 아니다 — 2093 위에 1.52배·2.6배·4.25배를 얹어 종으로 들리게 한다.
+  'desk.bell': {
+    dur: 2.8, peak: 0.82,
+    layers: [
+      { k: 'n', ft: 'bp', f: 6200, q: 5, d: 0.0025, g: 0.5 },
+      { k: 't', f: 2093, d: 1.45, g: 0.8, at: 0.0015 },
+      { k: 't', f: 3181, d: 1.05, g: 0.24, at: 0.0018 },
+      { k: 't', f: 5440, d: 0.8, g: 0.3, at: 0.0015 },
+      { k: 't', f: 8900, d: 0.4, g: 0.13, at: 0.0012 },
+      { k: 'n', ft: 'bp', f: 420, q: 6, d: 0.02, g: 0.26 }
+    ]
+  },
+  // 엘리베이터 아코디언 격자문. 살이 접히며 지나가는 금속 딱딱임 4회 → 걸쇠 울림.
+  'gate.slide': {
+    dur: 1.7, peak: 0.72,
+    layers: [
+      { k: 'n', ft: 'bp', f: 1250, q: 2, d: 0.45, g: 1.0, at: 0.05 },
+      { k: 'n', ft: 'bp', f: 2900, q: 8, d: 0.02, g: 0.55, t: 0.09 },
+      { k: 'n', ft: 'bp', f: 3350, q: 9, d: 0.018, g: 0.5, t: 0.23 },
+      { k: 'n', ft: 'bp', f: 2740, q: 8, d: 0.02, g: 0.46, t: 0.38 },
+      { k: 'n', ft: 'bp', f: 3120, q: 9, d: 0.017, g: 0.42, t: 0.54 },
+      { k: 'n', ft: 'bp', f: 690, q: 18, d: 0.24, g: 0.3, t: 0.78 },
+      { k: 'n', ft: 'bp', f: 1580, q: 14, d: 0.14, g: 0.22, t: 0.78 },
+      { k: 't', f: 88, d: 0.09, g: 0.16, t: 0.78 }
+    ]
+  },
+  'drawer.pull': {
+    dur: 0.75, peak: 0.58,
+    layers: [
+      { k: 'n', ft: 'bp', f: 260, q: 1.6, d: 0.26, g: 1.0, at: 0.03 },
+      { k: 'n', ft: 'bp', f: 1400, q: 2.2, d: 0.2, g: 0.24, at: 0.04 },
+      { k: 't', f: 74, d: 0.045, g: 0.34, t: 0.3 },
+      { k: 'n', ft: 'lp', f: 520, d: 0.05, g: 0.3, t: 0.3 }
+    ]
+  },
+  // 다이얼 디텐트 4클릭 + 동조가 올라오며 밝아지는 반송 잡음.
+  'radio.dial': {
+    dur: 0.6, peak: 0.55,
+    layers: [
+      { k: 'n', ft: 'lp', f: 900, f2: 3200, d: 0.2, g: 0.22, at: 0.01 },
+      { k: 'n', ft: 'bp', f: 1900, q: 12, d: 0.006, g: 0.5 },
+      { k: 'n', ft: 'bp', f: 2050, q: 12, d: 0.006, g: 0.44, t: 0.055 },
+      { k: 'n', ft: 'bp', f: 1830, q: 12, d: 0.006, g: 0.4, t: 0.118 },
+      { k: 'n', ft: 'bp', f: 1980, q: 12, d: 0.006, g: 0.36, t: 0.186 }
+    ]
+  },
+  // 관찰형 증거는 집히지 않는다 — 물건 소리가 아니라 노트에 적히는 소리가 맞다.
+  'note.scribble': {
+    dur: 0.5, peak: 0.4,
+    layers: [
+      { k: 'n', ft: 'bp', f: 2600, q: 1.5, d: 0.045, g: 0.5, at: 0.006 },
+      { k: 'n', ft: 'bp', f: 3400, q: 1.8, d: 0.035, g: 0.4, at: 0.005, t: 0.11 },
+      { k: 'n', ft: 'bp', f: 2200, q: 1.4, d: 0.04, g: 0.35, at: 0.006, t: 0.21 },
+      { k: 'n', ft: 'lp', f: 600, d: 0.05, g: 0.12 }
+    ]
+  },
+  // 소각. 불이 아니라 줄이다 — 방에 불은 없다(E7 물질 원점). 한 획 긋고, 아래가 꺼진다.
+  'note.strikeout': {
+    dur: 1.1, peak: 0.62,
+    layers: [
+      { k: 'n', ft: 'bp', f: 1750, q: 1.2, d: 0.09, g: 1.0, at: 0.004 },
+      { k: 'n', ft: 'lp', f: 420, d: 0.12, g: 0.34, at: 0.006 },
+      { k: 't', f: 64, d: 0.16, g: 0.26, t: 0.14, at: 0.002 },
+      { k: 'n', ft: 'hp', f: 2400, d: 0.05, g: 0.2, t: 0.2 }
+    ]
+  },
+  'photo.sleeve': {
+    dur: 0.6, peak: 0.5,
+    layers: [
+      { k: 'n', ft: 'lp', f: 3600, f2: 1200, d: 0.11, g: 0.55, at: 0.01 },
+      { k: 'n', ft: 'bp', f: 1100, q: 2, d: 0.03, g: 0.2, t: 0.05 },
+      { k: 'n', ft: 'hp', f: 2800, d: 0.02, g: 0.4, t: 0.16 }
+    ]
+  },
+  'cloth.rustle': {
+    dur: 0.55, peak: 0.38,
+    layers: [
+      { k: 'n', ft: 'bp', f: 1800, q: 0.9, d: 0.08, g: 0.5, at: 0.02 },
+      { k: 'n', ft: 'bp', f: 3400, q: 1.1, d: 0.05, g: 0.3, at: 0.015, t: 0.09 },
+      { k: 'n', ft: 'lp', f: 500, d: 0.09, g: 0.18 }
+    ]
   }
+}
+
+// 다른 모듈이 발화하는 sfx id 는 이 표의 키와 형식이 다르다(콜론·모드 접미). 폴백으로 흡수하면
+// 라디오도 소각도 사진도 전부 ui.tick 딸깍 하나로 들린다 — 실제로 그랬다. 여기서 명시 해소한다.
+// 값 null = 의도적 무음(다른 경로가 이미 소리를 낸다).
+export const SFX_ALIAS = {
+  'interrogation-burn': 'note.strikeout',
+  'lobby:wrench-pass': 'wrench.clank',
+  'photo:open': 'photo.sleeve',
+  'photo:close': 'notebook.close',
+  'photo:flip': 'photo.flip',
+  'evidence:pickup': 'paper.pickup',
+  'evidence:photos': 'photo.sleeve',
+  'evidence:observe': null   // 관찰은 손을 대지 않는다. evidence:collected 의 필기음만 남는다
+}
+
+// 해소 결과: 실재 스펙 키 · null(무음) · undefined(미등록 — 호출부가 폴백을 정한다)
+export function sfxKey (id) {
+  const s = String(id ?? '')
+  if (SFX[s]) return s
+  if (s in SFX_ALIAS) return SFX_ALIAS[s]
+  return undefined
 }
 
 export function footBuffer (material, variant, sr) {
