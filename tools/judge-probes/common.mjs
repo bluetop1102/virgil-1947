@@ -11,6 +11,11 @@
 // **소스를 고쳐도 옛 변환 결과를 계속 서빙한다** — 그 상태의 PASS 는 수정 전 코드의 PASS 다.
 // 규칙: ①소스를 고쳤으면 프로브 전에 vite 를 재시작한다 ②의심되면 서빙되는 판을 먼저 확인:
 //   curl -s http://127.0.0.1:<port>/src/<파일> | grep -c <새로 넣은 심볼>
+//
+// 교차 오염(S-C 실측): 병렬 세션은 같은 워킹트리를 서빙하므로 **남의 미커밋 WIP 가 내 프레임에
+// 섞인다**(예: S-D 작업 중이던 조작 카드가 S-C 블라인드 채점 프레임에 등장). 자기 축 판정에는
+// 무방하나, 남의 축이 찍힌 지적은 게이트로 넘겨라. 제출·판정용 최종 재촬영은 전 세션 커밋 후
+// 게이트가 한다.
 import { createRequire } from 'node:module'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
