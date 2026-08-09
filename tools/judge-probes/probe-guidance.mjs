@@ -8,21 +8,43 @@ import { boot, shot, stats, sleep, saveLog, visibleText, verdict } from './commo
 
 const { browser, page, issues } = await boot()
 
-const t0 = (await stats(page)).t
-await page.keyboard.press('Enter')
-while ((await stats(page)).t - t0 < 33) await sleep(300)
+// ① 조작 카드 — 판정을 사건에 결박한다. 이전 판은 `engine.time ≥ 33` 뒤 벽시계 +1초에 상태를
+// 읽었는데, 인트로 종료가 실행마다 t=30.3~34.8 로 흔들려(3차 판정 §0-1) 같은 빌드가 PASS 와
+// FAIL 로 갈렸다 — 게임이 아니라 게이트의 결함이다. `cinematic:end`(cin-intro) 를 페이지에서
+// 받은 그 순간부터 카드 상태를 60ms 로 샘플링해 수명 전체를 잡는다.
+await page.evaluate(() => {
+  const E = window.__ENGINE__
+  const rec = { end: null, first: null, hid: null, samples: [] }
+  window.__CARD__ = rec
+  E.bus.on('cinematic:end', ({ id }) => {
+    if (id !== 'cin-intro' || rec.end != null) return
+    rec.end = +E.time.toFixed(2)
+    const tick = () => {
+      const s = E.get('hud')?.controlsCardState?.() ?? 'never'
+      const t = +E.time.toFixed(2)
+      rec.samples.push([t, s])
+      if (s === 'visible' && rec.first == null) rec.first = t
+      if (s === 'hidden' && rec.first != null && rec.hid == null) rec.hid = t
+      if (rec.hid == null && rec.samples.length < 600) setTimeout(tick, 60)
+    }
+    tick()
+  })
+})
 
-// ① 조작 카드 — 이양 +1초에 visible, 이후 자동 소거는 폴링으로 잰다.
-// 고정 벽시계 대기(+7s)는 엔진 시계 0.4배 조건에서 카드 수명(엔진 초)을 못 덮어 오탐한다.
-await sleep(1000)
-const cardEarly = await page.evaluate(() => window.__ENGINE__.get('hud')?.controlsCardState?.() ?? 'never')
-await shot(page, 'guide-00-controls-card')
-let cardLate = cardEarly
-for (let i = 0; i < 60; i++) {                 // 최대 30초 벽시계 — 0.4배에서도 엔진 12초를 덮는다
-  await sleep(500)
-  cardLate = await page.evaluate(() => window.__ENGINE__.get('hud')?.controlsCardState?.() ?? 'never')
-  if (cardLate === 'hidden') break
+await page.keyboard.press('Enter')
+await page.waitForFunction(() => window.__CARD__.end != null, null, { timeout: 240000 })
+
+// 카드가 떠 있는 동안 프레임을 남긴다(판독성은 독립 에이전트 몫 — 아래 안내 참조).
+for (let i = 0; i < 300; i++) {
+  const c = await page.evaluate(() => ({ f: window.__CARD__.first, h: window.__CARD__.hid }))
+  if (c.f != null || c.h != null) break
+  await sleep(120)
 }
+await shot(page, 'guide-00-controls-card')
+await page.waitForFunction(() => window.__CARD__.hid != null, null, { timeout: 120000 }).catch(() => {})
+const card = await page.evaluate(() => window.__CARD__)
+const cardEarly = card.first != null ? 'visible' : 'never'
+const cardLate = card.hid != null ? 'hidden' : cardEarly
 
 // ② Esc 일시정지 — 열림 중 W 1.6초: 위치 동결. 닫힘 후 W 1초: 이동 복귀
 await page.keyboard.press('Escape')
@@ -56,11 +78,13 @@ const after = await page.evaluate(() => ({
   st: !!window.__ENGINE__.get('settings')?.isOpen?.()
 }))
 
-saveLog('probe-guidance', { cardEarly, cardLate, settingsOpen, frozen, resumed, hasControlsRow, nbOpen, after, issues })
+saveLog('probe-guidance', { card, cardEarly, cardLate, settingsOpen, frozen, resumed, hasControlsRow, nbOpen, after, issues })
 
 verdict([
-  ['조작 카드: 이양 직후 표시', cardEarly === 'visible', `+1s 상태 ${cardEarly}`],
-  ['조작 카드: 자동 소거', cardLate === 'hidden', `+7s 상태 ${cardLate}`],
+  ['조작 카드: 이양 직후 표시', card.first != null,
+    `cinematic:end t=${card.end} → visible t=${card.first ?? '없음'}`],
+  ['조작 카드: 자동 소거', card.hid != null,
+    card.first != null && card.hid != null ? `수명 ${(card.hid - card.first).toFixed(2)} 엔진초` : `상태 ${cardLate}`],
   ['Esc 일시정지: 이동 동결', settingsOpen && frozen < 0.05, `열림 중 이동 ${frozen.toFixed(3)}m`],
   ['Esc 해제: 이동 복귀', resumed > 0.2, `닫힘 후 이동 ${resumed.toFixed(2)}m`],
   ['설정 카드 조작 안내 행', hasControlsRow, ''],
