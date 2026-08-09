@@ -3495,3 +3495,43 @@ game-guide 는 조작 4키+심문 입력을 전부 복원했고, ai-tech 는 3�
   (`display-name` ×3 · `materials-outside-factory` ×1)은 HEAD 부터 있던 것으로 무관하다.
 - **지시**: `graph.js → music.js·cues.js` 로 갈랐던 것과 같은 방식으로 3줄을 덜어내면 닫힌다.
   게이트가 린트를 통과 조건으로 쓸 경우 회수 전에 필요하다.
+
+### [ ] S-J(촉감·소리) → 게이트 · `tools/judge-probes/probe-guidance.mjs`
+- **파일**: `tools/judge-probes/probe-guidance.mjs` — 카드 판정 2행(표시·자동 소거)
+- **루브릭**: J5①
+- **문제**: 조작 카드의 소거 조건을 바꿨다(`src/ui/hud.js`, 커밋 17e83da). 고정 3.5초 →
+  **"첫 이동 입력(WASD) 후 1.5초" 또는 "표시 8초" 중 먼저 오는 쪽**. 프로브는 이양 후 입력을
+  넣지 않으므로 **항상 8초 경로**를 탄다. 그런데 샘플러가 `rec.samples.length < 600`
+  (60ms × 600 = 36초 벽시계)에서 멈춘다 — 엔진 시계가 실시간의 0.4배면 8엔진초가 20초
+  벽시계로 들어오지만, GPU 경합으로 0.2배까지 떨어지면 40초 벽시계가 되어 **예산을 넘겨
+  `hid=null` → "자동 소거" FAIL** 이 된다. 게임 결함이 아니라 예산 문제고, 3차 판정 §0-1 이
+  닫은 오탐과 같은 계열이다.
+- **지시**: 샘플 상한 `600` → `1600` 으로 올린다(간격 60ms 유지 시 96초 벽시계 창). 판정문의
+  기대 수명도 "3.46 엔진초" → **"6~9 엔진초(입력 없음)"** 로 갱신. 이동 경로까지 재려면
+  `first` 확인 뒤 `w` 를 눌러 1.5초 내 소거를 확인하면 된다.
+- **요청자가 처리한 부분**: `controlsCardState()` 훅 계약은 그대로다('visible'|'hidden'|'never').
+  로컬 실측(자기 스크립트, 배포본 아님) — 입력 없음 **8.01 엔진초** · 이동 입력 후 **1.60초**,
+  두 실행 모두 콘솔 0. 로그는 `shots/sj/card-idle.json` · `shots/sj/card-move.json`.
+
+### [ ] S-J(촉감·소리) → ARCHITECTURE 소유자 · `src/audio/ambience.js` 등재
+- **파일**: `docs/ARCHITECTURE.md` — audio 모듈 분권 파일 목록
+- **문제**: `src/audio/ambience.js` 를 신설했다(커밋 372d52f). `engine.js` 가 500줄 상한을
+  넘어서(503) 이산 사건 스케줄러(`_sched`)와 배회 스웰을 함께 뺀 것으로, music.js·radio.js·
+  graph.js 와 같은 **engine.js 소유의 분권 파일**이다. 계약상 오디오 모듈은 여전히 하나다.
+- **지시**: audio 분권 파일 목록에 `ambience.js — 이산 환경 사건 스케줄 · 배회 스웰 · 원거리
+  단발음` 한 줄 추가. 공개 심볼은 `buildSwell(a)`(graph.js 가 호출) · `ambienceTick(a, t)`
+  (engine.update 가 호출) · `swellAt(t)` · `ACT_WATER`(engine `_levels` 가 소비) 넷이다.
+- **요청자가 처리한 부분**: `ACT_WATER` 를 engine.js 에서 이 파일로 옮기고 engine 이 import
+  하도록 방향을 한쪽으로 고정했다(순환 없음).
+
+### [x] S-J(촉감·소리) — 라우팅 받은 `src/ui/type.js` `wrap()` 처리 완료
+- **파일**: `src/ui/type.js` — `wrap()` 어절 경계 개행(커밋 8d32a83)
+- **근거**: 게이트가 96aa34c 로 S-J 에 조건부 라우팅한 건. 이번 라운드에 신설한 **검분 컷이
+  같은 조판기를 화면 중앙에서 쓴다** — "2주치"가 "2 / 주치"로 갈라진 것이 J4 판정 프레임에
+  그대로 찍혔다(수정 전 프레임).
+- **옵트인 플래그를 두지 않은 이유**: `wrap()` 호출부가 정확히 **둘**이다 — `casebook.docItem`
+  (수사노트·서류철 낱장)과 `board.js` 클레임. 조작 카드·타이틀은 `wrap` 을 쓰지 않는다
+  (`typed` 직접 호출). 미검수 면이 없어서 플래그가 지킬 대상이 없다.
+- **재검수**: 호출부 2곳을 프레임으로 대조했다 — `notebook-open`·`notebook-present` 픽셀차
+  **0%**, `deduction-board` **0.17%** 변화로 "바 / 깥에서"→"바깥에서", 행수 3행 유지·넘침 없음.
+  전후 샷 `shots/sj/wrap-before/` · `shots/sj/wrap-after/`.
