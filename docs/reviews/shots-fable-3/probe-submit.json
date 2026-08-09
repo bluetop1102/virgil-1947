@@ -1,0 +1,242 @@
+{
+ "log": [
+  {
+   "shot": "sub-10-s1-lines",
+   "pct": 1.16,
+   "mean": 64.4,
+   "t": 44.8,
+   "expo": 29.98,
+   "pos": [
+    -2.74,
+    0,
+    -1.93
+   ],
+   "phase": "lines",
+   "focus": "npc/deitch"
+  },
+  {
+   "shot": "sub-11-s1-choice",
+   "pct": 1.29,
+   "mean": 66.9,
+   "t": 49.9,
+   "expo": 28.42,
+   "pos": [
+    -2.74,
+    0.02,
+    -1.93
+   ],
+   "phase": "choice",
+   "focus": "npc/deitch"
+  },
+  {
+   "shot": "sub-20-s2-lines",
+   "pct": 4.13,
+   "mean": 62,
+   "t": 59.7,
+   "expo": 20.09,
+   "pos": [
+    -2.87,
+    0,
+    -2.43
+   ],
+   "phase": "lines",
+   "focus": "npc/deitch"
+  },
+  {
+   "shot": "sub-21-s2-choice",
+   "pct": 3.82,
+   "mean": 67.3,
+   "t": 63.6,
+   "expo": 21,
+   "pos": [
+    -2.87,
+    0.02,
+    -2.43
+   ],
+   "phase": "choice",
+   "focus": "npc/deitch"
+  },
+  {
+   "shot": "sub-30-picker",
+   "pct": 0.01,
+   "mean": 115.3,
+   "t": 64.9,
+   "expo": 20.5,
+   "pos": [
+    -2.88,
+    0,
+    -2.46
+   ],
+   "phase": "choice",
+   "focus": "npc/deitch"
+  },
+  {
+   "shot": "sub-31-picker-register",
+   "pct": 0.01,
+   "mean": 115.3,
+   "t": 65.6,
+   "expo": 20.78,
+   "pos": [
+    -2.88,
+    0,
+    -2.46
+   ],
+   "phase": "choice",
+   "focus": "npc/deitch"
+  },
+  {
+   "shot": "sub-32-verdict-a",
+   "pct": 2.39,
+   "mean": 64.8,
+   "t": 66.8,
+   "expo": 27.22,
+   "pos": [
+    -3.55,
+    0,
+    -2.56
+   ],
+   "phase": "lines",
+   "focus": "npc/deitch"
+  },
+  {
+   "shot": "sub-33-verdict-b",
+   "pct": 2.53,
+   "mean": 65.1,
+   "t": 69.1,
+   "expo": 27.52,
+   "pos": [
+    -3.55,
+    0.01,
+    -2.56
+   ],
+   "phase": "lines",
+   "focus": "npc/deitch"
+  },
+  {
+   "shot": "sub-40-s3-lines",
+   "pct": 1.16,
+   "mean": 63.9,
+   "t": 79.1,
+   "expo": 26.55,
+   "pos": [
+    -3.64,
+    0,
+    -1.89
+   ],
+   "phase": "lines",
+   "focus": "npc/deitch"
+  },
+  {
+   "shot": "sub-41-s3-choice",
+   "pct": 0.9,
+   "mean": 67.2,
+   "t": 84.1,
+   "expo": 25.65,
+   "pos": [
+    -3.64,
+    0.02,
+    -1.89
+   ],
+   "phase": "choice",
+   "focus": "npc/deitch"
+  }
+ ],
+ "issues": [],
+ "events": [
+  {
+   "t": 0.23,
+   "ev": "cinematic:start",
+   "p": {
+    "id": "cin-intro"
+   }
+  },
+  {
+   "t": 0.23,
+   "ev": "title:proceed",
+   "p": {}
+  },
+  {
+   "t": 30.24,
+   "ev": "cinematic:end",
+   "p": {
+    "id": "cin-intro"
+   }
+  },
+  {
+   "t": 34.27,
+   "ev": "evidence:collected",
+   "p": {
+    "id": "register"
+   }
+  },
+  {
+   "t": 34.27,
+   "ev": "player:interact",
+   "p": {
+    "targetId": "ev:register"
+   }
+  },
+  {
+   "t": 36.81,
+   "ev": "player:interact",
+   "p": {
+    "targetId": "npc/deitch"
+   }
+  },
+  {
+   "t": 36.81,
+   "ev": "act:phase",
+   "p": {
+    "act": 1,
+    "phase": "main"
+   }
+  },
+  {
+   "t": 49,
+   "ev": "interrogation:prompt",
+   "p": {
+    "sid": "deitch.S1"
+   }
+  },
+  {
+   "t": 49.93,
+   "ev": "interrogation:choose",
+   "p": {
+    "sid": "deitch.S1",
+    "choice": "TRUTH"
+   }
+  },
+  {
+   "t": 62.64,
+   "ev": "interrogation:prompt",
+   "p": {
+    "sid": "deitch.S2"
+   }
+  },
+  {
+   "t": 63.64,
+   "ev": "ui:open",
+   "p": {}
+  },
+  {
+   "t": 65.63,
+   "ev": "interrogation:choose",
+   "p": {
+    "sid": "deitch.S2",
+    "choice": "LIE"
+   }
+  },
+  {
+   "t": 65.63,
+   "ev": "ui:close",
+   "p": {}
+  },
+  {
+   "t": 83.08,
+   "ev": "interrogation:prompt",
+   "p": {
+    "sid": "deitch.S3"
+   }
+  }
+ ]
+}

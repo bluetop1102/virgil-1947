@@ -1,0 +1,674 @@
+{
+ "notes": {
+  "titleText": [
+   "HOTEL",
+   "VIRGIL",
+   "1947",
+   "체크인"
+  ],
+  "tBell": 4.8,
+  "handoverText": [],
+  "cardAtHandover": "hidden",
+  "cardTrail": [
+   {
+    "t": 34.24,
+    "s": "never"
+   },
+   {
+    "t": 34.84,
+    "ev": "cinematic:end"
+   },
+   {
+    "t": 35.44,
+    "s": "visible"
+   },
+   {
+    "t": 38.9,
+    "s": "hidden"
+   }
+  ],
+  "desk": [
+   -2.75,
+   1.1,
+   -3.24
+  ],
+  "deskPromptText": [],
+  "focus": "ev:register",
+  "pickupText": [],
+  "notebookText": [],
+  "settingsText": [
+   "객실 안내 · 조정표",
+   "품질 프리셋",
+   "‹",
+   "HIGH",
+   "›",
+   "시야각",
+   "‹",
+   "70°",
+   "›",
+   "마우스 감도",
+   "‹",
+   "100%",
+   "›",
+   "자막",
+   "‹",
+   "켬",
+   "›",
+   "음량",
+   "‹",
+   "100%",
+   "›",
+   "조작",
+   "이동 W·A·S·D   조사 E   수첩 Tab",
+   "변경 사항은 프런트 원장에 자동 기록됩니다.",
+   "음악: Kevin MacLeod (incompetech.com) · Creative Commons: By Attribution 4.0",
+   "카드 닫기"
+  ],
+  "radio": null
+ },
+ "issues": [],
+ "log": [
+  {
+   "shot": "fr-00-title",
+   "pct": 18.52,
+   "mean": 20.4,
+   "t": 2,
+   "expo": 13.86,
+   "pos": [
+    0,
+    0.01,
+    8
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-01-title-idle",
+   "pct": 18.51,
+   "mean": 20.4,
+   "t": 4.8,
+   "expo": 13.74,
+   "pos": [
+    0,
+    0.02,
+    8
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-10-cin-t4",
+   "pct": 99.94,
+   "mean": 0,
+   "t": 9.1,
+   "expo": 15.3,
+   "pos": [
+    0,
+    0,
+    8.75
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-10-cin-t8",
+   "pct": 99.91,
+   "mean": 0,
+   "t": 13.1,
+   "expo": 15.3,
+   "pos": [
+    0,
+    0,
+    8.75
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-10-cin-t12",
+   "pct": 0.04,
+   "mean": 98.7,
+   "t": 17,
+   "expo": 15.3,
+   "pos": [
+    0,
+    0,
+    8.73
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-10-cin-t18",
+   "pct": 0.11,
+   "mean": 91.5,
+   "t": 23.1,
+   "expo": 15.7,
+   "pos": [
+    0.42,
+    0,
+    3.52
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-10-cin-t24",
+   "pct": 0.17,
+   "mean": 96.2,
+   "t": 29.2,
+   "expo": 26.2,
+   "pos": [
+    -1.25,
+    -0.06,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-10-cin-t29",
+   "pct": 0.16,
+   "mean": 93.5,
+   "t": 34,
+   "expo": 26.58,
+   "pos": [
+    -1.25,
+    0.01,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-15-hand-d0",
+   "pct": 0.14,
+   "mean": 93.3,
+   "t": 34.3,
+   "expo": 26.5,
+   "pos": [
+    -1.25,
+    0.01,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-15-hand-d1",
+   "pct": 0.13,
+   "mean": 93.3,
+   "t": 35.3,
+   "expo": 26.53,
+   "pos": [
+    -1.25,
+    0.01,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-15-hand-d2",
+   "pct": 0.15,
+   "mean": 97.9,
+   "t": 36.2,
+   "expo": 26.55,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-15-hand-d3",
+   "pct": 0.14,
+   "mean": 98.4,
+   "t": 37.2,
+   "expo": 26.62,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-15-hand-d4",
+   "pct": 0.14,
+   "mean": 98.1,
+   "t": 38.1,
+   "expo": 26.57,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-15-hand-d5",
+   "pct": 0.12,
+   "mean": 95.8,
+   "t": 39.1,
+   "expo": 26.51,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-15-hand-d6",
+   "pct": 0.13,
+   "mean": 93.9,
+   "t": 40,
+   "expo": 26.48,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-15-hand-d7",
+   "pct": 0.11,
+   "mean": 93.8,
+   "t": 41,
+   "expo": 26.53,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-15-hand-d8",
+   "pct": 0.11,
+   "mean": 93.7,
+   "t": 41.9,
+   "expo": 26.6,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-15-hand-d9",
+   "pct": 0.13,
+   "mean": 93.7,
+   "t": 42.8,
+   "expo": 26.58,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-20-handover",
+   "pct": 0.16,
+   "mean": 93.8,
+   "t": 43.9,
+   "expo": 26.69,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-21-handover-2s",
+   "pct": 0.11,
+   "mean": 93.6,
+   "t": 46.1,
+   "expo": 26.52,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-22-card-gone",
+   "pct": 0.13,
+   "mean": 93.7,
+   "t": 52.4,
+   "expo": 26.56,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-30-look-0",
+   "pct": 0.06,
+   "mean": 102.1,
+   "t": 54.1,
+   "expo": 22.31,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-30-look-60",
+   "pct": 0.08,
+   "mean": 95.3,
+   "t": 55.8,
+   "expo": 31.98,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-30-look-120",
+   "pct": 0.03,
+   "mean": 103.5,
+   "t": 57.4,
+   "expo": 36.39,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-30-look-180",
+   "pct": 0.03,
+   "mean": 119.7,
+   "t": 59.1,
+   "expo": 25.73,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-30-look-240",
+   "pct": 0.13,
+   "mean": 91.8,
+   "t": 60.8,
+   "expo": 15.88,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-30-look-300",
+   "pct": 0.1,
+   "mean": 91,
+   "t": 62.5,
+   "expo": 14.65,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-31-look-up",
+   "pct": 0.11,
+   "mean": 81.3,
+   "t": 64.4,
+   "expo": 4.97,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-32-look-down",
+   "pct": 0.17,
+   "mean": 85,
+   "t": 66.1,
+   "expo": 7.65,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-40-desk-approach",
+   "pct": 0.11,
+   "mean": 93.3,
+   "t": 67.4,
+   "expo": 27.6,
+   "pos": [
+    -1.25,
+    0.02,
+    -1.38
+   ],
+   "phase": "idle",
+   "focus": "ev:register"
+  },
+  {
+   "shot": "fr-41-desk-prompt",
+   "pct": 0.38,
+   "mean": 86.6,
+   "t": 69.7,
+   "expo": 24.08,
+   "pos": [
+    -2.02,
+    0.02,
+    -1.6
+   ],
+   "phase": "idle",
+   "focus": "ev:register"
+  },
+  {
+   "shot": "fr-42-pickup-0",
+   "pct": 0.44,
+   "mean": 92.9,
+   "t": 70.3,
+   "expo": 26.89,
+   "pos": [
+    -2.02,
+    0.02,
+    -1.6
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-42-pickup-1",
+   "pct": 0.55,
+   "mean": 92.9,
+   "t": 70.9,
+   "expo": 26.87,
+   "pos": [
+    -2.02,
+    0.02,
+    -1.6
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-42-pickup-2",
+   "pct": 0.53,
+   "mean": 92.8,
+   "t": 71.5,
+   "expo": 26.87,
+   "pos": [
+    -2.02,
+    0.02,
+    -1.6
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-42-pickup-3",
+   "pct": 0.53,
+   "mean": 92.6,
+   "t": 72.1,
+   "expo": 26.8,
+   "pos": [
+    -2.02,
+    0.02,
+    -1.6
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-42-pickup-4",
+   "pct": 0.6,
+   "mean": 92.6,
+   "t": 72.6,
+   "expo": 26.75,
+   "pos": [
+    -2.02,
+    0.02,
+    -1.6
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-42-pickup-5",
+   "pct": 0.56,
+   "mean": 92.5,
+   "t": 73.2,
+   "expo": 26.71,
+   "pos": [
+    -2.02,
+    0.02,
+    -1.6
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-50-notebook",
+   "pct": 0.02,
+   "mean": 116.4,
+   "t": 75.4,
+   "expo": 26.85,
+   "pos": [
+    -2.02,
+    0.02,
+    -1.6
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-51-settings",
+   "pct": 0.92,
+   "mean": 70.6,
+   "t": 78.5,
+   "expo": 26.77,
+   "pos": [
+    -2.02,
+    0.02,
+    -1.6
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-70-wide-entrance",
+   "pct": 0.03,
+   "mean": 91.2,
+   "t": 90,
+   "expo": 14.56,
+   "pos": [
+    0.84,
+    0.02,
+    6.69
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-71-wide-chandelier",
+   "pct": 0.07,
+   "mean": 95.5,
+   "t": 93.5,
+   "expo": 15.87,
+   "pos": [
+    1.53,
+    0.02,
+    5.81
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-72-desk-oblique",
+   "pct": 0.08,
+   "mean": 92.4,
+   "t": 99.2,
+   "expo": 21.64,
+   "pos": [
+    1.41,
+    0.02,
+    1.96
+   ],
+   "phase": "idle",
+   "focus": null
+  },
+  {
+   "shot": "fr-73-keyrack",
+   "pct": 0.22,
+   "mean": 93,
+   "t": 104.7,
+   "expo": 26.82,
+   "pos": [
+    -1.06,
+    0.02,
+    -0.64
+   ],
+   "phase": "idle",
+   "focus": null
+  }
+ ]
+}

@@ -1,0 +1,59 @@
+[
+ {
+  "t": 4.83,
+  "ev": "cinematic:start",
+  "p": {
+   "id": "cin-intro"
+  }
+ },
+ {
+  "t": 4.83,
+  "ev": "title:proceed",
+  "p": {}
+ },
+ {
+  "t": 34.84,
+  "ev": "cinematic:end",
+  "p": {
+   "id": "cin-intro"
+  }
+ },
+ {
+  "t": 69.72,
+  "ev": "evidence:collected",
+  "p": {
+   "id": "register"
+  }
+ },
+ {
+  "t": 69.72,
+  "ev": "player:interact",
+  "p": {
+   "targetId": "ev:register"
+  }
+ },
+ {
+  "t": 73.28,
+  "ev": "ui:open",
+  "p": {}
+ },
+ {
+  "t": 75.41,
+  "ev": "ui:close",
+  "p": {}
+ },
+ {
+  "t": 76.64,
+  "ev": "game:pause",
+  "p": {
+   "on": true
+  }
+ },
+ {
+  "t": 78.5,
+  "ev": "game:pause",
+  "p": {
+   "on": false
+  }
+ }
+]

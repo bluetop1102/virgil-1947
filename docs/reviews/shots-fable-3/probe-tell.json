@@ -1,0 +1,94 @@
+{
+ "events": [
+  {
+   "t": 0.22,
+   "ev": "cinematic:start",
+   "p": {
+    "id": "cin-intro"
+   }
+  },
+  {
+   "t": 0.22,
+   "ev": "title:proceed",
+   "p": {}
+  },
+  {
+   "t": 30.24,
+   "ev": "cinematic:end",
+   "p": {
+    "id": "cin-intro"
+   }
+  },
+  {
+   "t": 34.85,
+   "ev": "evidence:collected",
+   "p": {
+    "id": "register"
+   }
+  },
+  {
+   "t": 34.85,
+   "ev": "player:interact",
+   "p": {
+    "targetId": "ev:register"
+   }
+  },
+  {
+   "t": 37.07,
+   "ev": "player:interact",
+   "p": {
+    "targetId": "npc/deitch"
+   }
+  },
+  {
+   "t": 37.07,
+   "ev": "act:phase",
+   "p": {
+    "act": 1,
+    "phase": "main"
+   }
+  },
+  {
+   "t": 49.26,
+   "ev": "interrogation:prompt",
+   "p": {
+    "sid": "deitch.S1"
+   }
+  },
+  {
+   "t": 49.5,
+   "ev": "interrogation:choose",
+   "p": {
+    "sid": "deitch.S1",
+    "choice": "TRUTH"
+   }
+  },
+  {
+   "t": 62.19,
+   "ev": "interrogation:prompt",
+   "p": {
+    "sid": "deitch.S2"
+   }
+  },
+  {
+   "t": 62.42,
+   "ev": "ui:open",
+   "p": {}
+  },
+  {
+   "t": 62.53,
+   "ev": "interrogation:choose",
+   "p": {
+    "sid": "deitch.S2",
+    "choice": "LIE"
+   }
+  },
+  {
+   "t": 62.53,
+   "ev": "ui:close",
+   "p": {}
+  }
+ ],
+ "issues": [],
+ "goalLine": "프런트부터다. 숙박부를 봐야겠다."
+}
