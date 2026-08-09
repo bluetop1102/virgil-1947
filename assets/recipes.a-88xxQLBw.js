@@ -1,0 +1,1 @@
+import{t as e}from"./recipes.a-D925-RY2.js";export{e as RECIPES_A};
