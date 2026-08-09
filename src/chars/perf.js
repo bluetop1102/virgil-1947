@@ -30,76 +30,127 @@ function pulse (t, rate = 1) {
   return Math.sin(t * Math.PI * 2 * rate)
 }
 
-function deitchPose (state, t, phase, variant = 0) {
+function add3 (a = ZERO, b = ZERO) {
+  return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
+}
+
+// 여러 층(바닥자세 + 텔)을 관절별로 더한다. 뒤 층이 앞 층을 덮지 않고 얹힌다.
+function mix (...layers) {
+  const out = {}
+  for (const layer of layers) {
+    if (!layer) continue
+    for (const key of Object.keys(layer)) out[key] = add3(out[key], layer[key])
+  }
+  return out
+}
+
+// ── 팔 2링크 IK ────────────────────────────────────────────────────────
+// 텔을 관절 각이 아니라 "손이 어디 있는가"로 쓰기 위한 것. 프런트 카운터 상판이 y=1.09고
+// 다이치의 어깨가 y=1.405라, 팔을 각도로 쓰면 손목 높이가 몇 cm만 어긋나도 상판 뒤로
+// 숨어 텔이 통째로 관찰 불가가 된다(2차 판정 §0-6의 실체 — 실측: 기본 자세의 손목은 y=0.888).
+// fwd = 어깨에서 앞(+z 로컬)으로, down = 어깨에서 아래로. 둘 다 미터.
+const UPPER = 0.292
+const FORE = 0.263
+
+function armPose (side, fwd, down, base, swing = 0, roll = 0) {
+  const key = side < 0 ? 'left' : 'right'
+  const r = clamp(Math.hypot(fwd, down), Math.abs(UPPER - FORE) + 0.02, UPPER + FORE - 0.012)
+  const bend = Math.acos(clamp((r * r - UPPER * UPPER - FORE * FORE) / (2 * UPPER * FORE), -1, 1))
+  const aim = Math.atan2(fwd, down)
+  const lead = Math.atan2(FORE * Math.sin(bend), UPPER + FORE * Math.cos(bend))
+  const upperAngle = aim - lead              // 어깨→팔꿈치 (앞으로 기운 각, 양수 = 앞)
+  const foreAngle = upperAngle + bend        // 팔꿈치→손목
+  const b = (name) => base?.[name] || ZERO
+  return {
+    [`${key}Shoulder`]: [-upperAngle - b(`${key}Shoulder`)[0], swing, 0],
+    [`${key}Elbow`]: [-bend - b(`${key}Elbow`)[0], 0, 0],
+    // 손등이 상판을 향하도록 손목을 눕힌다 — 팔뚝이 수평이면 손은 앞을 가리킨다
+    [`${key}Wrist`]: [foreAngle - 1.62 + roll - b(`${key}Wrist`)[0], 0, 0]
+  }
+}
+
+// 심문 바닥자세 — 두 팔을 프런트 카운터에 올린다. 손목 y≈1.135 (상판 1.09 위).
+// STORY §2의 텔은 전부 손에서 시작한다("숙박부 모서리를 맞춘다" · 오른손 하강) —
+// 손이 안 보이면 재생돼도 관찰되지 않는다. 이 자세가 텔의 전제조건이다.
+const REST_FWD = 0.400
+const REST_DOWN = 0.245
+
+function counterRest (base, side = 0) {
+  if (side > 0) return armPose(1, REST_FWD, REST_DOWN, base)
+  if (side < 0) return armPose(-1, REST_FWD, REST_DOWN, base)
+  return mix(armPose(-1, REST_FWD, REST_DOWN, base), armPose(1, REST_FWD, REST_DOWN, base))
+}
+
+// 배경 인형·비심문 NPC용 상시 미동. 호흡(0.20Hz)·시선 이동(0.09Hz)에 더해 아주 느린
+// 체중 이동을 어깨 롤로 준다 — 정지 프레임에서 "세워둔 마네킹"으로 읽히던 3인(도일·
+// 루이즈·프라이스) 대응(JUDGE J3 `j1-33-look180`).
+function standIdle (t, phase) {
+  const breath = pulse(t + phase, 0.20)
+  const glance = pulse(t + phase * 0.5, 0.09)
+  const shift = pulse(t + phase * 1.7, 0.043)
+  return {
+    head: [breath * 0.011 - shift * 0.006, glance * 0.026 + shift * 0.018, glance * 0.005],
+    leftShoulder: [breath * 0.008, shift * 0.010, -breath * 0.005 - shift * 0.014],
+    rightShoulder: [breath * 0.008, shift * 0.010, breath * 0.005 - shift * 0.014],
+    leftElbow: [shift * 0.012, 0, 0],
+    rightElbow: [-shift * 0.012, 0, 0]
+  }
+}
+
+function deitchPose (state, t, phase, variant = 0, base = null) {
   if (state === 'anxious') {
-    // 숙박부 모서리를 반복해서 맞춘다 (STORY §2). 예전 값은 손목 ±2°라 데스크 너머에서
-    // 아무것도 읽히지 않았다 — 팔이 장부로 올라갔다 내려오는 왕복 자체를 신호로 쓴다.
-    // variant 는 같은 신호의 다른 실행이다: 0은 양손으로 좌우를 맞추고, 1은 오른손만 위
-    // 모서리를 민다. 신호를 새로 만들지 않는다(STORY 가 진실원) — 치는 방식만 바꾼다.
+    // 숙박부 모서리를 반복해서 맞춘다 (STORY §2). 손은 상판에 붙어 있고 앞뒤로 밀었다
+    // 당긴다 — 팔 길이(0.555)가 상한이라 왕복은 8cm다. 진폭은 손목 롤과 어깨 스윙으로
+    // 보탠다. variant 0은 양손으로 좌우를 맞추고, 1은 오른손만 위 모서리를 민다.
     const solo = variant % 2 === 1
     const cycle = solo ? 3.8 : 3.0
     const local = (t + phase * cycle) % cycle
     const burst = ease(local / 0.42) * (1 - ease((local - (cycle - 1.15)) / 0.55))
-    // 손은 데스크를 떠나지 않는다(E4 — 다이치는 프런트를 벗어나지 않는다). 자세는 유지한
-    // 채 맞추는 동작만 주기적으로 커진다. hold 하한 0.55가 팔이 옆으로 떨어지는 것을 막는다.
-    const hold = 0.55 + 0.45 * burst
     const beat = pulse(local, solo ? 0.85 : 1.25) * burst
-    const pose = {
-      head: [0.085 * hold, (solo ? 0.055 : 0.018) * hold + beat * 0.03, 0],
-      rightShoulder: [0.30 * hold + (solo ? 0.09 * beat : 0), 0, 0.12 * hold - (solo ? 0 : 0.10 * beat)],
-      rightElbow: [-0.70 * hold, 0, 0.18 * hold],
-      rightWrist: [0.14 * hold + 0.13 * beat, 0, -0.12 * hold]
-    }
-    if (solo) {
-      pose.leftShoulder = [0.30 * hold, 0, -0.12 * hold]
-      pose.leftElbow = [-0.70 * hold, 0, -0.18 * hold]
-      pose.leftWrist = [0.14 * hold, 0, 0.12 * hold]
-    } else {
-      pose.leftShoulder = [0.30 * hold, 0, -0.12 * hold + 0.10 * beat]
-      pose.leftElbow = [-0.70 * hold, 0, -0.18 * hold]
-      pose.leftWrist = [0.14 * hold - 0.13 * beat, 0, 0.12 * hold]
-    }
-    return pose
+    const push = 0.042 * burst + 0.026 * beat
+    const lift = 0.014 * burst
+    return mix(
+      armPose(1, REST_FWD + push, REST_DOWN - lift, base, -0.05 * burst, 0.20 * burst + 0.16 * beat),
+      armPose(-1, REST_FWD + (solo ? 0 : push), REST_DOWN - (solo ? 0 : lift), base,
+        0.05 * burst, solo ? 0 : 0.20 * burst - 0.16 * beat),
+      { head: [0.10 * burst, (solo ? 0.075 : 0.028) * burst + beat * 0.045, -0.02 * beat] }
+    )
   }
 
   if (state === 'lying') {
-    // 오른손이 데스크 아래로 내려간다 (STORY §2). variant 1은 내려갔다가 스스로 거둔다 —
-    // 같은 신호의 다른 실행. 두 번째 거짓이 첫 번째의 복사로 읽히지 않게 하는 것이 목적이다.
+    // 오른손이 숙박부를 떠나 몸쪽으로 물러나며 내려간다 (STORY §2 "데스크 아래로").
+    // **하강은 상판 선(y≈1.10)에서 멈춘다** — 그 아래로 더 내리면 상판이 손을 통째로
+    // 가려 텔이 관찰 불가가 되기 때문이다(카메라로 풀 수 없는 세트 기하). 진폭은 27cm
+    // 후퇴 + 어깨 스윙 + 시선 회피로 채운다. variant 1은 내려갔다가 스스로 거둔다.
     const reach = variant % 2 === 1
-      ? ease(t / 0.5) * (1 - ease((t - 1.55) / 0.7))
-      : ease(t / 0.72)
-    const search = pulse(Math.max(0, t - 0.72), 0.42)
-    return {
-      head: [-0.035, -0.055 * reach, -0.014],
-      leftShoulder: [0.025, 0, -0.025],
-      rightShoulder: [0.34 * reach, 0.04, 0.16 * reach],
-      rightElbow: [0.58 * reach, 0, -0.12 + search * 0.025],
-      rightWrist: [-0.18 * reach, 0, -0.18 * reach]
-    }
+      ? ease(t / 0.62) * (1 - ease((t - 1.9) / 0.85))
+      : ease(t / 0.78)
+    const search = pulse(Math.max(0, t - 0.78), 0.42)
+    return mix(
+      counterRest(base, -1),
+      armPose(1, REST_FWD - 0.265 * reach, REST_DOWN + 0.030 * reach, base,
+        0.30 * reach, -0.34 * reach + search * 0.06),
+      {
+        head: [-0.05 - 0.12 * reach, -0.30 * reach, -0.05 * reach],
+        leftShoulder: [0.03 * reach, 0, -0.04 * reach]
+      }
+    )
   }
 
   if (state === 'breaking') {
+    // 안경을 벗고 눈두덩을 누른다 (STORY §2). 두 손이 카운터에서 얼굴로 올라온다.
     const reach = ease(t / 0.85)
-    const remove = ease((t - 0.65) / 0.65)
     const press = ease((t - 1.20) / 0.72)
-    return {
-      head: [-0.10 * reach - 0.18 * press, 0.02 * remove, -0.055 * press],
-      leftShoulder: [-0.46 * reach, 0, -0.24 * reach],
-      leftElbow: [-1.20 * reach, 0, -0.28 * reach],
-      leftWrist: [-0.38 * reach - 0.12 * press, 0, 0.34 * reach],
-      rightShoulder: [-0.44 * reach, 0, 0.24 * reach],
-      rightElbow: [-1.16 * reach, 0, 0.28 * reach],
-      rightWrist: [-0.34 * reach - 0.16 * press, 0, -0.34 * reach + 0.10 * remove]
-    }
+    const fwd = REST_FWD + (0.19 - REST_FWD) * reach
+    const down = REST_DOWN + (-0.15 - REST_DOWN) * reach - 0.03 * press
+    return mix(
+      armPose(-1, fwd, down, base, 0.10 * reach, -0.55 * reach),
+      armPose(1, fwd, down, base, -0.10 * reach, -0.55 * reach),
+      { head: [-0.10 * reach - 0.20 * press, 0.02 * reach, -0.055 * press] }
+    )
   }
 
-  const breath = pulse(t + phase, 0.20)
-  const glance = pulse(t + phase * 0.5, 0.09)
-  return {
-    head: [breath * 0.009, glance * 0.018, glance * 0.004],
-    leftShoulder: [breath * 0.006, 0, -breath * 0.004],
-    rightShoulder: [breath * 0.006, 0, breath * 0.004]
-  }
+  return mix(counterRest(base), standIdle(t, phase))
 }
 
 function doylePose (reaction, t) {
@@ -153,7 +204,7 @@ export class Performance {
     this.variants = new Map()
     this.history = []
     this.doyle = { successes: 0, wrongIndex: -1, reaction: null }
-    this.doyleTrack = null
+    this.ambient = new Map()
   }
 
   async init (engine) {
@@ -226,41 +277,42 @@ export class Performance {
     return true
   }
 
+  // 신호를 아직 안 받은 인물의 상시 트랙. 배경 인형이 미동 없이 서 있어 마네킹으로
+  // 읽히던 것(JUDGE J3)을 여기서 푼다 — 재생 중인 클립이 없어도 호흡은 돈다.
+  _ambient (npc) {
+    let track = this.ambient.get(npc)
+    if (!track) {
+      track = {
+        npc, state: 'idle', clip: `${npc}.idle`, startedAt: 0, plays: 0, variant: 0,
+        phase: rng(this.seedFor(npc))(), seed: this.seedFor(npc), joints: null, base: null
+      }
+      this.ambient.set(npc, track)
+    }
+    return track
+  }
+
   update (dt, elapsed) {
     const time = Number.isFinite(elapsed) ? elapsed : (this.engine?.time || 0)
     const rigs = this.engine?.get('characters')?.rigs
     if (!rigs) return
 
-    for (const track of this.tracks.values()) {
-      const rig = rigs.get(track.npc)
+    for (const [npc, rig] of rigs) {
+      if (rig?.root?.visible === false) continue
+      const track = this.tracks.get(npc) ?? this._ambient(npc)
       if (!this.bindRig(track, rig)) continue
       const local = Math.max(0, time - track.startedAt)
-      const pose = track.npc === 'deitch'
-        ? deitchPose(track.state, local, track.phase, track.variant)
-        : deitchPose(track.state === 'breaking' ? 'breaking' : 'idle', local, track.phase)
+      const reaction = npc === 'doyle' ? doylePose(this.doyle.reaction, time) : null
+      let pose
+      if (reaction) pose = mix(standIdle(local, track.phase), reaction)
+      else if (npc === 'deitch') pose = deitchPose(track.state, local, track.phase, track.variant, track.base)
+      else if (track.state === 'breaking') pose = deitchPose('breaking', local, track.phase, 0, track.base)
+      else pose = standIdle(local, track.phase)
       applyPose(track, pose, dt)
       rig.root.userData.performance = {
-        state: track.state,
-        clip: track.clip,
-        startedAt: track.startedAt,
-        plays: track.plays
-      }
-    }
-
-    const doyleRig = rigs.get('doyle')
-    if (!this.doyleTrack) this.doyleTrack = {
-      npc: 'doyle', state: 'idle', clip: 'doyle.idle', startedAt: 0,
-      plays: 0, phase: 0, seed: this.seedFor('doyle'), joints: null, base: null
-    }
-    const doyleTrack = this.tracks.get('doyle') || this.doyleTrack
-    if (this.bindRig(doyleTrack, doyleRig)) {
-      const pose = doylePose(this.doyle.reaction, time)
-      if (pose) applyPose(doyleTrack, pose, dt)
-      if (doyleRig?.root) doyleRig.root.userData.performance = {
-        state: pose ? 'reaction' : doyleTrack.state,
-        clip: pose ? `doyle.link-${this.doyle.reaction.ok ? this.doyle.successes : 'wrong'}` : doyleTrack.clip,
-        startedAt: pose ? this.doyle.reaction.startedAt : doyleTrack.startedAt,
-        plays: pose ? 1 : doyleTrack.plays
+        state: reaction ? 'reaction' : track.state,
+        clip: reaction ? `doyle.link-${this.doyle.reaction.ok ? this.doyle.successes : 'wrong'}` : track.clip,
+        startedAt: reaction ? this.doyle.reaction.startedAt : track.startedAt,
+        plays: reaction ? 1 : track.plays
       }
     }
   }
@@ -277,7 +329,7 @@ export class Performance {
     this.tracks.clear()
     this.variants.clear()
     this.history.length = 0
-    this.doyleTrack = null
+    this.ambient.clear()
     this.engine = null
   }
 }

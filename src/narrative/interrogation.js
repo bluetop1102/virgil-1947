@@ -204,7 +204,8 @@ export class Interrogation {
       if (!this._eligible(s, rec)) continue
       this.cur = s
       if (rec.presented.indexOf(s.id) < 0) rec.presented.push(s.id)
-      this.engine.bus.emit('interrogation:statement', { npc: this.npc, line: s.text, truth: !!s.truth })
+      // camera = script.js 의 진술별 컷 지시. CINEMATICS 가 구도를 다시 잡는 근거다.
+      this.engine.bus.emit('interrogation:statement', { npc: this.npc, line: s.text, truth: !!s.truth, camera: s.camera || null })
       const perf = s.anxiousTell ? 'anxious' : s.truth ? 'idle' : 'lying'
       this.engine.bus.emit('perf:state', { npc: this.npc, state: perf })
       this._say(this._name(this.npc), s.text, true)

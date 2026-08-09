@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { bevelBox, group, mesh } from '../world/kit.js'
+import { EYE, InterrogationCamera, smooth, yawTo } from './camera.js'
 
 export const INTRO_DURATION = 30
 
@@ -20,7 +21,6 @@ const COPY = [
   '호텔은 둘 다 신고하지 않았다.'
 ]
 
-const EYE = 1.68
 const HANDOFF_AT = 27
 const CAMERA_START = new THREE.Vector3(0, EYE, 8.75)
 const CAMERA_MID = new THREE.Vector3(0.45, EYE, 3.6)
@@ -31,32 +31,6 @@ const DEITCH_LOOK = new THREE.Vector3(-3.35, 1.70, -4.25)
 const BADGE_POS = new THREE.Vector3(-1.35, 1.105, -3.18)
 const HAND_AMP = THREE.MathUtils.degToRad(0.15)
 
-const INTERROGATION = Object.freeze({
-  baseLens: 40,
-  truthLens: 50,
-  truthBack: 0.5,
-  doubtTrack: 0.4,
-  liePush: 0.5,
-  // 반 발짝. 푸시인(0.5)을 넘기지 않아야 오답이 반복돼도 사거리(4.2m) 밖으로 밀려나지 않는다
-  wrongBack: 0.55,
-  wrongLens: 35,          // 물러나며 방이 열린다 — 거리로 못 채운 진폭을 화각으로 채운다
-  breakDrop: 0.08,
-  dofBias: 1,
-  dofMs: 650
-})
-
-function clamp01 (v) {
-  return Math.min(1, Math.max(0, v))
-}
-
-function smooth (v) {
-  const x = clamp01(v)
-  return x * x * (3 - 2 * x)
-}
-
-function yawTo (from, target) {
-  return Math.atan2(-(target.x - from.x), -(target.z - from.z))
-}
 
 function makeBadge () {
   const root = group('cin-intro.badge')
@@ -93,183 +67,6 @@ function makeHand () {
   return root
 }
 
-// ── 심문 카메라 ──────────────────────────────────────────────────────
-// 선택은 순간이지만 카메라는 끊지 않는다. 모든 반응은 현재 포즈에서 이어지는 단일 보간이다.
-class InterrogationCamera {
-  constructor (engine) {
-    this.engine = engine
-    this.move = null
-    this.lieBase = null
-    this.npc = null
-    this.linkCount = 0
-    this.off = [
-      engine.bus.on('interrogation:aiming', (p) => this._aim(p)),
-      engine.bus.on('interrogation:verdict', (p) => this._verdict(p)),
-      engine.bus.on('perf:state', (p) => this._performance(p)),
-      engine.bus.on('deduction:link', (p) => this._link(p))
-    ]
-  }
-
-  _pose () {
-    const camera = this.engine.camera
-    return {
-      pos: camera.position.clone(),
-      quat: camera.quaternion.clone(),
-      lens: camera.getFocalLength()
-    }
-  }
-
-  _basis (quat = this.engine.camera.quaternion) {
-    return {
-      forward: new THREE.Vector3(0, 0, -1).applyQuaternion(quat).normalize(),
-      right: new THREE.Vector3(1, 0, 0).applyQuaternion(quat).normalize()
-    }
-  }
-
-  _anchorQuaternion (npc, from, fallback) {
-    let anchor = null
-    this.engine.scene.traverse((o) => {
-      if (!anchor && o.visible !== false && o.userData?.anchor === `npc/${npc}`) anchor = o
-    })
-    if (!anchor) return fallback.clone()
-    const target = new THREE.Vector3()
-    anchor.getWorldPosition(target)
-    target.y += 1.46
-    const probe = new THREE.Object3D()
-    probe.position.copy(from)
-    probe.lookAt(target)
-    return probe.quaternion
-  }
-
-  _start (target, duration, linear = false) {
-    const from = this._pose()
-    this.move = {
-      from,
-      to: {
-        pos: target.pos?.clone() ?? from.pos.clone(),
-        quat: target.quat?.clone() ?? from.quat.clone(),
-        lens: target.lens ?? from.lens
-      },
-      duration,
-      elapsed: 0,
-      linear
-    }
-  }
-
-  _aim ({ on } = {}) {
-    if (on) {
-      this.lieBase = this._pose()
-      const { forward } = this._basis(this.lieBase.quat)
-      this._start({
-        pos: this.lieBase.pos.clone().addScaledVector(forward, INTERROGATION.liePush),
-        lens: INTERROGATION.baseLens
-      }, INTERROGATION.dofMs / 1000)
-      this.engine.bus.emit('camera:dof', { bias: INTERROGATION.dofBias, ms: INTERROGATION.dofMs })
-      return
-    }
-    if (!this.lieBase) return
-    this._start(this.lieBase, 0.5)
-    this.lieBase = null
-    this.engine.bus.emit('camera:dof', { bias: 0, ms: 500 })
-  }
-
-  _verdict ({ npc, choice, correct } = {}) {
-    this.npc = npc ?? this.npc
-    const pose = this._pose()
-    const { forward, right } = this._basis(pose.quat)
-    if (choice === 'TRUTH') {
-      this._start({
-        pos: pose.pos.clone().addScaledVector(forward, -INTERROGATION.truthBack),
-        lens: INTERROGATION.truthLens
-      }, 0.9)
-      return
-    }
-    if (choice === 'DOUBT') {
-      this._start({
-        pos: pose.pos.clone().addScaledVector(right, INTERROGATION.doubtTrack),
-        lens: INTERROGATION.baseLens
-      }, 0.8, true)
-      return
-    }
-    if (choice !== 'LIE') return
-    if (correct) {
-      const targetPos = this.move?.to.pos.clone() ?? pose.pos.clone()
-      this._start({
-        pos: targetPos,
-        quat: this._anchorQuaternion(this.npc, targetPos, pose.quat),
-        lens: INTERROGATION.baseLens
-      }, 0.45)
-      this.lieBase = null
-      return
-    }
-    this._start({
-      pos: pose.pos.clone().addScaledVector(forward, -INTERROGATION.wrongBack),
-      lens: INTERROGATION.wrongLens
-    }, 0.8)
-    this.lieBase = null
-    this.engine.bus.emit('camera:dof', { bias: 0, ms: 500 })
-  }
-
-  _performance ({ npc, state } = {}) {
-    if (npc) this.npc = npc
-    if (state !== 'breaking') return
-    const pose = this._pose()
-    const pending = this.move?.to
-    const pos = pending?.pos.clone() ?? pose.pos.clone()
-    pos.y -= INTERROGATION.breakDrop
-    this._start({
-      pos,
-      quat: pending?.quat ?? pose.quat,
-      lens: pending?.lens ?? pose.lens
-    }, 0.72)
-  }
-
-  _link ({ ok } = {}) {
-    if (!ok) return
-    this.linkCount = Math.min(3, this.linkCount + 1)
-    const lens = 54 - this.linkCount * 6
-    this._start({ lens }, 0.9)
-  }
-
-  _syncPlayer (pose) {
-    const player = this.engine.get('player')
-    if (!player) return
-    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(pose.quat)
-    const target = pose.pos.clone().add(forward)
-    player.teleport?.([pose.pos.x, pose.pos.y - EYE, pose.pos.z], yawTo(pose.pos, target))
-    if (typeof player.pitch === 'number') {
-      const euler = new THREE.Euler().setFromQuaternion(pose.quat, 'YXZ')
-      player.pitch = player.pitchT = euler.x
-    }
-  }
-
-  update (dt) {
-    if (!this.move) return
-    const move = this.move
-    move.elapsed = Math.min(move.duration, move.elapsed + dt)
-    const raw = clamp01(move.elapsed / move.duration)
-    const t = move.linear ? raw : smooth(raw)
-    const camera = this.engine.camera
-    camera.position.lerpVectors(move.from.pos, move.to.pos, t)
-    camera.quaternion.slerpQuaternions(move.from.quat, move.to.quat, t)
-    camera.setFocalLength(THREE.MathUtils.lerp(move.from.lens, move.to.lens, t))
-    const envelope = Math.sin(raw * Math.PI)
-    camera.rotateY(Math.sin(this.engine.time * Math.PI * 0.8) * HAND_AMP * envelope)
-    camera.rotateX(Math.cos(this.engine.time * Math.PI * 0.8 + 0.7) * HAND_AMP * 0.36 * envelope)
-    camera.updateMatrixWorld(true)
-    if (raw < 1) return
-    camera.position.copy(move.to.pos)
-    camera.quaternion.copy(move.to.quat)
-    camera.setFocalLength(move.to.lens)
-    camera.updateMatrixWorld(true)
-    this._syncPlayer(move.to)
-    this.move = null
-  }
-
-  dispose () {
-    for (const off of this.off) off()
-  }
-}
 
 function buildOverlay () {
   const style = document.createElement('style')
@@ -452,6 +249,12 @@ const cinematics = {
       this.engine.bus.emit('subtitle', { speaker: 'deitch', text: '…형사님. 또 오셨군요.', dur: 2.55 })
     })
     if (t >= HANDOFF_AT) this._once('handoff', () => this._handoff())
+    // 이양 직후 첫 목표. 조작을 넘겨받은 화면에 읽을 것이 한 줄도 없어서 신선 플레이어가
+    // 어디로 가야 하는지 알 길이 없었다(JUDGE §0-3 실측 — 가시 텍스트 0건). 목표 제시와
+    // 첫 상호작용 유도를 형사 독백 한 줄이 겸한다.
+    if (t >= 29.75) this._once('first-goal', () => {
+      this.engine.bus.emit('subtitle', { speaker: '', text: '프런트부터다. 숙박부를 봐야겠다.', dur: 4.2 })
+    })
   },
 
   _handoff () {
