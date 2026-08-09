@@ -16,6 +16,10 @@ const INTERROGATION = Object.freeze({
   // 데스크 램프(-2.75, 1.54, -3.18)가 정면 진입 각의 시선을 정확히 먹는다(2차 판정 §0-6).
   // 플레이어가 어디서 들어오든 카메라가 각을 흡수해야 복불복이 사라진다.
   arcDeg: [0, 10, -10, 19, -19, 28, -28, 36, -36],
+  // 판정 반응 컷 전용 후보각 — 0°를 빼서 최소 13° 이상 각이 바뀌게 강제한다. 진술 컷과
+  // 같은 자리에서 렌즈만 움직이면 컷이 아니라 같은 그림이 된다(블라인드 판독: "reverse로
+  // 이름 붙은 4·5번도 1·2번과 구분되는 별도 앵글로 보이지 않는다").
+  reactArc: [22, -22, 31, -31, 13, -13, 40, -40],
   headroom: 0.13,         // 정수리 위 여백(m)
   cover: 2.20,            // 피사체 세로 폭 대비 프레임 세로 배수
   margin: 0.16,           // 손 옆 여유 — 이만큼 떨어진 곳까지 비어 있어야 손이 산다
@@ -163,7 +167,7 @@ export class InterrogationCamera {
     const from = this.engine.camera.position
     const enter = Math.atan2(from.x - pts.face.x, from.z - pts.face.z) + (opts.turn || 0)
     let best = null
-    for (const deg of INTERROGATION.arcDeg) {
+    for (const deg of opts.arc ?? INTERROGATION.arcDeg) {
       const az = enter + THREE.MathUtils.degToRad(deg)
       const pos = new THREE.Vector3(
         pts.face.x + Math.sin(az) * radius, eyeY, pts.face.z + Math.cos(az) * radius)
@@ -238,7 +242,9 @@ export class InterrogationCamera {
   _verdict ({ npc, choice, correct } = {}) {
     this.npc = npc ?? this.npc
     this.lieBase = null
-    const react = { bias: INTERROGATION.reactBias, drop: INTERROGATION.reactDrop }
+    const react = {
+      bias: INTERROGATION.reactBias, drop: INTERROGATION.reactDrop, arc: INTERROGATION.reactArc
+    }
     if (choice === 'TRUTH') { this._cut(this.npc, 'pull', 0.9, { lens: 1.06 }); return }
     if (choice === 'DOUBT') {
       this._cut(this.npc, 'slide', 0.8, { turn: INTERROGATION.doubtTurn, linear: true })
@@ -246,7 +252,7 @@ export class InterrogationCamera {
     }
     if (choice !== 'LIE') return
     this.engine.bus.emit('camera:dof', { bias: 0, ms: 500 })
-    if (correct) this._cut(this.npc, 'push', 0.55, react)
+    if (correct) this._cut(this.npc, 'push', 0.6, { ...react, back: -0.16 })
     else this._cut(this.npc, 'pull', 0.8, { ...react, back: 0.32, lens: 0.88 })
   }
 
