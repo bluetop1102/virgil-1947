@@ -48,6 +48,12 @@ export function buildGraph (a) {
   a.musicBus = c.createGain()
   for (const n of [a.dry, a.wet, a.toneBus, a.waterBus, a.musicBus]) n.connect(a.duckG)
 
+  // 심문 긴장층. musicBus **아래**에 다는 것이 계약이다 — 붕괴(breaking) 중 음악 버스가 0이 되면
+  // 긴장층도 같이 죽고(E7 §3 "붕괴 중 BGM 0"), 심문 감쇠(_levels의 quiet 0.42)는 toneBus·waterBus·
+  // 라디오만 건드리므로 이 버스를 지나가지 않는다. 환경은 낮아지고 긴장만 남는 구조가 여기서 나온다.
+  a.tensionBus = c.createGain()
+  a.tensionBus.connect(a.musicBus)
+
   a.send = c.createGain()
   a.conv = [c.createConvolver(), c.createConvolver()]
   a.wetG = [c.createGain(), c.createGain()]

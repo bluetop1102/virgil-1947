@@ -3244,3 +3244,40 @@ atmo 6컷 전부 `blackPct 0.0000 / whitePct 0.0000`, p999 190~221(게이트 150
 - **우회(적용 완료)**: AUDIO 가 `qa:state` 의 `mood` 를 읽어 `setRoom` 한다(`audio/engine.js`).
   씬 프로브 한정이라 본편 경로에는 영향이 없다.
 - **지시**: main.js 가 `room:changed` 를 같이 쏘는 편이 계약상 옳다. 그때 AUDIO 쪽 우회를 지운다.
+
+### [ ] S-A 오디오 세션 → [UI] 소유 — 인게임 크레딧 노출 경로가 없으면 BGM 라이선스가 미이행이다
+
+- **파일**: `src/ui/settings.js`(Esc 카드) 또는 타이틀 하단.
+- **근거**: 로비 라디오에 Kevin MacLeod CC BY 4.0 트랙 3곡을 태웠다(`docs/credits.md` §1.2,
+  AGENTS 에셋 예외 ② · 사용자 승인). incompetech Music FAQ 의 "Crediting" 항이 게시 위치를
+  매체별로 지정하는데 **게임은 "credits are placed on a 'Credits' screen found in the settings
+  menu"** 다. 문서 기재만으로는 CC BY 의 attribution 요건이 닫히지 않는다.
+- **지시**: Esc 설정 카드에 '크레딧' 행 하나(또는 접히는 면)를 추가하고 아래 3블록을 그대로 넣는다.
+  줄바꿈·따옴표·URL 을 바꾸지 마라 — incompetech 지정 문안 원문이다.
+
+  ```text
+  "Night on the Docks - Sax" Kevin MacLeod (incompetech.com)
+  Licensed under Creative Commons: By Attribution 4.0
+  https://creativecommons.org/licenses/by/4.0/
+  ```
+  (같은 형식으로 "I Knew a Guy" · "Lobby Time" 2곡 추가 — 전문은 `docs/credits.md` §1.2)
+- **폴백 상태**: 노출 경로가 안 붙으면 제출 전에 `assets/radio-*.mp3` 3개를 지우는 것으로도
+  요건이 닫힌다(`radio.js` 가 파일 부재 시 절차 생성 방송만 내보낸다). 다만 그 경우 J6 의
+  음악층이 라디오에서 사라진다 — **UI 한 줄이 훨씬 싸다.**
+
+### [x] S-A 오디오 세션 → [CINEMATICS] — E2 0:22 "라디오가 잦아든다" 오디오측 해결(위 큐 항목 종결)
+
+- 위의 S5 발주 항목(`_soundBeats` 에 비트 추가 요청)은 **CINEMATICS 파일을 건드리지 않고**
+  오디오 쪽에서 닫았다. `audio/engine.js` 가 `cinematic:start {id:'cin-intro'}` 에서 t+22 를
+  예약하고 라디오 게인만 0.08 로 내린 뒤(`_radioLevel`), `cinematic:end` 에서 편성을 음악국으로
+  넘긴다(`_radioReturn`). 룸톤·물은 건드리지 않으므로 0:27–0:30 "룸톤만 남는다"도 성립한다.
+- **CINEMATICS 는 조치 불필요.** 시각을 바꾸려면 `engine.js` 의 `introFadeAt` 상수(22초)를 고친다.
+
+### [ ] S-A 오디오 세션 → [제출 체크리스트 소유자] — `docs/submission/checklist.md` 46~48행이 낡았다
+
+- **현재 문구**: "빌드 경로의 바이너리 에셋은 AI 생성 타이틀 배경 1장뿐 — `git ls-files … | grep -icE …` → **1**".
+- **바뀐 사실**: 로비 라디오 BGM 3곡이 추가돼 **4** 가 맞다(`assets/radio-1~3-*.mp3`,
+  AGENTS 에셋 예외 ② · 사용자 승인 2026-08-09). 출처·라이선스 전문·후처리 명령은
+  `docs/credits.md` **§1.2** 에 기재했다(§1.1 은 타이틀 배경 그대로).
+- **지시**: 46~48행의 기대값을 1 → 4 로, 참조를 "§1.1" → "§1.1·§1.2" 로 고친다.
+  체크 명령 자체는 그대로 쓸 수 있다(`grep -icE` 결과가 4).

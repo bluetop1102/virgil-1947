@@ -5,7 +5,8 @@
 // 서명도 마찬가지였다. 소리를 다는 쪽은 오디오 소유자다 — 레벨·UI 파일을 건드리지 않고
 // 기존 이벤트만 구독해서 붙인다.
 
-import { musicCue } from './music.js'
+import { musicCue, tensionStart, tensionStinger, tensionStop } from './music.js'
+import { tune } from './radio.js'
 
 // 상호작용 대상 id → 소리. 정확 일치가 먼저고, 없으면 아래 부분 일치로 떨어진다.
 const TARGET = {
@@ -39,6 +40,9 @@ export function wireCues (a, bus) {
   bus.on('player:interact', (p) => {
     const cue = cueFor(p?.targetId)
     if (cue) a.play(cue[0], { gain: cue[1] })
+    // "주파수를 맞춘다" — 다이얼이 실제로 국을 바꾼다(radio.js 편성표). 딸깍만 나고 아무것도
+    // 안 바뀌던 상호작용이 여기서 결과를 갖는다.
+    if (cue?.[0] === 'radio.dial') tune(a, (a.radio?.station ?? 0) + 1)
   })
 
   // 게임의 첫 소리. 벨을 누르라고 써 있는데 벨이 울리지 않았다.
@@ -68,4 +72,14 @@ export function wireCues (a, bus) {
   })
   bus.on('act:enter', (p) => { if (p?.act === 3) musicCue(a, 'act3') })
   bus.on('act:phase', (p) => { if (p?.act === 1 && p?.phase === 'late') musicCue(a, 'phase') })
+
+  // 심문 긴장층(music.js). 구동은 전부 구조적 비트 — 진위·연기 상태는 구독하지 않는다.
+  bus.on('interrogation:start', () => tensionStart(a))
+  bus.on('interrogation:prompt', () => a.tension?.set('prompt', 1.2))
+  bus.on('interrogation:aiming', (p) => {
+    if (p?.on) { a.tension?.set('aim', 0.9); tensionStinger(a) } else a.tension?.set('prompt', 1.4)
+  })
+  bus.on('interrogation:verdict', (p) => a.tension?.release(p?.correct !== false))
+  bus.on('interrogation:end', () => tensionStop(a, 4.5))
+  bus.on('interrogation:left', () => tensionStop(a, 2.4))
 }

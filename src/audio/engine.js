@@ -12,6 +12,8 @@ import { footBuffer, sfxBuffer, footKey, sfxKey } from './dsp.js'
 import { renderIR, renderBed, renderRadioSource, roomKey, ROOM_MIX } from './ir.js'
 import { buildGraph } from './graph.js'
 import { wireCues } from './cues.js'
+import { musicCue } from './music.js'
+import { tune, radioDispose } from './radio.js'
 
 const FOOT_VARIANTS = 6
 const SFX_VARIANTS = 3
@@ -38,6 +40,10 @@ const audio = {
     this.interro = false
     this.breaking = false
     this.musicOn = false
+    this.pendingMusic = null
+    this.tension = null
+    this.radioDuck = 1
+    this.introFadeAt = null
     this.act = engine.state?.act ?? 1
     this.room = roomKey(engine.state?.room ?? 'lobby')
     this.mix = ROOM_MIX[this.room]
@@ -58,9 +64,18 @@ const audio = {
     if (!this.ctx || this.silent) return
     this._listener()
     this._sched(this.engine.time)
+    // E2 0:22 — 배지가 데스크에 닿고 "라디오가 잦아든다". 시네마틱 파일을 건드리지 않고
+    // 오디오 쪽에서 시각만 세어 처리한다(HANDOFF 등재분의 오디오측 해결). engine.time 기준이라
+    // 일시정지에도 어긋나지 않고, ctx 생성 시점과 무관하다.
+    if (this.introFadeAt != null && this.engine.time >= this.introFadeAt) {
+      this.introFadeAt = null
+      this._radioLevel(0.08, 3.4)
+    }
   },
 
   dispose () {
+    try { this.tension?.stop(0.05) } catch (e) { /* 이미 해제 */ }
+    radioDispose(this)
     try { this.radio?.src.stop() } catch (e) { /* 이미 정지 */ }
     this.radio = null
     try { this.ctx?.close?.() } catch (e) { /* 이미 닫힌 컨텍스트 */ }
@@ -208,6 +223,10 @@ const audio = {
     const q = this.pending
     this.pending = []
     for (const [id, opts] of q) this.play(id, opts)
+    // 인트로 드론도 같은 프레임 경합에 걸린다 — music.js가 여기로 흘려보낸 큐를 연다.
+    const m = this.pendingMusic
+    this.pendingMusic = null
+    if (m) musicCue(this, m)
     if (!this.silent) this._prewarm()
   },
 
@@ -225,12 +244,15 @@ const audio = {
   },
 
   // ── 레벨 ────────────────────────────────────────────────────────────
+  // 심문 감쇠(quiet)가 닿는 곳은 **환경뿐**이다 — 룸톤·험·물·라디오. musicBus/tensionBus는
+  // 여기 없다. 심문이 게임에서 가장 조용한 구간이 됐던 역전은 이 비대칭이 없었기 때문이다:
+  // 환경만 0.42로 내려가고 그 자리를 채우는 층이 없었다(judge-plan §1 J6).
   _levels (dur = 0.6) {
     const c = this.ctx
     if (!c) return
     const now = c.currentTime
     const m = this.mix
-    const quiet = this.interro ? 0.42 : 1
+    const quiet = this._quiet()
     ramp(this.toneBus.gain, m.tone * quiet * 0.9, now, dur)
     ramp(this.humG.gain, m.hum * 0.05 * quiet, now, dur)
     const lvl = m.water * (ACT_WATER[this.act] ?? 1)
@@ -238,7 +260,24 @@ const audio = {
     ramp(this.waterG.air.gain, lvl * 0.055 * quiet, now, dur)
     ramp(this.waterG.tank.gain, lvl * 0.2 * quiet, now, dur)
     // 라디오는 룸톤 버스에 물려 있다 — 오답 -6dB 딥과 심문 감쇠를 같이 받는다(E7 §3).
-    if (this.radio) ramp(this.radio.gain.gain, this.radio.level * quiet, now, dur)
+    this._radioLevel(this.radioDuck, dur)
+  },
+
+  _quiet () { return this.interro ? 0.42 : 1 },
+
+  // 조작 이양. 괴담 방송이 끝나고 편성이 음악으로 넘어간다(디제틱 — 방송국이 프로그램을 바꾼 것).
+  // 이 자리가 "이 게임에 음악이 있다"가 처음 성립하는 지점이고, 계약상 유일하게 가능한 자리다.
+  _radioReturn () {
+    this._radioLevel(1, 9)
+    tune(this, 0, 6)
+  },
+
+  // 라디오만 따로 움직인다. 인트로 잦아듦(E2 0:22)은 환경 전체를 건드리면 안 된다.
+  _radioLevel (duck, dur = 0.6) {
+    this.radioDuck = duck
+    const c = this.ctx
+    if (!c || !this.radio) return
+    ramp(this.radio.gain.gain, this.radio.level * this._quiet() * duck, c.currentTime, dur)
   },
 
   // ── 로비 라디오 (디제틱 루프, E7 §4) ────────────────────────────────
@@ -260,6 +299,11 @@ const audio = {
     const src = c.createBufferSource()
     src.buffer = buf
     src.loop = true
+    // 방송(절차 생성 웅얼거림)과 음악 트랙이 같은 다이얼 위에 있다. voiceG·musicG 가 국을 고르고,
+    // tuneG 가 그 사이의 빈 주파수를 만들고, g 부터는 라디오 한 대의 공통 경로다 —
+    // 거리 감쇠·룸 리버브·오답 딥·심문 감쇠를 두 국이 똑같이 상속한다.
+    const voiceG = c.createGain()
+    const tuneG = c.createGain()
     const g = c.createGain()
     g.gain.value = 0.0001
     const p = c.createPanner()
@@ -272,9 +316,13 @@ const audio = {
     if (p.positionX) { p.positionX.value = pos[0]; p.positionY.value = pos[1]; p.positionZ.value = pos[2] }
     const wet = c.createGain()
     wet.gain.value = 0.8
-    src.connect(g); g.connect(p); p.connect(this.toneBus); p.connect(wet); wet.connect(this.send)
+    src.connect(voiceG); voiceG.connect(tuneG); tuneG.connect(g)
+    g.connect(p); p.connect(this.toneBus); p.connect(wet); wet.connect(this.send)
     src.start(c.currentTime + 0.01)
-    this.radio = { src, gain: g, level: clamp(req?.gain ?? 0.38, 0, 1), nodes: [src, g, p, wet] }
+    this.radio = {
+      src, voiceG, tuneG, gain: g, station: 1, music: null,
+      level: clamp(req?.gain ?? 0.38, 0, 1), nodes: [src, voiceG, tuneG, g, p, wet]
+    }
     this._levels(2.2)
   },
 
@@ -379,6 +427,14 @@ const audio = {
       if (p?.choice === 'LIE' && p.correct === false) this.roomtoneDip(3, -6)
     })
     bus.on('perf:state', (p) => this._setBreaking(p?.state === 'breaking'))
+    // 인트로 라디오 — E2 첫 30초 대본. 0:22 배지가 놓일 때 잦아들고, 조작 이양(시네마틱 종료)에서
+    // 방송이 끝나고 소리가 돌아온다. `_soundBeats` 를 건드리지 않는 오디오측 이행이다.
+    bus.on('cinematic:start', (p) => { if (p?.id === 'cin-intro') this.introFadeAt = this.engine.time + 22 })
+    bus.on('cinematic:end', (p) => {
+      if (p?.id !== 'cin-intro') return
+      this.introFadeAt = null
+      this._radioReturn()
+    })
     // ARCH §이벤트: 일시정지 시 디제틱 감쇠. 카드 뒤 화면은 계속 도는데 방 소리만 물러난다.
     bus.on('game:pause', (p) => this._pause(!!p?.on))
   },

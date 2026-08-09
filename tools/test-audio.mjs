@@ -34,7 +34,10 @@ const DYNAMIC_REGISTERED = 1   // src/gameplay/evidence.js 의 `evidence:${def.m
 const LOOP_IDS = new Set(['radio:lobby-loop'])
 
 const PORT = Number(process.env.AUDIO_TEST_PORT || 5411)
-const server = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], { stdio: 'ignore' })
+// SHOT=1 로 띄운다 — HMR·파일 워처가 켜져 있으면 병렬 세션이 파일을 저장할 때 vite 가 풀 리로드를
+// 내려서 page.evaluate 가 "Execution context was destroyed" 로 터지거나, 더 나쁘게는 모듈이 반쯤
+// 바뀐 상태로 측정된다(실제로 겪었다 — AGENTS.md 샷 하네스 규약과 같은 이유).
+const server = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], { stdio: 'ignore', env: { ...process.env, SHOT: '1' } })
 process.on('exit', () => { try { server.kill('SIGKILL') } catch {} })
 
 async function waitPort (ms = 30000) {
@@ -172,7 +175,7 @@ try {
     // ── 살아있는 그래프 ──────────────────────────────────────────────
     // 버퍼만 재면 노드 배선 오류가 안 잡힌다. 모듈을 실제 OfflineAudioContext에 물려 렌더한다.
     const mod = (await import('/src/audio/engine.js')).default
-    const { musicCue } = await import('/src/audio/music.js')
+    const { musicCue, tensionStart } = await import('/src/audio/music.js')
     const { EventBus } = await import('/src/core/bus.js')
     const cam = { matrixWorld: { elements: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1.7, 0, 1] } }
     const live = async (room, act, o = {}) => {
@@ -182,10 +185,12 @@ try {
       await inst.init({ qa: false, bus: new EventBus(), state: { act, room }, camera: cam, time: 0 })
       inst._open(oc)
       if (o.radio) inst._radio(true, { pos: [0, 0.9, -1.85], gain: 0.38 })
+      if (o.interro) inst.interro = true            // _levels 앞에 세워야 감쇠가 적용된다
       inst.toneBus.gain.value = o.tone ?? 0
       inst._levels(0.01)
       if (o.silence) inst.silence(1.2)
       if (o.music) musicCue(inst, o.music)
+      if (o.tension) tensionStart(inst)
       if (o.breaking) inst._setBreaking(true, 0.01)
       if (o.pause) inst._pause(true)
       if (o.foot) for (let i = 0; i < 6; i++) inst.play('foot:marble', { gain: 1, delay: i * 0.25 })
@@ -205,7 +210,12 @@ try {
       paused: await live('lobby', 1, { pause: true }),
       base6: await live('lobby', 1, { dur: 6 }),
       droneIntro: await live('lobby', 1, { music: 'intro', dur: 6 }),
-      droneBroken: await live('lobby', 1, { music: 'intro', breaking: true, dur: 6 })
+      droneBroken: await live('lobby', 1, { music: 'intro', breaking: true, dur: 6 }),
+      // 심문 3종 — 감쇠만(구판) · 감쇠+긴장층(현행) · 붕괴 중. 8초는 긴장층 진입 램프(3.4초) 뒤를 보려는 길이다.
+      interroBare: await live('lobby', 1, { interro: true, dur: 8 }),
+      interroTension: await live('lobby', 1, { interro: true, tension: true, dur: 8 }),
+      interroBroken: await live('lobby', 1, { interro: true, tension: true, breaking: true, dur: 8 }),
+      free8: await live('lobby', 1, { dur: 8 })
     }
     return out
   }, emitted)
@@ -261,6 +271,15 @@ try {
   console.log(`  인트로 드론: ${droneRatio}x · 붕괴 중 ${+(L.droneBroken.tail.rms / L.base6.tail.rms).toFixed(2)}x (기준 무드론)`)
   if (!(L.droneIntro.tail.rms > L.base6.tail.rms * 1.3)) bad.push(`live/music: 인트로 드론이 들리지 않는다 (${droneRatio}x)`)
   if (!(L.droneBroken.tail.rms < L.droneIntro.tail.rms * 0.85)) bad.push('live/music: 붕괴(breaking) 중 음악 버스가 0 이 아니다')
+  // 심문 긴장층 — J6 의 P0. 심문이 게임에서 가장 조용한 구간이던 역전(lines -42.7dB vs 배회
+  // -34.5dB 실측)을 여기서 오프라인 렌더로도 잠근다. 세 조건이 동시에 서야 한다:
+  //   ①감쇠 자체는 살아 있다(환경은 여전히 내려간다) ②긴장층이 그 자리를 배회 기준선 위로 채운다
+  //   ③붕괴 중에는 긴장층도 0 이다(E7 §3 — 방의 소리만 남는다).
+  const iq = (x) => +(x.tail.rms / L.free8.tail.rms).toFixed(2)
+  console.log(`  심문 레벨 비(기준 자유 배회): 감쇠만 ${iq(L.interroBare)}x · 긴장층 ${iq(L.interroTension)}x · 붕괴 중 ${iq(L.interroBroken)}x`)
+  if (!(L.interroBare.tail.rms < L.free8.tail.rms * 0.85)) bad.push(`live/interro: 심문 환경 감쇠가 안 먹는다 (${iq(L.interroBare)}x)`)
+  if (!(L.interroTension.tail.rms > L.free8.tail.rms)) bad.push(`live/interro: 심문이 자유 배회보다 조용하다 — J6 역전 재발 (${iq(L.interroTension)}x)`)
+  if (!(L.interroBroken.tail.rms < L.interroTension.tail.rms * 0.7)) bad.push(`live/interro: 붕괴 중 긴장층이 안 꺼진다 (${iq(L.interroBroken)}x)`)
 
   // ── 발화 id 해소 ────────────────────────────────────────────────────
   const unresolved = res.resolve.filter(r => r.ok === 2)

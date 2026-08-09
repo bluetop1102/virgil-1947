@@ -3,11 +3,16 @@
 > NAN 2026 제출물 4번(AI 활용 기술 문서)의 **필수 항목**이다. 누락은 심사 제외 사유가 된다.
 > 이 파일이 진실원이고, 제출 PDF는 여기서 파생한다. 의존성을 추가하면 **같은 커밋에서** 여기도 고친다.
 
-## 1. 외부 에셋 — 다운로드 0건 · AI 생성 1건
+## 1. 외부 에셋 — 다운로드 3건(BGM) · AI 생성 1건
 
-이 프로젝트는 **텍스처·지오메트리·오디오·폰트를 하나도 내려받지 않는다.** 게임 안에서 보이는
-것은 전부 런타임 절차 생성이다. **예외는 타이틀 화면 배경 1장**으로, 내려받은 것이 아니라
-AI로 생성했다(§1.1). 게임 월드 안에는 들어가지 않는다.
+이 프로젝트는 **텍스처·지오메트리·효과음·폰트를 하나도 내려받지 않는다.** 화면에 보이는 것과
+sfx·룸톤·리버브·발소리는 전부 런타임 절차 생성이다. 예외는 둘뿐이고, 둘 다 사용자 승인분이다
+(AGENTS.md 에셋 예외 ①②, 2026-08-09):
+
+- **타이틀 화면 배경 1장** — 내려받은 것이 아니라 AI로 생성했다(§1.1). 게임 월드 안에는 안 쓴다.
+- **로비 라디오 BGM 3곡** — Kevin MacLeod(incompetech.com)의 CC BY 4.0 트랙(§1.2). 비디제틱
+  BGM이 아니라 **로비 소품인 라디오에서 나오는 디제틱 음원**이고, 거리 감쇠·룸 리버브·심문
+  감쇠를 그대로 통과한다(E7 §3 "비디제틱 BGM 0" 계약 유지).
 
 | 종류 | 조달 방식 | 근거 |
 |---|---|---|
@@ -15,20 +20,22 @@ AI로 생성했다(§1.1). 게임 월드 안에는 들어가지 않는다.
 | 재질(PBR 24종) | 절차 텍스처 조합 레시피 | `src/materials/recipes.a.js` · `recipes.b.js` |
 | 지오메트리(소품 40종·가구·몰딩) | 코드 생성 + 시드 변주 | `src/world/kit.js` · `props*.js` |
 | 환경광(IBL) | 절차 생성 PMREM — **HDR 파일 로드 금지** | `src/world/atmo/ibl.js` · 계약: ARCHITECTURE §6.5 |
-| 오디오(리버브 IR·발소리·룸톤) | WebAudio DSP로 합성 | `src/audio/dsp.js` · `ir.js` |
+| 오디오(리버브 IR·발소리·룸톤·효과음·심문 긴장층) | WebAudio DSP·오실레이터로 합성 | `src/audio/dsp.js` · `ir.js` · `music.js` |
+| 오디오(로비 라디오 BGM 3곡) | **외부 CC BY 4.0 다운로드** — 유일한 오디오 예외 | §1.2 |
 | 폰트 | 시스템 폰트 스택만(`ui-serif, Georgia, serif`) — 웹폰트 파일 없음 | `index.html` |
 | 인물 리그 | 절차 휴머노이드 + 스키닝, 모션 파일 없음 | 계약: E4 §3 |
 
 검증: 빌드에 실리는 경로(`src` · `assets` · `index.html`)의 이미지·오디오·폰트·모델
-바이너리는 §1.1 의 배경 1장뿐이다.
+바이너리는 §1.1 의 배경 1장과 §1.2 의 BGM 3곡, 합계 4개뿐이다.
 
 ```bash
 git ls-files src assets index.html \
-  | grep -icE '\.(png|jpg|jpeg|hdr|exr|mp3|wav|ogg|glb|gltf|fbx|woff2?|ttf)$'   # → 1
+  | grep -iE '\.(png|jpg|jpeg|hdr|exr|mp3|wav|ogg|glb|gltf|fbx|woff2?|ttf)$'   # → 4행
 ```
 
-(`assets/title-bg.jpg`. `docs/reviews/**` 의 jpg 는 체험 리뷰 증거 스크린샷이고, 과거 커밋의
-`scratchpad/` 스크린샷은 QA 진단 산출물이다 — 둘 다 게임 에셋도 빌드 대상도 아니다.)
+(`assets/title-bg.jpg` · `assets/radio-1-…mp3` · `radio-2-…mp3` · `radio-3-…mp3`.
+`docs/reviews/**` 의 jpg 는 체험 리뷰 증거 스크린샷이고, 과거 커밋의 `scratchpad/` 스크린샷은
+QA 진단 산출물이다 — 둘 다 게임 에셋도 빌드 대상도 아니다.)
 
 **왜 이 제약을 걸었나**: 오프라인 재현성과 라이선스 리스크 0. 심사자가 어떤 계정·키·네트워크
 없이 링크만으로 실행할 수 있어야 한다는 요건과 같은 방향이다.
@@ -65,6 +72,52 @@ no signage, no watermark.
 
 **폴백**: 이 파일이 없거나 `?titlebg=render` 로 열면 타이틀 배경은 **인게임 로비 실렌더**로
 떨어진다(`src/ui/title.js`). 즉 외부 에셋 없이도 게임은 완전한 타이틀 화면을 갖는다.
+
+### 1.2 외부 라이선스 음원 — 로비 라디오 BGM 3곡 (CC BY 4.0)
+
+세 곡 전부 **Kevin MacLeod**(incompetech.com)의 작품이고 **Creative Commons: By Attribution
+4.0** 으로 배포된다. 게임 안에서는 비디제틱 BGM이 아니라 **로비 사이드테이블 라디오의 편성**
+으로만 재생된다 — 다이얼(E, "주파수를 맞춘다") 상호작용이 국을 바꾸고, 절차 생성 괴담 방송이
+같은 다이얼의 한 자리를 차지한다(`src/audio/radio.js`).
+
+| # | 곡명 | 파일 | 길이 | 편성·악기 | 곡 상세(공식) |
+|---|---|---|---|---|---|
+| 1 | **Night on the Docks - Sax** | `assets/radio-1-night-on-the-docks-sax.mp3` | 2:54 | 일렉트릭 피아노+테너 색소폰. 무박(BPM 0). 작곡가 설명 원문: "Sad and smooth; Think 1950's detective film." | https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100137 |
+| 2 | **I Knew a Guy** | `assets/radio-2-i-knew-a-guy.mp3` | 2:46 | 드럼킷+베이스+비브라폰, 75 BPM. 원문: "Slow walking bass, drums follow along sparely, with a cool Vibe melody." | https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100199 |
+| 3 | **Lobby Time** | `assets/radio-3-lobby-time.mp3` | 3:13 | 비브라폰+피아노+베이스+드럼, 128 BPM. 라운지 재즈 | https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1600054 |
+
+- **원본 출처(직접 다운로드 URL)**: `https://incompetech.com/music/royalty-free/mp3-royaltyfree/<곡명>.mp3`
+  (예: `…/mp3-royaltyfree/Night%20on%20the%20Docks%20-%20Sax.mp3`). 2026-08-09 내려받음.
+- **후처리**: `ffmpeg -ac 1 -ar 22050 -b:a 48k -af loudnorm=I=-18:TP=-2:LRA=11 -map_metadata -1`.
+  모노·22.05kHz로 줄인 이유는 런타임에서 AM 라디오 대역(320~3300Hz)으로 다시 좁히기 때문이고
+  (`src/audio/radio.js`), 곡당 1.1~1.2MB가 된다. 편곡·편집·구간 절단은 하지 않았다.
+- **라이선스 전문**: https://creativecommons.org/licenses/by/4.0/ ·
+  법적 전문 https://creativecommons.org/licenses/by/4.0/legalcode.en
+
+**표준 표기(incompetech 지정 문안 원문 그대로 — Music FAQ "Crediting" 항)**:
+
+```text
+"Night on the Docks - Sax" Kevin MacLeod (incompetech.com)
+Licensed under Creative Commons: By Attribution 4.0
+https://creativecommons.org/licenses/by/4.0/
+
+"I Knew a Guy" Kevin MacLeod (incompetech.com)
+Licensed under Creative Commons: By Attribution 4.0
+https://creativecommons.org/licenses/by/4.0/
+
+"Lobby Time" Kevin MacLeod (incompetech.com)
+Licensed under Creative Commons: By Attribution 4.0
+https://creativecommons.org/licenses/by/4.0/
+```
+
+같은 FAQ가 **게시 위치**도 지정한다: "Video Games — Most commonly, credits are placed on a
+'Credits' screen found in the settings menu." 즉 이 문서 기재만으로는 부족하고 **인게임 노출
+경로가 있어야 라이선스 이행이 끝난다.** 설정 카드는 `src/ui/**`(S-D 소유)라 오디오 세션이
+직접 넣지 않고 `docs/HANDOFF.md` 에 등재했다.
+
+**폴백**: `assets/radio-*.mp3` 가 없으면 편성표가 비고 라디오는 절차 생성 괴담 방송만 내보낸다
+(`radio.js` `HAS_MUSIC` 분기). 즉 외부 음원 없이도 게임은 그대로 성립한다 — 코덱 거부·로드
+실패도 같은 자리로 떨어진다.
 
 ## 2. 오픈소스 의존성
 
