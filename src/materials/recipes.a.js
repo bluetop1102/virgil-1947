@@ -334,12 +334,18 @@ void SURF (vec2 uv, out vec3 alb, out float rgh, out float mtl, out float ao, ou
 // 반대로 균열만 가늘게 두면 벽이 무지 면이 돼 G6(빈 폴리곤)에 걸리므로 흙손자국·보수자국·그을음으로
 // 10~50cm대 명도 변화를 반드시 함께 깐다.
 // 폭은 셀 단위다 — 셀 수로 나눠야 텍셀 폭이 나온다. 1텍셀 미만이면 밉맵이 지워버린다.
-float pFine (vec2 uv) { return CRK(uv, vec2(11.0), 0.050, 1.0); }
-float pHair (vec2 uv) { return CRK(uv, vec2(26.0), 0.045, 1.0); }
+// 균열은 면 전체에 균질하게 깔리지 않는다 — 이음매·누수 자리에서 뻗어나가고 성한 면은
+// 성한 채로 남는다. 게이트 없이 같은 밀도의 보로노이가 면을 덮으면 확대 시 2차 디테일이
+// 아니라 절차 노이즈로 읽힌다(천장 앙각 프레임의 즉답 트리거). 저주파 응력장으로 밀도를
+// 변조해 균열이 뭉치는 자리와 성한 자리를 만든다. 하한 0.10 은 남겨 무지 면(G6)은 피한다.
+float pStress (vec2 uv) { return smoothstep(0.34, 0.72, FBM(uv, vec2(1.7, 1.3), 4)); }
+float pFine (vec2 uv) { return CRK(uv, vec2(11.0), 0.050, 1.0) * (0.10 + 0.90 * pStress(uv)); }
+float pHair (vec2 uv) { return CRK(uv, vec2(26.0), 0.045, 1.0) * (0.06 + 0.94 * pStress(uv * 1.7 + 4.1)); }
 float pPatch (vec2 uv) { return smoothstep(0.58, 0.80, FBM(uv, vec2(2.5), 4)); }
+// 박락은 이미 갈라진 자리에서 떨어진다 — 같은 응력장에 실어 균열과 같은 곳에 뭉치게 한다.
 float pSpall (vec2 uv) {
   vec3 w = WOR(uv, vec2(15.0), 1.0);
-  return step(0.905, w.z) * smoothstep(0.26, 0.09, w.x);
+  return step(0.905, w.z) * smoothstep(0.26, 0.09, w.x) * (0.15 + 0.85 * pStress(uv));
 }
 float H (vec2 uv) {
   return 0.78 + FBM(uv, vec2(4.0), 4) * 0.12 + FBM(uv, vec2(30.0), 3) * 0.06
