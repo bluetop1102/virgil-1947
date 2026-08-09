@@ -39,6 +39,12 @@ const CONDITIONALS = [
   { flag: 'pryce-confession', id: 'water-log', mode: 'grant' }
 ]
 
+// 검분 컷(J4) 대상 판정만 여기 있다. **창의 길이는 이 파일에 두지 않는다** — ui/hud.js 가
+// 이 모듈을 정적 import 하면 `import.meta.glob`(아래 SCRIPT)이 vite 밖에서 터져
+// `tools/test-interrogation.mjs` 같은 plain node 하네스가 죽는다(S-I 실측).
+// 손에 들리는 종이만 검분한다. 관찰(observe)·사진 스크럽·열쇠 같은 3D 소품은 대상이 아니다.
+const PAPER_KINDS = new Set(['document'])
+
 const GAZE_DIST = 2.6
 const GAZE_HOLD = 1.0
 const PHOTO_COUNT = 4
@@ -142,6 +148,11 @@ export default {
 
   // ── 조회 ────────────────────────────────────────────────────────
   def (id) { return this.defs.get(id) ?? null },
+  // 검분 컷 대상인가. 집어 든 서류만 참이다 — 아니면 획득 쪽지만 남는다(ui/hud.js).
+  isPaper (id) {
+    const d = this.defs.get(id)
+    return !!d && d.mode === 'pickup' && PAPER_KINDS.has(d.kind)
+  },
   list () { return this.engine?.state.evidenceList() ?? [] },
   has (id) { return !!this.engine?.state.has(id) },
   isModal () { return this.photo.open },

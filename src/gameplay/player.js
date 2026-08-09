@@ -23,8 +23,14 @@ const BOB_ROLL = 0.0062     // rad, 약 0.36도
 const BREATH_HZ = 0.4
 const BREATH_Y = 0.003
 
-const DIP_T = 0.2           // 증거를 집어들 때의 상체 하강. 진폭은 화면에서 몇 픽셀 — 넘기면 멀미다
-const DIP_Y = 0.013
+const DIP_T = 0.2           // 증거를 집어들 때의 상체 하강. 시간을 늘리면 멀미다 — 진폭만 올린다
+// 1.3cm 는 320ms 간격 연속 프레임 6장에서 판독되지 않았다(3차 판정 J4 실측). 2.6배로 올린다.
+const DIP_Y = 0.034
+// 검분 컷과 같은 창에서 도는 미세 틸트. 종이를 눈앞으로 들면 시선이 따라 내려갔다 돌아온다.
+// 딥(0.2초 충격)과 달리 1초에 걸친 한 번의 호(弧)라 진폭이 커도 멀미로 넘어가지 않는다.
+const TILT_T = 1.05         // ui/hud.js 의 INSPECT_T 와 같은 길이. 원본은 그쪽이다(컷의 시간)
+const TILT_P = 0.023        // rad ≈ 1.3°
+const TILT_R = 0.010
 
 // 바닥 재질명 → 발소리 카테고리. library.js의 명명 규약을 문자열로만 참조한다(직접 import 금지).
 const FLOOR_KINDS = [
@@ -65,7 +71,7 @@ export default {
   solids: [], hot: [], nextScan: 0,
   floorY: 0,   // 레이캐스트가 바닥을 못 찾았을 때의 최종 바닥. 대기 프로브(y=-500)에서는 이 값을 옮긴다
   focus: null, focusDist: 0,
-  paused: false, dipT0: -9,
+  paused: false, dipT0: -9, tiltT0: -9,
   ray: null, down: null,
   body: null, physFail: false, floorHit: null,
   _o: new THREE.Vector3(), _d: new THREE.Vector3(), _n: new THREE.Vector3(),
@@ -89,7 +95,13 @@ export default {
     // 설정 카드가 열려 있는 동안 이동·상호작용을 죽인다. 포인터락이 풀려도 키 리스너는
     // document 에 그대로 붙어 있어서, 카드 뒤로 계속 걸어갔다 — JUDGE J5 실측 1.52m.
     engine.bus.on('game:pause', ({ on }) => this._pause(!!on))
-    if (!engine.qa) engine.bus.on('evidence:collected', () => { this.dipT0 = engine.time })
+    if (!engine.qa) {
+      engine.bus.on('evidence:collected', ({ id }) => {
+        this.dipT0 = engine.time
+        // 종이일 때만 틸트가 붙는다 — hud 의 검분 컷과 같은 조건이라 둘이 어긋나지 않는다.
+        if (engine.get('evidence')?.isPaper?.(id)) this.tiltT0 = engine.time
+      })
+    }
     if (engine.qa) this._initQa(engine)
     if (!engine.qa) this._listen()
   },
@@ -320,8 +332,12 @@ export default {
     const dipAge = elapsed - this.dipT0
     const dip = dipAge >= 0 && dipAge < DIP_T ? Math.sin(dipAge / DIP_T * Math.PI) * DIP_Y : 0
 
+    // 검분 컷 동안 종이 쪽으로 고개가 기운다. 반주기 사인이라 컷이 끝나는 자리에서 정확히 0이다.
+    const tiltAge = elapsed - this.tiltT0
+    const tilt = tiltAge >= 0 && tiltAge < TILT_T ? Math.sin(tiltAge / TILT_T * Math.PI) : 0
+
     const cam = e.camera
-    cam.rotation.set(this.pitch + driftP - dip * 0.25, this.yaw, roll + driftR, 'YXZ')
+    cam.rotation.set(this.pitch + driftP - dip * 0.25 - tilt * TILT_P, this.yaw, roll + driftR + tilt * TILT_R, 'YXZ')
     cam.position.set(
       this.pos.x + Math.cos(this.yaw) * bobX,
       this.pos.y + EYE + bobY + breathY - dip,

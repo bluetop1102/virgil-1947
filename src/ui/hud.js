@@ -1,9 +1,10 @@
 // HUD. 크로스헤어·체력·탄약·미니맵 없음.
 // 상호작용 가능 여부는 오브젝트 쪽 림 강조가 알린다(GAMEPLAY/재질 소관). 여기는 손글씨 한 줄만 남긴다.
-import { surface, sheet } from './paper.js'
+import { surface, sheet, crease } from './paper.js'
 import { typed, measureTyped, pen, penLine, INK, FONT } from './type.js'
 import { paperclip } from './sketch.js'
 import { normalize } from './casefile.js'
+import { docItem } from './casebook.js'
 import { clamp } from '../core/util.js'
 
 // 프런트에서 건네주는 안내 카드. 조작을 알려주는 유일한 지점이라 문안은 여기가 원본이다.
@@ -14,11 +15,22 @@ const CARD_ROWS = [
   ['카드', ['Esc']]
 ]
 const CARD_DELAY = 0.5
-// 표시 시간은 게임 시계(engine.time) 기준인데 프로브는 벽시계로 잰다. 헤드리스에서 두 시계의
-// 비는 약 0.4 이고(S-A 실측, probe-audio.mjs 머리주석) GPU 경합 시 0.2 까지 떨어진다. 그 구간
-// 전체에서 "+1초 표시 / +7초 소거" 두 판정을 동시에 만족하는 창은 (2.95, 4.03) 이다 —
-// 6.0·4.2 로 올렸다가 각각 소거 판정에서 FAIL 했다. 발사문 사양값 3.5 가 그 창의 한가운데다.
-const CARD_HOLD = 3.5
+// 소거는 두 조건 중 **먼저 오는 쪽**이다. 3.5초 고정이던 구판은 안내가 필요한 사람에게 너무
+// 짧았고(다시 부를 방법이 없다 — 3차 판정 J5①), 아는 사람에게는 그만큼 오래 화면에 남았다.
+// 안 움직이는 사람에게는 8초까지 버티고, 첫 걸음을 뗀 사람에게는 1.5초 뒤 내려간다.
+// 시계는 engine.time 이라 프로브의 벽시계와 비가 다르다 — 판정은 사건 결박으로 한다
+// (`controlsCardState()` 훅 계약 유지, tools/judge-probes/probe-guidance.mjs).
+const CARD_HOLD = 8
+const CARD_MOVE_HOLD = 1.5
+const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'])
+// 검분 컷이 열려 있는 시간. **이 값이 원본이다** — gameplay/player.js 의 카메라 틸트가 같은
+// 길이를 따로 들고 있다(TILT_T). 상수 하나 때문에 ui 가 gameplay 를 정적 import 하면
+// evidence.js 의 `import.meta.glob` 이 딸려 와 plain node 하네스가 죽는다(S-I 실측).
+const INSPECT_T = 1.05
+// 검분 컷의 자세. 화면에 붙은 판이 아니라 손에 들린 종이다 — 블라인드 판독에서 "원근 왜곡이
+// 부족하고 글줄이 종이의 기울기와 어긋나 UI 패널로 보인다"는 지적을 받아 각을 키웠다.
+// 기울기가 캔버스 전체에 걸리므로 글줄도 종이와 같은 각으로 눕는다.
+const INSPECT_POSE = 'perspective(720px) rotateX(13deg) rotateY(-9deg) rotate(-2.6deg)'
 
 export default {
   name: 'hud',
@@ -33,8 +45,10 @@ export default {
     this.choiceBusy = false
     this.cardVisible = false
     this.cardShown = false
-    this.cardT0 = -99
+    this.cardOff = 0
     this.cardArm = 0
+    this.inspecting = false
+    this.inspectT0 = -99
 
     this.layer = document.createElement('div')
     this.layer.style.cssText = 'position:absolute;inset:0;pointer-events:none'
@@ -56,6 +70,13 @@ export default {
     this.cWrap.style.transform = `translateY(30px) ${this.cardPose}`
     this.layer.appendChild(this.cWrap)
 
+    // 검분 컷. 집은 종이가 눈앞으로 올라왔다 내려간다 — 새 소품을 그리지 않고 수사노트에
+    // 끼워질 낱장(casebook.docItem)을 그대로 든다. 같은 종이가 손에 있었다가 파일로 들어간다.
+    this.iWrap = document.createElement('div')
+    this.iWrap.style.cssText = 'position:absolute;left:50%;top:50%;opacity:0;transition:opacity .26s ease,transform .34s cubic-bezier(.16,1,.3,1);filter:drop-shadow(-10px 16px 22px rgba(0,0,0,.76))'
+    this.iWrap.style.transform = `translate(-50%,38%) ${INSPECT_POSE} scale(.86)`
+    this.layer.appendChild(this.iWrap)
+
     // ── T-P1-09 심문 3선택 프롬프트 ─────────────────────────────
     this.choiceWrap = document.createElement('div')
     // bottom 13% — 자막(하단 고정)과 같은 자리에 겹쳐 둘 다 판독이 흐려지던 것을 세로 분리
@@ -64,17 +85,22 @@ export default {
     this.choiceWrap.addEventListener('pointerdown', (e) => this._choicePointer(e))
     this._choiceKey = (e) => this._keyChoice(e)
     window.addEventListener('keydown', this._choiceKey)
+    this._hudKey = (e) => this._keyHud(e)
+    window.addEventListener('keydown', this._hudKey)
 
     if (engine.qa) {
       this.pWrap.style.transition = 'none'
       this.sWrap.style.transition = 'none'
       this.choiceWrap.style.transition = 'none'
       this.cWrap.style.transition = 'none'
+      this.iWrap.style.transition = 'none'
     }
 
     this._layout(engine.size.w, engine.size.h)
 
-    engine.bus.on('evidence:collected', ({ id }) => { this._hideCard(); this._noteEvidence(id) })
+    engine.bus.on('evidence:collected', ({ id }) => { this._hideCard(); this._noteEvidence(id); this._inspect(id) })
+    // 수사노트·사진이 열리면 손에 든 것을 먼저 내린다. 컷이 모달 뒤에 남아 있으면 안 된다.
+    engine.bus.on('ui:open', () => this._endInspect())
     // 조작을 처음 넘겨받는 두 경로. 새 게임은 인트로가 끝나는 자리(이양 직후 다이치 대사가
     // 지나간 뒤), 재입장은 타이틀이 닫히는 자리다. 시네마틱에는 이양 시점을 알리는 이벤트가
     // 없어서 cinematic:end 를 경계로 쓴다 — 대사와 카드가 겹치지 않는 이점도 같이 온다.
@@ -187,11 +213,24 @@ export default {
     this.cardArm = this.engine.time + CARD_DELAY
   },
 
+  // 입력을 소모하지 않는 두 반응. 카드는 걸음에 밀려 내려가고, 검분 컷은 다음 E 에 끊긴다 —
+  // 어느 쪽도 preventDefault 하지 않으므로 그 키의 원래 동작(이동·상호작용)은 그대로 간다.
+  _keyHud (e) {
+    if (e.repeat) return
+    if (this.cardVisible && MOVE_KEYS.has(e.code)) {
+      this.cardOff = Math.min(this.cardOff, this.engine.time + CARD_MOVE_HOLD)
+    }
+    // 컷을 연 그 E 로 컷이 닫히면 안 된다. player 는 document, hud 는 window 에 붙어 있어
+    // 같은 keydown 이 player(획득 → 컷 열림) 다음에 여기로 온다 — engine.time 이 그 사이에
+    // 흐르지 않으므로 나이가 0 인 컷은 방금 이 입력이 연 것이다(실측으로 잡힌 결함).
+    if (this.inspecting && e.code === 'KeyE' && this.engine.time - this.inspectT0 > 0.12) this._endInspect()
+  },
+
   _showCard () {
     this.cardArm = 0
     this.cardVisible = true
     this.cardShown = true
-    this.cardT0 = this.engine.time
+    this.cardOff = this.engine.time + CARD_HOLD
     this._drawCard()
     this.cWrap.style.opacity = '1'
     this.cWrap.style.transform = `translateY(0) ${this.cardPose}`
@@ -272,7 +311,47 @@ export default {
     this.cWrap.appendChild(s.c)
   },
 
+  // 획득 순간의 검분. 비가역이 아니고 입력을 막지도 않는다 — 걸어가면서도 끝까지 돌고,
+  // E 를 다시 누르면 그 자리에서 내려간다(연출 컷이지 모달이 아니다).
+  _inspect (id) {
+    const e = this.engine
+    if (e.qa || !e.get('evidence')?.isPaper?.(id)) return
+    if (e.get('interrogation')?.isModal?.() || e.get('notebook')?.isOpen?.() || e.get('evidence')?.isModal?.()) return
+    if (this.ic) this.ic.c.remove()
+    const w = clamp(Math.round(this.vw * 0.33), 340, 580)
+    const h = Math.round(w * 0.62)
+    this.ic = docItem(w, h, normalize(e.state.evidence.get(id) || { id }), 7)
+    // 손에 든 종이는 평평하지 않다. 접힌 자국 하나가 면을 갈라야 평판으로 안 읽힌다.
+    const ctx = this.ic.ctx
+    crease(ctx, w, h, -2, h * 0.63, w + 2, h * 0.66, 0.9)
+    // 데스크 텅스텐 등을 이 종이도 받는다. 중성 회백으로 남으면 방의 호박색과 어긋나 종이
+    // 하나만 장면 위에 얹힌 레이어로 읽힌다(조작 카드가 같은 지적으로 받은 처리).
+    // 광원은 프레임에서 오른쪽 위의 데스크 램프라 그쪽이 밝고 반대편이 그늘진다.
+    ctx.save()
+    ctx.globalCompositeOperation = 'source-atop'
+    const warm = ctx.createLinearGradient(w, 0, w * 0.12, h)
+    warm.addColorStop(0, 'rgba(255,201,126,0.34)')
+    warm.addColorStop(0.45, 'rgba(232,166,96,0.15)')
+    warm.addColorStop(1, 'rgba(38,25,14,0.38)')
+    ctx.fillStyle = warm
+    ctx.fillRect(0, 0, w, h)
+    ctx.restore()
+    this.iWrap.appendChild(this.ic.c)
+    this.inspecting = true
+    this.inspectT0 = e.time
+    this.iWrap.style.opacity = '1'
+    this.iWrap.style.transform = `translate(-50%,-50%) ${INSPECT_POSE} scale(1)`
+  },
+
+  _endInspect () {
+    if (!this.inspecting) return
+    this.inspecting = false
+    this.iWrap.style.opacity = '0'
+    this.iWrap.style.transform = `translate(-50%,38%) ${INSPECT_POSE} scale(.86)`
+  },
+
   _showChoicePrompt (payload) {
+    this._endInspect()
     const allowed = ['TRUTH', 'DOUBT', 'LIE']
     const options = Array.isArray(payload?.options) ? payload.options.filter(o => allowed.includes(o)) : []
     if (!payload?.sid || options.length < 2) return false
@@ -408,8 +487,12 @@ export default {
   update () {
     if (this.slip && this.engine.time - this.slipT0 > 4.6 && !this.engine.qa) this._hideSlip()
     if (this.cardArm && this.engine.time >= this.cardArm) this._showCard()
-    if (this.cardVisible && this.engine.time - this.cardT0 > CARD_HOLD) this._hideCard()
+    if (this.cardVisible && this.engine.time >= this.cardOff) this._hideCard()
+    if (this.inspecting && this.engine.time - this.inspectT0 > INSPECT_T) this._endInspect()
   },
 
-  dispose () { window.removeEventListener('keydown', this._choiceKey) }
+  dispose () {
+    window.removeEventListener('keydown', this._choiceKey)
+    window.removeEventListener('keydown', this._hudKey)
+  }
 }
