@@ -78,31 +78,60 @@ function armPose (side, fwd, down, base, swing = 0, roll = 0, follow = false) {
 const REST_FWD = 0.400
 const REST_DOWN = 0.245
 
+// 두 팔을 같은 자리에 얹으면 카운터 위에서 좌우대칭이 되고, 그것이 스틸에서 마네킹으로
+// 읽힌다(블라인드 판독: "양손이 좌우 대칭에 가깝게 나란히 얹혀 있고 상체 축이 완전히
+// 수직"). 오른팔을 더 뻗고 왼팔을 당겨 상체에 비틀림을 준다. 두 손목 모두 상판(1.09)
+// 위에 남는다 — 오른손 y≈1.172 · 왼손 y≈1.150.
+const REST_SKEW = { fwd: 0.055, down: -0.012 }
+
+function rest (side) {
+  const k = side > 0 ? 1 : -0.9
+  return { fwd: REST_FWD + REST_SKEW.fwd * k, down: REST_DOWN + REST_SKEW.down * k }
+}
+
+// 팔 비틀림에 맞춘 상체 비틀림. 카운터 자세를 쓰는 모든 상태가 같이 얹어야 진술이
+// 시작될 때 몸통이 풀렸다 다시 잡히는 팝이 안 생긴다.
+const COUNTER_TWIST = Object.freeze({
+  head: [0, 0.10, 0.03],
+  leftShoulder: [-0.05, 0, 0],
+  rightShoulder: [0.06, 0, 0]
+})
+
 function counterRest (base, side = 0) {
-  if (side > 0) return armPose(1, REST_FWD, REST_DOWN, base)
-  if (side < 0) return armPose(-1, REST_FWD, REST_DOWN, base)
-  return mix(armPose(-1, REST_FWD, REST_DOWN, base), armPose(1, REST_FWD, REST_DOWN, base))
+  const one = (s) => armPose(s, rest(s).fwd, rest(s).down, base, -0.04 * s, 0.06 * s)
+  if (side > 0) return one(1)
+  if (side < 0) return one(-1)
+  return mix(one(-1), one(1), COUNTER_TWIST)
+}
+
+// phase 하나에서 인물별 값을 여러 개 뽑는다. 시드를 새로 들이지 않아 결정론이 유지되고
+// 같은 인물은 늘 같은 자세로 선다.
+function spread (phase, k) {
+  const x = Math.sin((phase + 1) * (12.9898 + k * 4.137)) * 43758.5453
+  return x - Math.floor(x)
 }
 
 // 서 있는 인물의 **정지 자세**. 마네킹으로 읽히는 것은 움직임이 없어서가 아니라 자세가
 // 좌우대칭이어서다 — 스틸 프레임에서는 호흡이 안 보이고 늘어뜨린 두 팔의 대칭만 남는다
 // (블라인드 채점자가 로비 프레임의 최대 데모 신호로 지목). 한쪽 팔을 더 굽혀 앞으로,
-// 어깨를 비틀고, 고개를 몇 도 돌려 대칭을 깬다. phase(인물별 시드)로 좌우를 뒤집어
-// 세 인형이 같은 포즈로 서 있지 않게 한다.
+// 어깨를 비틀고, 고개를 돌려 대칭을 깬다.
 function relaxedStance (phase, base) {
-  const flip = phase < 0.5 ? 1 : -1
-  const lean = 0.6 + phase * 0.8              // 인물별 강약
-  const near = { fwd: 0.19, down: 0.455 }     // 더 굽힌 팔 — 손이 앞으로 나온다
-  const far = { fwd: 0.06, down: 0.525 }      // 늘어뜨린 팔
-  const a = flip > 0 ? near : far
-  const b = flip > 0 ? far : near
+  // 좌우 이진 뒤집기는 인물이 셋뿐일 때 둘이 같은 자세를 뽑는다(실측: pryce 0.507 ·
+  // ruiz 0.922 가 같은 쪽이었다). 두 팔의 목표점을 연속값으로 잡고 왼팔을 오른팔에서
+  // 0.35~0.65 떨어뜨려, 조건 분기 없이 한쪽 팔이 반드시 더 굽고 앞으로 나오게 한다.
+  const r = spread(phase, 0)
+  const l = (r + 0.35 + 0.30 * spread(phase, 1)) % 1   // 분리를 조건 없이 보장한다(≥0.35)
+  const turn = spread(phase, 2) - 0.5
+  const arm = (v) => ({ fwd: 0.05 + v * 0.15, down: 0.535 - v * 0.09 })
+  const right = arm(r)
+  const left = arm(l)
   return mix(
-    armPose(1, a.fwd, a.down, base, -0.06 * flip, 0.10 * flip, true),
-    armPose(-1, b.fwd, b.down, base, 0.06 * flip, -0.10 * flip, true),
+    armPose(1, right.fwd, right.down, base, -0.05 * (r - 0.5), 0.16 * (r - 0.5), true),
+    armPose(-1, left.fwd, left.down, base, 0.05 * (l - 0.5), -0.16 * (l - 0.5), true),
     {
-      head: [-0.035 * lean, 0.13 * flip * lean, 0.04 * flip],
-      leftShoulder: [flip > 0 ? 0.05 : -0.07, 0, -0.05 * flip],
-      rightShoulder: [flip > 0 ? -0.07 : 0.05, 0, -0.05 * flip]
+      head: [-0.02 - 0.05 * r, 0.46 * turn, 0.07 * (r - l)],
+      leftShoulder: [0.13 * (l - 0.5), 0, -0.06 * (l - 0.5)],
+      rightShoulder: [0.13 * (r - 0.5), 0, 0.06 * (r - 0.5)]
     }
   )
 }
@@ -136,8 +165,9 @@ function deitchPose (state, t, phase, variant = 0, base = null) {
     const push = 0.042 * burst + 0.026 * beat
     const lift = 0.014 * burst
     return mix(
-      armPose(1, REST_FWD + push, REST_DOWN - lift, base, -0.05 * burst, 0.20 * burst + 0.16 * beat),
-      armPose(-1, REST_FWD + (solo ? 0 : push), REST_DOWN - (solo ? 0 : lift), base,
+      COUNTER_TWIST,
+      armPose(1, rest(1).fwd + push, rest(1).down - lift, base, -0.05 * burst, 0.20 * burst + 0.16 * beat),
+      armPose(-1, rest(-1).fwd + (solo ? 0 : push), rest(-1).down - (solo ? 0 : lift), base,
         0.05 * burst, solo ? 0 : 0.20 * burst - 0.16 * beat),
       { head: [0.10 * burst, (solo ? 0.075 : 0.028) * burst + beat * 0.045, -0.02 * beat] }
     )
@@ -153,8 +183,9 @@ function deitchPose (state, t, phase, variant = 0, base = null) {
       : ease(t / 0.78)
     const search = pulse(Math.max(0, t - 0.78), 0.42)
     return mix(
+      COUNTER_TWIST,
       counterRest(base, -1),
-      armPose(1, REST_FWD - 0.265 * reach, REST_DOWN + 0.030 * reach, base,
+      armPose(1, rest(1).fwd - 0.265 * reach, rest(1).down + 0.030 * reach, base,
         0.30 * reach, -0.34 * reach + search * 0.06),
       {
         head: [-0.05 - 0.12 * reach, -0.30 * reach, -0.05 * reach],
@@ -167,11 +198,12 @@ function deitchPose (state, t, phase, variant = 0, base = null) {
     // 안경을 벗고 눈두덩을 누른다 (STORY §2). 두 손이 카운터에서 얼굴로 올라온다.
     const reach = ease(t / 0.85)
     const press = ease((t - 1.20) / 0.72)
-    const fwd = REST_FWD + (0.19 - REST_FWD) * reach
-    const down = REST_DOWN + (-0.15 - REST_DOWN) * reach - 0.03 * press
+    const lerp = (a, b) => a + (b - a) * reach
     return mix(
-      armPose(-1, fwd, down, base, 0.10 * reach, -0.55 * reach),
-      armPose(1, fwd, down, base, -0.10 * reach, -0.55 * reach),
+      armPose(-1, lerp(rest(-1).fwd, 0.19), lerp(rest(-1).down, -0.15) - 0.03 * press,
+        base, 0.10 * reach, -0.55 * reach),
+      armPose(1, lerp(rest(1).fwd, 0.19), lerp(rest(1).down, -0.15) - 0.03 * press,
+        base, -0.10 * reach, -0.55 * reach),
       { head: [-0.10 * reach - 0.20 * press, 0.02 * reach, -0.055 * press] }
     )
   }
