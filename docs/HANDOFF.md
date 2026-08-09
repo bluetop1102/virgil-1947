@@ -3416,3 +3416,82 @@ STORY §2 deitch 텔 문안 · 제출 체크리스트 바이너리 1→4 · 크�
   (오버플로 리스크는 안전한 면부터 옵트인). 위 지시문의 "제출 후" 문구 대신 이 항을 따르되,
   **`block()` 호출부를 프레임으로 재검수하라는 요구는 그대로 유효하다** — 행수가 바뀌면 종이
   밖으로 넘치는 면이 생기고, 그건 지표가 아니라 프레임에서만 보인다.
+
+## 회수 블록 — S-G 제출물 문서 (2026-08-10)
+
+**소유 5파일 완료**: `docs/submission/` 의 `ai-tech.md`(제출물 4 본문 완성) ·
+`game-guide.md`(제출물 3 본문 완성) · `video-plan.md`(제출물 2 조작 대본 52초) ·
+`audio-listen-check.md`(19항목을 1회차 완주 순서로 재배열) · `README.md`(상태판 갱신).
+`frames/` 는 읽기만 했고 확정본 파일명(`sub-30-picker` · `sub-11-s1-choice` · `frame-00-title`)으로
+game-guide 캡션과 README PDF 절을 결박했다.
+
+**블라인드 독자 검증 3회 통과**(컨텍스트 없는 서브에이전트에 문서 1개만 제공):
+game-guide 는 조작 4키+심문 입력을 전부 복원했고, ai-tech 는 3축 요약이 섰다.
+3회차가 **내부 모순 6건 + 과장 5건**을 잡아 전건 반영했다(커밋 수 3중 표기·발사문 용어의
+상위/하위 혼용·P0 티켓 수 미표기·1,500만 두 뜻·§2.5 표가 잔여 린트 4건을 감춘 것 등).
+
+**문서 작성 중 코드에서 확인해 정정한 사실 1건**: game-guide 초안의 "체크포인트 막 경계 자동
+저장 1슬롯"은 **이 빌드에 없다.** `localStorage` 를 쓰는 곳은 `src/ui/settings.js` 뿐이고
+(`title.js` 의 `hasCheckpoint()` 는 정의만 있고 호출되지 않는 사문화 코드, 재입장 화면은
+`?resume=1` 로만 뜬다), `state.serialize()` 는 프로브용이라 어디에도 저장되지 않는다.
+문서를 "이 제출본에는 세이브·로드가 없다"로 고쳤다. **설계 사양(MASTER-PLAN §8)과 구현이
+어긋난 자리**이므로 게이트가 판단할 것 — 문서를 사실에 맞춘 것이지 사양을 바꾼 것이 아니다.
+
+**후속 라운드에 남기는 것**: S-H·S-I·S-J 반영 후 최종 배포가 나오면 `docs/submission/README.md`
+§링크의 `gh-pages ef4453f` 와 §커밋 이력의 198 을 갱신해야 한다. ai-tech §5 는 스냅샷임을
+본문에 명시했으므로 갱신 없이도 성립한다(수치마다 재현 명령이 붙어 있다).
+
+## 회수 블록 — S-I 연출·카메라 (2026-08-10)
+
+**소유 4파일 완료**: `src/narrative/camera.js` · `src/narrative/cinematics.js` ·
+`src/narrative/script.js` · `src/chars/perf.js`. 심문 도구 2개는 손대지 않았다.
+
+### [ ] S-I → [AUDIO · S-J] 소유 — E2 0:22 종결 통지를 이제 CINEMATICS 가 쏜다
+
+- **발화**: `cinematics.js` `_soundBeats()` t=22 비트에서
+  `bus.emit('cinematic:beat', { id: 'cin-intro', beat: 'radio-fade', at: 22 })`.
+- **현재 상태**: AUDIO 는 여전히 `cinematic:start` 에서 `engine.time + 22` 를 자체 예약해
+  `_radioLevel(0.08, 3.4)` 로 내린다(`audio/engine.js` `introFadeAt`). **둘 다 살아 있어도
+  이중 감쇠는 없다** — 통지를 아직 아무도 안 듣기 때문이다. 지금 상태로 무해하다.
+- **지시(선택)**: `introFadeAt` 자체 타이머를 지우고 `cinematic:beat` 의 `beat==='radio-fade'`
+  에 결박하면 시각의 진실원이 하나가 된다. 시네마틱 시계는 `game:pause` 에 멈추지만
+  `engine.time` 은 계속 흐르므로, 인트로 중 일시정지가 걸리면 두 시각이 어긋난다 —
+  비트 결박 쪽이 대본과 일치한다.
+
+### [ ] S-I → [UI · hud.js 소유자] — `node tools/test-interrogation.mjs` 가 지금 작업본에서 죽는다
+
+- **증상**: `TypeError: (intermediate value).glob is not a function` at `src/gameplay/evidence.js:12`.
+- **원인**: 작업본 `src/ui/hud.js:8` 에 `import { INSPECT_T } from '../gameplay/evidence.js'`
+  가 새로 붙었다(HEAD 에는 없다). `evidence.js:12` 의 `import.meta.glob` 은 vite 전용 변환이라
+  plain node 에서 함수가 아니고, `test-interrogation.mjs` → `hud.js` → `evidence.js` 정적 체인이
+  그것을 끌고 들어온다. **심문 상태기계는 무관하다.**
+- **귀속 실측**: `git archive HEAD` 로 뜬 청정 사본에서 **108 passed / 0 failed**,
+  같은 사본에 S-I 소유 3파일(`camera.js`·`cinematics.js`·`script.js`)만 덮어도 **108/0**.
+  작업본에서만 죽는다.
+- **지시**: `INSPECT_T` 를 `evidence.js` 가 아니라 상수만 있는 자리(예: `core/config.js` 또는
+  `ui` 쪽 상수)에서 가져오거나, `evidence.js` 의 `import.meta.glob` 을 지연 로드로 내린다.
+  게이트가 `test-interrogation` 을 통과 조건으로 쓰므로 **회수 전에 닫아야 한다.**
+
+### [ ] S-I → [ARCH 문서] 소유 — `camera.js` 계약 3건 추가 등재 요청
+
+`docs/ARCHITECTURE.md` 의 InterrogationCamera 항에 아래를 덧붙여 주기 바란다. 기존 계약
+(5점 레이캐스트 회피·±각 폴백·역산 렌즈·상대 앵커)은 **그대로 살아 있고 그 안에 얹었다**.
+
+1. **컷 종류 `low` 신설** — `range.low = 2.10`. 진술의 `camera: 'low'`(script.js S3 3건)이 탄다.
+2. **`opts.facing`** — 후보각의 기준을 진입 각이 아니라 **인물 정면**으로 바꾼다
+   (`_points().facing` = 리그 로컬 +z 의 월드 방위각). 측면 컷 전용이다. 나머지 컷은 진입 각
+   기준 그대로 — "플레이어가 어디서 들어오든 각을 흡수한다"는 계약은 유지된다.
+3. **`move.then` 체인과 `_land()`** — 보간 완료 시 다음 단계를 이어붙이고, 중간 단계에서는
+   `_syncPlayer` 를 미룬다. `_land()` 는 **눈높이보다 0.14m 넘게 낮은 자리에서 컷이 끝나면
+   눈높이 복귀를 자동으로 붙인다**. 근거: `player.js:326` 이 매 프레임 `pos.y + EYE` 로 카메라를
+   되쓰고 `_move()` 가 `pos.y` 를 바닥에 스냅하므로, 낮은 자리에서 컷을 놓으면 **다음 한
+   프레임에 낙차가 통째로 튄다**(실측). 로우앵글뿐 아니라 `breaking` 하강이 겹친 경우도 덮는다.
+
+### [ ] S-I → [AUDIO · S-J] 소유 — `contract-lint` 위반 1건이 새로 늘었다
+
+- **증상**: `max-500-lines src/audio/engine.js:501 503 physical lines`.
+- **귀속 실측**: `git archive HEAD` 청정 사본에서 `contract-lint FAIL (4 violations)`,
+  지금 작업본에서 `FAIL (5 violations)` — 늘어난 1건이 위 항목이다. 나머지 4건
+  (`display-name` ×3 · `materials-outside-factory` ×1)은 HEAD 부터 있던 것으로 무관하다.
+- **지시**: `graph.js → music.js·cues.js` 로 갈랐던 것과 같은 방식으로 3줄을 덜어내면 닫힌다.
+  게이트가 린트를 통과 조건으로 쓸 경우 회수 전에 필요하다.
