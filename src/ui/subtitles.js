@@ -1,7 +1,7 @@
 // 자막. 배경 박스 없음, 색 구분 없음, 지문 없음.
 // 필름 프린트에 태워 넣은 글자처럼 — 미세한 헐레이션과 불균일 농도만 남긴다.
 import { surface } from './paper.js'
-import { FONT, wrap, penLine } from './type.js'
+import { FONT, penLine } from './type.js'
 import { rng, clamp } from '../core/util.js'
 
 const NAME = {
@@ -20,6 +20,34 @@ function strip (t) {
     .replace(/（[^）]*）/g, ' ')
     .replace(/\s{2,}/g, ' ')
     .trim()
+}
+
+// 어절 경계 개행. type.js 의 wrap 은 글자 단위라 "…제 기억 / 으론." 처럼 어절 중간이 갈렸다
+// (3차 판정 §3 부수 ① — 제출 프레임에 그대로 찍힌다). 자막만 공백에서 끊고, 한 어절이 한 줄을
+// 넘을 때에 한해 그 어절 안에서 글자 단위로 쪼갠다.
+function wrapWords (ctx, text, maxW, size) {
+  ctx.save()
+  ctx.font = `400 ${size}px ${FONT.serif}`
+  const fits = t => ctx.measureText(t).width <= maxW
+  const out = []
+  for (const para of String(text).split('\n')) {
+    let line = ''
+    for (const word of para.split(/\s+/)) {
+      if (!word) continue
+      const test = line ? `${line} ${word}` : word
+      if (fits(test)) { line = test; continue }
+      if (line) { out.push(line); line = '' }
+      if (fits(word)) { line = word; continue }
+      let chunk = ''
+      for (const ch of word) {
+        if (chunk && !fits(chunk + ch)) { out.push(chunk); chunk = ch } else chunk += ch
+      }
+      line = chunk
+    }
+    if (line) out.push(line)
+  }
+  ctx.restore()
+  return out.length ? out : ['']
 }
 
 function glyphs (ctx, text, x, y, size, alpha, seed, ink) {
@@ -125,7 +153,7 @@ export default {
     // 상한 27px 는 1920·2560 어느 쪽에서도 걸려 실제 표시가 늘 27px 였다 — 1080p 에서 판독이
     // 흐리다는 체험 피드백의 직접 원인. 계수와 상한을 함께 올린다.
     const size = clamp(Math.round(this.vw * 0.0195), 17, 36)
-    const lines = wrap(ctx, this.cur.text, this.cw - 40, { size, font: FONT.serif })
+    const lines = wrapWords(ctx, this.cur.text, this.cw - 40, size)
     const lh = size * 1.66
     const nameSize = Math.round(size * 0.64)
     const total = lines.length * lh + (this.cur.speaker ? nameSize * 2.1 : 0)

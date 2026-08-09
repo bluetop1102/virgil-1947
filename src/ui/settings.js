@@ -73,7 +73,7 @@ const settings = {
       .virgil-setting-keys{padding-right:9px;font-size:12px;letter-spacing:.15em;color:#3f3020}
       .virgil-setting-label{padding-left:9px}.virgil-setting-value{text-align:center;font-size:14px;letter-spacing:.13em;color:#34271a}.virgil-setting-turn{height:30px;line-height:28px;text-align:center;border:1px solid #6f5733;background:linear-gradient(145deg,#a2864d,#614923);color:#21170b;cursor:pointer;box-shadow:inset 0 1px rgba(239,213,151,.5),0 2px 3px rgba(45,29,14,.35);user-select:none}
       .virgil-setting-turn:hover,.virgil-setting-turn:focus{filter:brightness(1.14);outline:1px solid #3d2b18}.virgil-settings-foot{display:flex;justify-content:space-between;align-items:flex-end;padding:18px 8px 0;color:#665239;font-size:10px;letter-spacing:.09em}
-      .virgil-settings-credit{margin-top:7px;font-size:9px;letter-spacing:.05em;color:#6f5b40}
+      .virgil-settings-credit{margin-top:7px;font-size:9px;letter-spacing:.05em;color:#3f3020}
       .virgil-settings-close{padding:10px 22px 9px;border:1px solid #705631;background:linear-gradient(155deg,#9d814a,#5d4524);box-shadow:0 4px 8px rgba(50,32,15,.38),inset 0 1px rgba(238,212,151,.48);color:#24190d;font-size:12px;letter-spacing:.2em;cursor:pointer}
       .virgil-settings-close:hover,.virgil-settings-close:focus{filter:brightness(1.14);outline:1px solid #3d2b18}
       .virgil-stats{position:fixed;right:18px;top:18px;z-index:200;pointer-events:none;min-width:250px;padding:12px 15px;border-left:3px solid #9b7a3e;border-top:1px solid rgba(190,161,99,.5);background:rgba(8,9,9,.88);color:#c6b588;font-family:${TYPEFACE};font-size:11px;line-height:1.72;letter-spacing:.08em;white-space:pre;text-shadow:0 0 6px rgba(195,166,98,.22)}
@@ -106,7 +106,7 @@ const settings = {
     // 놓친 사람이 되돌아와 확인할 자리를 여기 하나 둔다.
     const note = node('div', 'virgil-setting-note')
     note.appendChild(node('div', 'virgil-setting-label', '조작'))
-    note.appendChild(node('div', 'virgil-setting-keys', '이동 W·A·S·D   조사 E   수첩 Tab'))
+    note.appendChild(node('div', 'virgil-setting-keys', '이동 W·A·S·D   조사 E   수첩 Tab   카드 Esc'))
     card.appendChild(note)
 
     const foot = node('div', 'virgil-settings-foot')
