@@ -6,6 +6,11 @@
 //   PROBE_URL 미지정 시 배포본을 찌른다. 로컬 검증은 자기 포트의 vite를 띄우고 PROBE_URL로.
 //   PROBE_OUT 기본은 shots/judge-verify — 병렬 세션은 반드시 자기 디렉터리를 지정해라.
 // 주의: GPU를 쓴다. 자기 수정이 끝난 뒤 실행하고, shoot.mjs 전체 샷과 동시 실행은 피해라.
+//
+// 낡은 판 PASS 함정(S-A 실측 2026-08-09): SHOT=1 로 띄운 vite 는 파일 워처가 꺼져 있어
+// **소스를 고쳐도 옛 변환 결과를 계속 서빙한다** — 그 상태의 PASS 는 수정 전 코드의 PASS 다.
+// 규칙: ①소스를 고쳤으면 프로브 전에 vite 를 재시작한다 ②의심되면 서빙되는 판을 먼저 확인:
+//   curl -s http://127.0.0.1:<port>/src/<파일> | grep -c <새로 넣은 심볼>
 import { createRequire } from 'node:module'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
