@@ -72,7 +72,8 @@ const settings = {
       .virgil-setting-note{height:46px;display:grid;grid-template-columns:1fr auto;align-items:center;border-bottom:1px solid rgba(67,49,30,.31);font-size:13px;letter-spacing:.12em}
       .virgil-setting-keys{padding-right:9px;font-size:12px;letter-spacing:.15em;color:#3f3020}
       .virgil-setting-label{padding-left:9px}.virgil-setting-value{text-align:center;font-size:14px;letter-spacing:.13em;color:#34271a}.virgil-setting-turn{height:30px;line-height:28px;text-align:center;border:1px solid #6f5733;background:linear-gradient(145deg,#a2864d,#614923);color:#21170b;cursor:pointer;box-shadow:inset 0 1px rgba(239,213,151,.5),0 2px 3px rgba(45,29,14,.35);user-select:none}
-      .virgil-setting-turn:hover,.virgil-setting-turn:focus{filter:brightness(1.14);outline:1px solid #3d2b18}.virgil-settings-foot{display:flex;justify-content:space-between;align-items:flex-end;padding:26px 8px 0;color:#665239;font-size:10px;letter-spacing:.09em}
+      .virgil-setting-turn:hover,.virgil-setting-turn:focus{filter:brightness(1.14);outline:1px solid #3d2b18}.virgil-settings-foot{display:flex;justify-content:space-between;align-items:flex-end;padding:18px 8px 0;color:#665239;font-size:10px;letter-spacing:.09em}
+      .virgil-settings-credit{margin-top:7px;font-size:9px;letter-spacing:.05em;color:#6f5b40}
       .virgil-settings-close{padding:10px 22px 9px;border:1px solid #705631;background:linear-gradient(155deg,#9d814a,#5d4524);box-shadow:0 4px 8px rgba(50,32,15,.38),inset 0 1px rgba(238,212,151,.48);color:#24190d;font-size:12px;letter-spacing:.2em;cursor:pointer}
       .virgil-settings-close:hover,.virgil-settings-close:focus{filter:brightness(1.14);outline:1px solid #3d2b18}
       .virgil-stats{position:fixed;right:18px;top:18px;z-index:200;pointer-events:none;min-width:250px;padding:12px 15px;border-left:3px solid #9b7a3e;border-top:1px solid rgba(190,161,99,.5);background:rgba(8,9,9,.88);color:#c6b588;font-family:${TYPEFACE};font-size:11px;line-height:1.72;letter-spacing:.08em;white-space:pre;text-shadow:0 0 6px rgba(195,166,98,.22)}
@@ -109,7 +110,13 @@ const settings = {
     card.appendChild(note)
 
     const foot = node('div', 'virgil-settings-foot')
-    foot.appendChild(node('div', '', '변경 사항은 프런트 원장에 자동 기록됩니다.'))
+    const notes = node('div', '')
+    notes.appendChild(node('div', '', '변경 사항은 프런트 원장에 자동 기록됩니다.'))
+    // 로비 라디오 BGM 3곡이 CC BY 4.0 이라 저작자 표기가 라이선스 의무다. 곡별 표기와
+    // 라이선스 전문은 docs/credits.md §1.2 — 게임 안에는 저작자·출처·라이선스만 낸다.
+    notes.appendChild(node('div', 'virgil-settings-credit',
+      '음악: Kevin MacLeod (incompetech.com) · Creative Commons: By Attribution 4.0'))
+    foot.appendChild(notes)
     const close = node('div', 'virgil-settings-close', '카드 닫기')
     close.tabIndex = 0
     close.setAttribute('role', 'button')
