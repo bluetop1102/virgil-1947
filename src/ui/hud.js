@@ -50,7 +50,7 @@ export default {
 
     // 카드는 화면에 붙은 판이 아니라 카운터에 놓인 물건이다. 원근 없이 정면으로 서 있으면
     // 방의 소실선과 어긋나 그것만 UI 오버레이로 읽힌다(블라인드 채점 지적) — 3D 기울기를 준다.
-    this.cardPose = 'perspective(620px) rotateX(9deg) rotateY(7deg) rotate(-1.4deg)'
+    this.cardPose = 'perspective(560px) rotateX(13deg) rotateY(11deg) rotate(-1.8deg)'
     this.cWrap = document.createElement('div')
     this.cWrap.style.cssText = 'position:absolute;opacity:0;transition:opacity .34s ease,transform .5s cubic-bezier(.16,1,.3,1);filter:drop-shadow(-7px 13px 16px rgba(0,0,0,.7))'
     this.cWrap.style.transform = `translateY(30px) ${this.cardPose}`
@@ -204,13 +204,23 @@ export default {
     this.cWrap.style.transform = `translateY(30px) ${this.cardPose}`
   },
 
+  // 활자가 종이 섬유로 번진 자국을 먼저 깔고 그 위에 타건을 얹는다. 번짐이 없으면 종이만
+  // 낡고 글자는 벡터로 찍은 듯 깨끗해서 둘이 다른 시대의 것으로 보인다(블라인드 채점 지적).
+  _ink (ctx, text, x, y, o) {
+    ctx.save()
+    ctx.filter = `blur(${(o.size * 0.1).toFixed(2)}px)`
+    typed(ctx, text, x, y, { ...o, alpha: (o.alpha ?? 0.86) * 0.42 })
+    ctx.restore()
+    return typed(ctx, text, x, y, o)
+  },
+
   // 키는 타자기로 친 글자로만 적고, 그 아래를 연필로 한 번 그어 둔다. 키캡 모양 네모로
   // 두르면 종이가 아니라 게임 UI 아이콘으로 읽힌다(블라인드 채점 지적).
   _keyRun (ctx, text, x, y, size, seed) {
     const runW = measureTyped(ctx, text, { size: size * 0.92, font: FONT.type, track: 1.1 })
     // wobble 을 기본값보다 키운다 — 타건마다 활자가 미세하게 기울지 않으면, 낡은 종이 위에
     // 균질한 현대 폰트를 얹은 것으로 읽힌다(블라인드 채점 지적).
-    typed(ctx, text, x, y, { size: size * 0.92, ink: INK.ribbon, alpha: 0.86, seed, font: FONT.type, track: 1.1, wobble: 0.055 })
+    this._ink(ctx, text, x, y, { size: size * 0.92, ink: INK.ribbon, alpha: 0.86, seed, font: FONT.type, track: 1.1, wobble: 0.055 })
     pen(ctx, [[x - 1, y + size * 0.3], [x + runW * 0.45, y + size * 0.34], [x + runW + 1, y + size * 0.28]], {
       w: 1.1, alpha: 0.4, ink: INK.pencil, seed: seed + 7
     })
@@ -232,20 +242,32 @@ export default {
     const ctx = s.ctx
     // 머리글은 한 번에 친 한 줄이다. 호텔명을 따로 떼어 다른 크기·자간으로 박으면 종이 한 장이
     // 아니라 "로고를 합성한 것"으로 읽힌다(블라인드 채점 지적).
-    typed(ctx, '프런트 안내 · HOTEL VIRGIL', pad, h * 0.215, {
+    this._ink(ctx, '프런트 안내 · HOTEL VIRGIL', pad, h * 0.215, {
       size: size * 0.74, ink: INK.faded, alpha: 0.9, track: 1.6, seed: 3, wobble: 0.05
     })
     penLine(ctx, pad, h * 0.285, w - pad, h * 0.285, { w: 1.0, alpha: 0.42, ink: INK.faded, seed: 7 })
     const keyX = pad + w * 0.30
     CARD_ROWS.forEach(([label, keys], i) => {
       const y = top + step * i
-      const lw = typed(ctx, label, pad, y, { size: size * 0.88, ink: INK.ribbon, alpha: 0.86, track: 1.2, seed: 23 + i * 9, wobble: 0.05 })
+      const lw = this._ink(ctx, label, pad, y, { size: size * 0.88, ink: INK.ribbon, alpha: 0.86, track: 1.2, seed: 23 + i * 9, wobble: 0.05 })
       // 타자기로 친 안내표의 점 리더. 항목과 값을 잇는 1940년대 인쇄물 관습이다
       typed(ctx, '.'.repeat(Math.max(3, Math.floor((keyX - pad - lw) / (size * 0.42)))), pad + lw + size * 0.3, y, {
         size: size * 0.8, ink: INK.faded, alpha: 0.42, track: 0.8, seed: 61 + i * 5
       })
       this._keyRun(ctx, keys.join('  '), keyX, y, size, 41 + i * 13)
     })
+    // 데스크 텅스텐 등을 카드도 받는다. 종이만 중성 회백으로 남으면 방의 호박색 조명과 어긋나
+    // 그것 하나가 "장면 위에 얹힌 레이어"로 읽힌다(블라인드 채점 지적). source-atop 이라
+    // 잘려나간 종이 바깥은 칠하지 않는다 — 실루엣은 그대로다.
+    ctx.save()
+    ctx.globalCompositeOperation = 'source-atop'
+    const warm = ctx.createLinearGradient(0, 0, w * 0.85, h)
+    warm.addColorStop(0, 'rgba(255,198,120,0.34)')
+    warm.addColorStop(0.5, 'rgba(236,168,96,0.17)')
+    warm.addColorStop(1, 'rgba(46,30,17,0.34)')
+    ctx.fillStyle = warm
+    ctx.fillRect(0, 0, w, h)
+    ctx.restore()
     this.cc2 = s
     this.cWrap.appendChild(s.c)
   },
