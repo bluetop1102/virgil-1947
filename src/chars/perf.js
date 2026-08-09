@@ -217,6 +217,23 @@ function deitchPose (state, t, phase, variant = 0, base = null) {
   return mix(counterRest(base), standIdle(t, phase))
 }
 
+// 지나치는 카메라 쪽으로 고개를 반 박자 돌렸다 되돌린다. "세워둔 소품"과 "지나치는 사람"을
+// 가르는 것은 자세의 정교함이 아니라 이쪽을 한 번 봤다는 사건 하나다(3차 판정 J3 배경 인형).
+// 상시 미동(standIdle) 위에 얹히는 1회성 층이라 호흡·체중 이동은 그대로 돈다.
+const GLANCE_T = 1.55
+
+function glancePose (glance, t) {
+  if (!glance) return null
+  const age = t - glance.startedAt
+  if (age < 0 || age > GLANCE_T) return null
+  const turn = ease(age / 0.34) * (1 - ease((age - 0.80) / 0.72)) * glance.yaw
+  return {
+    head: [-0.05 * Math.abs(turn), turn, turn * 0.13],
+    leftShoulder: [0, turn * 0.17, 0],
+    rightShoulder: [0, turn * 0.17, 0]
+  }
+}
+
 function doylePose (reaction, t) {
   if (!reaction) return null
   const age = t - reaction.startedAt
@@ -269,12 +286,34 @@ export class Performance {
     this.history = []
     this.doyle = { successes: 0, wrongIndex: -1, reaction: null }
     this.ambient = new Map()
+    this.glances = new Map()
   }
 
   async init (engine) {
     this.engine = engine
     this.off.push(engine.bus.on('perf:state', ({ npc, state } = {}) => this.play(npc, state)))
     this.off.push(engine.bus.on('deduction:link', (payload = {}) => this.reactToLink(payload)))
+    this.off.push(engine.bus.on('perf:glance', ({ npc } = {}) => this.glanceAt(npc)))
+  }
+
+  // 고개를 돌릴 각은 지금 카메라가 있는 쪽에서 잰다 — 고정 각으로 주면 카메라가 어느 쪽으로
+  // 지나가든 같은 방향으로 돌아 "이쪽을 봤다"가 성립하지 않는다. 로컬 +z 가 얼굴 방향이라
+  // 월드 행렬 3열이 그대로 정면 벡터다(THREE 를 새로 들일 필요가 없다). 목 가동범위로 제한한다.
+  glanceAt (npc) {
+    const rig = this.engine?.get('characters')?.rigs?.get(npc)
+    const cam = this.engine?.camera
+    if (!rig?.root || rig.root.visible === false || !cam) return false
+    const e = rig.root.matrixWorld.elements
+    const facing = Math.atan2(e[8], e[10])
+    const toCam = Math.atan2(cam.position.x - e[12], cam.position.z - e[14])
+    let yaw = toCam - facing
+    while (yaw > Math.PI) yaw -= Math.PI * 2
+    while (yaw < -Math.PI) yaw += Math.PI * 2
+    this.glances.set(npc, {
+      startedAt: Number.isFinite(this.engine.time) ? this.engine.time : 0,
+      yaw: clamp(yaw, -0.62, 0.62)
+    })
+    return true
   }
 
   play (npc, state) {
@@ -370,7 +409,10 @@ export class Performance {
       if (reaction) pose = mix(relaxedStance(track.phase, track.base), standIdle(local, track.phase), reaction)
       else if (npc === 'deitch') pose = deitchPose(track.state, local, track.phase, track.variant, track.base)
       else if (track.state === 'breaking') pose = deitchPose('breaking', local, track.phase, 0, track.base)
-      else pose = mix(relaxedStance(track.phase, track.base), standIdle(local, track.phase))
+      else {
+        pose = mix(relaxedStance(track.phase, track.base), standIdle(local, track.phase),
+          glancePose(this.glances.get(npc), time))
+      }
       applyPose(track, pose, dt)
       rig.root.userData.performance = {
         state: reaction ? 'reaction' : track.state,
@@ -394,6 +436,7 @@ export class Performance {
     this.variants.clear()
     this.history.length = 0
     this.ambient.clear()
+    this.glances.clear()
     this.engine = null
   }
 }

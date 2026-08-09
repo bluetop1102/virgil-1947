@@ -11,7 +11,7 @@ export const HAND_AMP = THREE.MathUtils.degToRad(0.15)
 const INTERROGATION = Object.freeze({
   // 컷 종류별 정위치 사거리(얼굴 기준). push 는 얼굴로 들어가고 pull 은 방을 보여주며 물러난다.
   // 하한은 물리 몸이 카운터(앞면 z=-3.04)에 끼지 않는 거리다.
-  range: { push: 1.82, slide: 2.04, pull: 2.34 },
+  range: { push: 1.82, slide: 2.04, pull: 2.34, low: 2.10 },
   // 진입 각 흡수 — 이 각들을 차례로 재서 얼굴·양손이 다 열리는 첫 자리를 고른다.
   // 데스크 램프(-2.75, 1.54, -3.18)가 정면 진입 각의 시선을 정확히 먹는다(2차 판정 §0-6).
   // 플레이어가 어디서 들어오든 카메라가 각을 흡수해야 복불복이 사라진다.
@@ -20,6 +20,17 @@ const INTERROGATION = Object.freeze({
   // 같은 자리에서 렌즈만 움직이면 컷이 아니라 같은 그림이 된다(블라인드 판독: "reverse로
   // 이름 붙은 4·5번도 1·2번과 구분되는 별도 앵글로 보이지 않는다").
   reactArc: [22, -22, 31, -31, 13, -13, 40, -40],
+  // 측면 로우앵글(3차 판정 J3③ "네 컷 전부 정면 미디엄 — 거리만 다르다"). 다른 컷과 달리
+  // 각을 **인물의 정면 기준 절대값**으로 잡는다(facing) — 진입 각 기준이면 플레이어가 어디서
+  // 들어왔느냐에 따라 같은 지시가 30°도 되고 70°도 돼 "측면"이 성립하지 않는다.
+  // 큰 각부터 재고, 카운터 뒤로 넘어가는 각은 얼굴 차폐로 스스로 탈락해 앞 각으로 물러난다.
+  low: {
+    arc: [52, -52, 41, -41, 62, -62, 30, -30, 20, -20],
+    drop: 0.50,           // 카운터 상판(1.09) 바로 위 — 손 높이에서 얼굴을 올려다본다
+    bias: 0.46,           // 조준점을 얼굴 쪽으로 올려 앙각을 만든다(다른 컷은 손 쪽 0.78)
+    hold: 2.0,            // 낮은 자리에 머무는 시간
+    rise: 1.25            // 눈높이로 복귀 — player 모듈이 매 프레임 pos.y+EYE 로 카메라를
+  },                      // 되쓰므로, 복귀 없이 컷을 놓으면 0.5m 가 한 프레임에 튄다(실측)
   headroom: 0.13,         // 정수리 위 여백(m)
   cover: 2.20,            // 피사체 세로 폭 대비 프레임 세로 배수
   margin: 0.16,           // 손 옆 여유 — 이만큼 떨어진 곳까지 비어 있어야 손이 산다
@@ -92,6 +103,13 @@ export class InterrogationCamera {
   // 프레이밍 표적 — 얼굴·두 손·두 어깨. 리그가 진실원이다(앵커는 리그가 없을 때의 폴백).
   // 어깨를 같이 재지 않으면 얼굴만 아슬하게 비껴간 자리가 뽑혀 램프 볼이 가슴을 통째로
   // 덮은 채 "통과"한다 — 얼굴이 보여도 그 프레임은 못 쓴다.
+  // 인물이 향한 쪽의 방위각. 이것이 0°(정면)의 기준이고, 측면 컷은 여기서 각을 잰다.
+  // 인물 로컬 +z 가 얼굴 방향이다(rig.js — 얼굴·조끼·안경이 전부 +z 에 붙는다).
+  static _facing (object) {
+    const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(object.getWorldQuaternion(new THREE.Quaternion()))
+    return Math.atan2(fwd.x, fwd.z)
+  }
+
   _points (npc) {
     const rig = this.engine.get('characters')?.rigs?.get(npc)
     if (rig?.joints?.head && rig.root?.visible !== false) {
@@ -99,7 +117,10 @@ export class InterrogationCamera {
       const face = rig.joints.head.localToWorld(new THREE.Vector3(0, 0.105, 0.05))
       const hands = [at('leftWrist', -0.09), at('rightWrist', -0.09)].filter(Boolean)
       const torso = [at('leftShoulder', -0.10), at('rightShoulder', -0.10)].filter(Boolean)
-      return { face, hands, torso, root: rig.root, top: face.y + INTERROGATION.headroom }
+      return {
+        face, hands, torso, root: rig.root, top: face.y + INTERROGATION.headroom,
+        facing: InterrogationCamera._facing(rig.root)
+      }
     }
     let anchor = null
     this.engine.scene.traverse((o) => {
@@ -109,7 +130,10 @@ export class InterrogationCamera {
     const face = new THREE.Vector3()
     anchor.getWorldPosition(face)
     face.y += 1.52
-    return { face, hands: [], torso: [], root: null, top: face.y + INTERROGATION.headroom }
+    return {
+      face, hands: [], torso: [], root: null, top: face.y + INTERROGATION.headroom,
+      facing: InterrogationCamera._facing(anchor)
+    }
   }
 
   // 시야를 실제로 막는 것만 센다. 깊이를 쓰지 않는 것(먼지 입자·광축·글로우)은 뒤가
@@ -165,7 +189,10 @@ export class InterrogationCamera {
     const eyeY = floorY + EYE - (opts.drop || 0)
     const radius = (INTERROGATION.range[kind] ?? INTERROGATION.range.slide) + (opts.back || 0)
     const from = this.engine.camera.position
-    const enter = Math.atan2(from.x - pts.face.x, from.z - pts.face.z) + (opts.turn || 0)
+    const base = opts.facing && pts.facing != null
+      ? pts.facing
+      : Math.atan2(from.x - pts.face.x, from.z - pts.face.z)
+    const enter = base + (opts.turn || 0)
     let best = null
     for (const deg of opts.arc ?? INTERROGATION.arcDeg) {
       const az = enter + THREE.MathUtils.degToRad(deg)
@@ -193,11 +220,14 @@ export class InterrogationCamera {
   _cut (npc, kind, seconds, opts = {}) {
     const pose = this._stage(npc, kind, opts)
     if (!pose) return false
-    this._start(pose, seconds, opts.linear === true)
+    this._start(pose, seconds, opts.linear === true, opts.then ?? null)
     return true
   }
 
-  _start (target, duration, linear = false) {
+  // then 은 보간이 끝난 순간 이어붙일 다음 단계를 만든다. 있으면 _syncPlayer 를 미룬다 —
+  // 중간 단계에서 플레이어를 옮기면 카메라 높이가 바닥 좌표로 새어 나가고, player 모듈이
+  // 다음 프레임에 그 값으로 카메라를 되쓴다.
+  _start (target, duration, linear = false, then = null) {
     const from = this._pose()
     this.move = {
       from,
@@ -208,8 +238,35 @@ export class InterrogationCamera {
       },
       duration,
       elapsed: 0,
-      linear
+      linear,
+      then
     }
+  }
+
+  // 측면 로우앵글: 내려가며 돌기 → 머물기 → 원래 자리로 복귀. 머물기는 from=to 인 0이동
+  // 보간이라 update 가 매 프레임 같은 포즈를 다시 세우고, player 모듈이 pos.y+EYE 로
+  // 카메라를 되쓰는 것을 그동안 덮는다.
+  // **복귀가 계약이다.** 뒤따르는 컷들은 전부 진입 각 기준(arcDeg·reactArc)이라, 이 컷이
+  // 측면에 플레이어를 놓고 끝나면 그 52°가 다음 컷의 기준각이 되고 판정 리액션이 74°까지
+  // 밀린다(실측). 한 번 찌르고 돌아와야 "정면 연속을 끊는 한 컷"으로 남는다.
+  _lowCut (npc) {
+    const low = INTERROGATION.low
+    const back = this._pose()
+    return this._cut(npc, 'low', 1.15, {
+      facing: true, arc: low.arc, drop: low.drop, bias: low.bias,
+      then: () => this._start(this._pose(), low.hold, false, () => this._start(back, low.rise))
+    })
+  }
+
+  // 착지. 눈높이보다 낮은 자리에서 보간이 끝나면 player 모듈이 다음 프레임에 pos.y+EYE 로
+  // 카메라를 되쓰면서 그 차이가 한 프레임에 통째로 튄다(실측). 어떤 경로로 내려왔든
+  // — 로우앵글이든 그 위에 겹친 breaking 하강이든 — 눈높이 복귀를 붙여서 놓는다.
+  _land (to) {
+    const floorY = this.engine.get('player')?.pos?.y ?? to.pos.y - EYE
+    if (to.pos.y > floorY + EYE - 0.14) { this._syncPlayer(to); return }
+    const pose = this._stage(this.npc, 'slide', { arc: [0] })
+    if (pose) this._start(pose, INTERROGATION.low.rise)
+    else this._syncPlayer(to)
   }
 
   // 진술이 시작될 때마다 컷을 다시 잡는다. 이 자리가 없으면 프레임이 플레이어의 접근
@@ -218,6 +275,7 @@ export class InterrogationCamera {
   _statement ({ npc, camera } = {}) {
     if (npc) this.npc = npc
     if (!this.npc) return
+    if (camera === 'low') { this._lowCut(this.npc); return }
     this._cut(this.npc, camera === 'push' || camera === 'pull' ? camera : 'slide', 1.05)
   }
 
@@ -311,8 +369,9 @@ export class InterrogationCamera {
     camera.quaternion.copy(move.to.quat)
     camera.setFocalLength(move.to.lens)
     camera.updateMatrixWorld(true)
-    this._syncPlayer(move.to)
     this.move = null
+    if (move.then) { move.then(); return }
+    this._land(move.to)
   }
 
   dispose () {

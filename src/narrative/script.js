@@ -143,7 +143,9 @@ const INTERROGATION_SCRIPT = {
         onLieWrong: { detective: '이건 어떻습니까.', text: '형사님이 뭘 들고 오시든 저는 본 걸 말한 겁니다.', burn: true }
       },
       {
-        id: 'deitch.S3', camera: 'pull',
+        // 세 번째 진술은 측면 로우앵글이다 — 인물마다 한 번씩. 앞뒤가 전부 정면 미디엄이라
+        // 거리만 다른 컷이 이어지던 것을 여기서 끊는다(3차 판정 J3③).
+        id: 'deitch.S3', camera: 'low',
         text: '9일부터 수압이 떨어졌습니다. 3층 위로는 물이 안 올라갔어요. 민원 장부가 여기 있습니다.',
         onTruth: { detective: '보겠습니다.', action: '장부를 내준다', text: '도일 씨가 봤습니다. 늘 그 사람이 봅니다.', flags: ['doyle-named'] },
         onDoubt: { detective: '장부부터 봅시다.', action: '장부를 밀어 놓는다', text: '…보시죠. 저는 접수만 합니다.', note: '도일 이야기는 나오지 않는다' },
@@ -203,7 +205,7 @@ const INTERROGATION_SCRIPT = {
         onLieWrong: { detective: '이건 어떻습니까.', text: '…저는 모르는 일이에요. 진짜예요.', burn: true, flags: ['footprints-lost'], note: '발자국 증거를 영영 못 얻는다' }
       },
       {
-        id: 'ruiz.S3', camera: 'slide',
+        id: 'ruiz.S3', camera: 'low',
         text: '카펫이 젖어 있었어요. 942호 앞에서 계단 쪽으로요. 아침에 제가 닦았어요. 그게 제 일이니까.',
         onTruth: { detective: '닦으면서 생각한 게 있겠죠.', text: '닦으면서 생각했어요. 이 물은 위에서 내려온 게 아니라, 위로 올라간 거구나.', flags: ['water-upward'] },
         onDoubt: { detective: '닦은 게 확실합니까.', text: '…닦은 건 저예요. 그건 확실해요.' },
@@ -251,7 +253,7 @@ const INTERROGATION_SCRIPT = {
         onLieWrong: { detective: '경력을 확인해보죠.', text: '…인사기록을 떼십시오. 저는 도와드릴 게 없습니다.', burn: true }
       },
       {
-        id: 'pryce.S3', camera: 'push',
+        id: 'pryce.S3', camera: 'low',
         text: '넬 밴스 사건은 제 소관이 아니었습니다. 그때 저는 이미 나온 뒤였고요.',
         note: 'photos는 S1을 통과해야 얻는다. S1 실패 시 DOUBT이 최선이며 자백에 도달하지 못한다',
         onTruth: { detective: '알겠습니다.', text: '…네. 나온 뒤였습니다.' },

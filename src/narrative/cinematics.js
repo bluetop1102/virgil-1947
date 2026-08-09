@@ -8,7 +8,7 @@ export const INTRO_BEATS = Object.freeze([
   { at: 0, id: 'black-water' },
   { at: 4, id: 'typewriter' },
   { at: 10, id: 'fade-in' },
-  { at: 12, id: 'lobby-track' },
+  { at: 11.2, id: 'lobby-track' },
   { at: 22, id: 'badge' },
   { at: 27, id: 'handoff' },
   { at: 30, id: 'end' }
@@ -29,6 +29,38 @@ const SOFA_LOOK = new THREE.Vector3(2.85, 0.92, 3.72)
 const DESK_LOOK = new THREE.Vector3(-1.35, 1.08, -3.18)
 const DEITCH_LOOK = new THREE.Vector3(-3.35, 1.70, -4.25)
 const BADGE_POS = new THREE.Vector3(-1.35, 1.105, -3.18)
+
+// 트래킹 구간 경계. 총 길이 30s·`cinematic:end` 시점은 계약이라 건드리지 않고, 이 안에서만
+// 시간을 다시 나눈다 — 출발을 페이드 꼬리(veil 35%)로 1초 당겨 1구간이 6.4s 를 쓴다.
+const TRACK_IN = 11.2
+const TRACK_TURN = 17.6
+const TRACK_OUT = 22
+// 로비 인형(프라이스) 앞을 스치는 지점의 구간 내 위치. 3차 판정 J1 "셔터가 아니라 속도" —
+// 실측으로 이 순간 인형 얼굴이 초당 1727px 흘러 윤곽이 통째로 뭉갰다.
+const PASS_AT = 0.60
+const PASS_SPAN = 0.32
+const PASS_SLOW = 0.62
+
+// ∫₀ˣ smoothstep — 가속 램프가 훑는 거리를 닫힌 식으로 준다(A(1)=0.5).
+const rampArea = (x) => x * x * x * (1 - x * 0.5)
+
+// 사다리꼴 속도 프로파일. smoothstep 하나로 한 구간을 다 덮으면 순간속도가 평균의 1.5배까지
+// 솟고, 그 첨두가 정확히 구간 한가운데(인형 통과 지점)에 앉는다. 양 끝만 가감속하고 가운데를
+// 등속으로 두면 같은 거리·같은 시간에 첨두가 내려간다.
+function cruise (u, ramp) {
+  const v = 1 / (1 - ramp)
+  if (u <= ramp) return v * ramp * rampArea(u / ramp)
+  if (u >= 1 - ramp) return 1 - v * ramp * rampArea((1 - u) / ramp)
+  return v * (ramp * 0.5 + (u - ramp))
+}
+
+// 통과 감속 — 인형 앞 [c-w, c+w] 구간에서만 시간이 느리게 흐른다. 잃은 만큼을 구간 전체가
+// 나눠 가지므로(분모) 도착 시각과 총 이동거리는 그대로다. depth<1 이면 항상 단조증가한다.
+function slowNear (u, c, w, depth) {
+  const s = Math.min(1, Math.max(-1, (u - c) / w))
+  const n = 0.5 * (s + 1) + Math.sin(Math.PI * s) / (2 * Math.PI)
+  return (u - depth * w * n) / (1 - depth * w)
+}
 
 
 function makeBadge () {
@@ -156,6 +188,10 @@ const cinematics = {
     if (t >= 22) this._once('badge-hit', () => {
       this.engine.bus.emit('sfx', { id: 'key.jingle', pos: BADGE_POS.toArray(), gain: 0.48 })
       this.engine.bus.emit('sfx', { id: 'door.close', pos: BADGE_POS.toArray(), gain: 0.16 })
+      // E2 0:22 "라디오가 잦아든다". 지금은 AUDIO 가 `cinematic:start` 에서 +22 를 자체
+      // 예약해 우회 중이라(HANDOFF 종결분) 이 통지를 아직 아무도 안 듣는다 — 그래도 시각의
+      // 진실원은 이 비트다. AUDIO 가 여기에 결박하면 자체 타이머를 지울 수 있다.
+      this.engine.bus.emit('cinematic:beat', { id: 'cin-intro', beat: 'radio-fade', at: 22 })
     })
   },
 
@@ -176,21 +212,26 @@ const cinematics = {
   },
 
   _cameraPose (t, pos, look) {
-    if (t < 12) {
+    if (t < TRACK_IN) {
       pos.copy(CAMERA_START)
       look.copy(DESK_LOOK)
       return
     }
-    if (t < 18) {
-      const p = smooth((t - 12) / 6)
+    if (t < TRACK_TURN) {
+      const u = (t - TRACK_IN) / (TRACK_TURN - TRACK_IN)
+      const p = cruise(slowNear(u, PASS_AT, PASS_SPAN, PASS_SLOW), 0.18)
       pos.lerpVectors(CAMERA_START, CAMERA_MID, p)
-      look.lerpVectors(DESK_LOOK, SOFA_LOOK, Math.sin(p * Math.PI))
+      // 소파 쪽 스윙 진폭. 1.0(소파 정면)이면 왕복 각속도가 47°/s 까지 올라가 지나치는 것이
+      // 전부 흐른다 — 팔걸이가 프레임에 남는 선까지만 돌린다(E2 0:12 "스치고").
+      look.lerpVectors(DESK_LOOK, SOFA_LOOK, Math.sin(p * Math.PI) * 0.82)
       return
     }
-    if (t < 22) {
-      const p = smooth((t - 18) / 4)
-      pos.lerpVectors(CAMERA_MID, CAMERA_END, p)
-      look.lerpVectors(SOFA_LOOK, DESK_LOOK, p)
+    if (t < TRACK_OUT) {
+      // 시선은 1구간이 이미 데스크로 돌려놓았다. 옛 판은 여기서 소파를 다시 집어 t=18 에
+      // 한 프레임 2164°/s 스냅(시선 표적 8m 순간이동)이 났다 — 실측. 2구간은 데스크를 문
+      // 채로 들어가는 순수 달리다.
+      pos.lerpVectors(CAMERA_MID, CAMERA_END, cruise((t - TRACK_TURN) / (TRACK_OUT - TRACK_TURN), 0.24))
+      look.copy(DESK_LOOK)
       return
     }
     pos.copy(CAMERA_END)
@@ -240,6 +281,12 @@ const cinematics = {
   },
 
   _storyBeats (t) {
+    // 트래킹이 지나갈 때 로비 인형이 한 번씩 이쪽을 본다. 프레임 밖에서 도는 반응은
+    // 아무것도 아니라, 시각은 각자 **화면 안에 있는 동안**의 실측으로 잡았다 —
+    // 프라이스 t=12.4~13.8(최근접 2.1m) · 루이즈 t=11.9~16.2(화면 x 1120~1257 로 가장
+    // 안쪽인 구간이 13.4~15.0). 반응 길이는 1.55s(perf.js GLANCE_T)라 여기서 0.35s 뒤에 선다.
+    if (t >= 12.5) this._once('glance-pryce', () => this.engine.bus.emit('perf:glance', { npc: 'pryce' }))
+    if (t >= 13.4) this._once('glance-ruiz', () => this.engine.bus.emit('perf:glance', { npc: 'ruiz' }))
     if (t >= 17.15) this._once('radio-line', () => {
       this.engine.bus.emit('subtitle', { speaker: '라디오', text: '…9층에서 물소리가 나면…', dur: 2.15 })
     })
