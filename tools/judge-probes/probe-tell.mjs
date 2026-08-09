@@ -17,7 +17,9 @@ async function ig () {
     return { phase: st.phase ?? null, sid: st.statementId ?? null, pick: !!nb?._pick }
   })
 }
-async function waitIg (pred, ms = 40000, tag = '') {
+// 대기 예산은 벽시계다. 헤드리스 engine.time 이 실시간의 0.4배까지 흐르므로(공용 드라이버
+// 주석) 엔진 기준 소요의 2.5배를 덮게 잡는다 — S-B 실측: 40s 예산은 인트로 낭독도 못 덮었다.
+async function waitIg (pred, ms = 120000, tag = '') {
   const t0 = Date.now()
   let s = null
   while (Date.now() - t0 < ms) {
@@ -73,21 +75,21 @@ await sleep(600)
 if ((await ig()).phase === 'idle') { await aim(page, -3.35, 1.3, -4.25); await sleep(800); await page.keyboard.press('e') }
 
 // S1 — 진실
-await waitIg(s => s.sid?.endsWith('S1') && s.phase === 'choice', 40000, 's1-choice')
+await waitIg(s => s.sid?.endsWith('S1') && s.phase === 'choice', 120000, 's1-choice')
 await page.keyboard.press('1')
 
 // S2 — 거짓 진술 낭독(푸시인) 중 텔 3프레임 : 독립 에이전트 채점 재료
-await waitIg(s => s.sid?.endsWith('S2'), 30000, 's2')
+await waitIg(s => s.sid?.endsWith('S2'), 90000, 's2')
 await sleep(800); await shot(page, 'tell-01-pushin-a')
 await sleep(1500); await shot(page, 'tell-02-pushin-b')
 await sleep(1500); await shot(page, 'tell-03-pushin-c')
 
 // 거짓 지목 → 판정 리버스 샷 2프레임 : 오버숄더 채점 재료
-await waitIg(s => s.phase === 'choice', 30000, 's2-choice')
+await waitIg(s => s.phase === 'choice', 90000, 's2-choice')
 await page.keyboard.press('3')
-await waitIg(s => s.pick, 8000, 's2-pick')
+await waitIg(s => s.pick, 30000, 's2-pick')
 if (!await pickEvidence('register')) console.log('경고: picker에서 register 못 찾음')
-await waitIg(s => !s.pick, 15000, 's2-resolve')
+await waitIg(s => !s.pick, 45000, 's2-resolve')
 await sleep(700); await shot(page, 'tell-04-reverse-a')
 await sleep(1800); await shot(page, 'tell-05-reverse-b')
 

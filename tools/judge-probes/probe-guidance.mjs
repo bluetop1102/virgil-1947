@@ -12,12 +12,17 @@ const t0 = (await stats(page)).t
 await page.keyboard.press('Enter')
 while ((await stats(page)).t - t0 < 33) await sleep(300)
 
-// ① 조작 카드 — 이양 +1초에 visible, +7초에 hidden
+// ① 조작 카드 — 이양 +1초에 visible, 이후 자동 소거는 폴링으로 잰다.
+// 고정 벽시계 대기(+7s)는 엔진 시계 0.4배 조건에서 카드 수명(엔진 초)을 못 덮어 오탐한다.
 await sleep(1000)
 const cardEarly = await page.evaluate(() => window.__ENGINE__.get('hud')?.controlsCardState?.() ?? 'never')
 await shot(page, 'guide-00-controls-card')
-await sleep(6000)
-const cardLate = await page.evaluate(() => window.__ENGINE__.get('hud')?.controlsCardState?.() ?? 'never')
+let cardLate = cardEarly
+for (let i = 0; i < 60; i++) {                 // 최대 30초 벽시계 — 0.4배에서도 엔진 12초를 덮는다
+  await sleep(500)
+  cardLate = await page.evaluate(() => window.__ENGINE__.get('hud')?.controlsCardState?.() ?? 'never')
+  if (cardLate === 'hidden') break
+}
 
 // ② Esc 일시정지 — 열림 중 W 1.6초: 위치 동결. 닫힘 후 W 1초: 이동 복귀
 await page.keyboard.press('Escape')

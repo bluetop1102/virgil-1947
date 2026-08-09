@@ -22,7 +22,7 @@ async function ig () {
     return { phase: st.phase ?? null, sid: st.statementId ?? null, pick: !!nb?._pick }
   })
 }
-async function waitIg (pred, ms = 40000, tag = '') {
+async function waitIg (pred, ms = 120000, tag = '') {
   const t0 = Date.now()
   let s = null
   while (Date.now() - t0 < ms) {
@@ -63,7 +63,7 @@ try {
   await page.keyboard.press('e')
   await sleep(600)
   if ((await ig()).phase === 'idle') { await aim(page, -3.35, 1.3, -4.25); await sleep(800); await page.keyboard.press('e') }
-  await waitIg(s => s.sid?.endsWith('S1'), 40000, 's1')
+  await waitIg(s => s.sid?.endsWith('S1'), 120000, 's1')
   const iFrom = (await stats(page)).t
   await sleep(9000)                        // S1 낭독 9초 — 긴장층이 얹힐 자리
   const iTo = (await stats(page)).t
@@ -72,7 +72,7 @@ try {
   await shot(page, 'audio-interro-lines')
   // 낭독이 끝나 interrogation:prompt 가 이벤트 로그에 남을 때까지 기다린다 — §4b 블라인드
   // 판독자가 심문 시작점을 대리 이벤트로 고르게 만들던 창 문제(S-A 지적)의 수정.
-  await waitIg(s => s.phase === 'choice', 30000, 's1-choice').catch(() => {})
+  await waitIg(s => s.phase === 'choice', 90000, 's1-choice').catch(() => {})
   const aud = await fetchAudioLog(page)
   const win = aud.filter(s => s.rms != null && s.t >= iFrom && s.t <= iTo)
   interroMean = win.length ? win.reduce((p, c) => p + c.rms, 0) / win.length : null
