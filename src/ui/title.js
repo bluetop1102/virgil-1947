@@ -29,6 +29,39 @@ function plaque (label, mode) {
   return node
 }
 
+// 프런트 벨. CSS 반원으로 그렸을 때는 배경(사진)과 밀도가 안 맞아 조악했다 — 돔의 금속
+// 그라디언트·림 반사·누름버튼·받침 2단·접지 그림자까지 형태로 그린다. 인스턴스마다 그라디언트
+// id 가 충돌하지 않도록 접미사를 받는다. 정적 마크업이라 외부 입력이 섞이지 않는다.
+function bell (key) {
+  const node = el('span', 'virgil-bell')
+  node.innerHTML = `<svg viewBox="0 0 120 92" width="100%" height="100%" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="vb-dome-${key}" x1=".18" y1="0" x2=".82" y2="1">
+        <stop offset="0" stop-color="#eed9a2"/><stop offset=".26" stop-color="#bc9852"/>
+        <stop offset=".62" stop-color="#755c2c"/><stop offset="1" stop-color="#493819"/>
+      </linearGradient>
+      <linearGradient id="vb-base-${key}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#c8a862"/><stop offset=".55" stop-color="#6f5729"/>
+        <stop offset="1" stop-color="#3d2f14"/>
+      </linearGradient>
+      <radialGradient id="vb-shadow-${key}" cx=".5" cy=".5" r=".5">
+        <stop offset="0" stop-color="#000" stop-opacity=".62"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="60" cy="84" rx="46" ry="7" fill="url(#vb-shadow-${key})"/>
+    <rect x="16" y="74" width="88" height="6" rx="3" fill="url(#vb-base-${key})"/>
+    <rect x="23" y="66" width="74" height="9" rx="3.5" fill="url(#vb-base-${key})"/>
+    <path d="M18 67a42 38 0 0 1 84 0z" fill="url(#vb-dome-${key})"/>
+    <path d="M18 67a42 38 0 0 1 84 0" fill="none" stroke="#f6e6b4" stroke-opacity=".5" stroke-width="1.2"/>
+    <path d="M32 57a29 26 0 0 1 24-26" fill="none" stroke="#fbeec9" stroke-opacity=".46" stroke-width="2.6" stroke-linecap="round"/>
+    <ellipse cx="60" cy="67" rx="42" ry="4.6" fill="#2a2010" fill-opacity=".55"/>
+    <rect x="56" y="18" width="8" height="14" rx="2.6" fill="url(#vb-base-${key})"/>
+    <ellipse cx="60" cy="17" rx="9" ry="4.4" fill="url(#vb-dome-${key})"/>
+    <ellipse cx="58" cy="15.6" rx="4" ry="1.7" fill="#fbf0cd" fill-opacity=".62"/>
+  </svg>`
+  return node
+}
+
 function hasCheckpoint () {
   return ['virgil.checkpoint', 'virgil.save', 'virgil.state'].some(key => localStorage.getItem(key))
 }
@@ -44,9 +77,10 @@ const title = {
     this.qa = engine.qa
     this.pose = { ...POSE }
     this.fov0 = engine.camera.fov
-    // 기본은 A안(인게임 렌더). ?titlebg=image 로 B안을 미리 본다.
+    // 기본은 B안(호텔 외관 이미지). 이미지가 없거나 ?titlebg=render 면 A안(인게임 로비 렌더)으로
+    // 떨어진다 — 배경이 사라져 글자만 남는 화면은 나오지 않는다.
     const params = new URLSearchParams(location.search)
-    this.bg = params.get('titlebg') === 'image' && BG_IMAGE ? 'image' : 'render'
+    this.bg = BG_IMAGE && params.get('titlebg') !== 'render' ? 'image' : 'render'
     // ?scene= 진입로는 프로브 공간(월드 y=-500)에 플레이어를 세운다. 거기서 카메라를 로비로
     // 끌어오면 그 진입로가 깨진다(AGENTS.md). 씬 모드에서는 카메라를 건드리지 않는다.
     this.freeCamera = params.has('scene')
@@ -79,14 +113,22 @@ const title = {
       .virgil-glass[data-bg="image"]{background:linear-gradient(180deg,rgba(2,3,5,.86) 0%,rgba(2,3,5,.54) 20%,rgba(2,3,5,.10) 44%,rgba(2,3,5,.06) 62%,rgba(1,2,3,.60) 100%),radial-gradient(ellipse at 50% 52%,rgba(3,4,6,0) 30%,rgba(2,3,5,.22) 68%,rgba(1,2,3,.64) 100%)}
       .virgil-glass[data-bg="image"]:before,.virgil-glass[data-bg="image"]:after{display:none}
       .virgil-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 46%}
-      .virgil-title-mark{position:absolute;left:50%;top:16%;transform:translateX(-50%);font-family:${DISPLAY};font-size:clamp(54px,9vw,126px);letter-spacing:.29em;text-indent:.29em;color:#c2a668;text-shadow:0 1px #efe0a9,0 -1px #392f1d,0 0 24px rgba(176,143,75,.2),0 8px 34px rgba(0,0,0,.9);white-space:nowrap}
-      .virgil-title-sub{position:absolute;left:50%;top:31%;transform:translateX(-50%);font-family:${DISPLAY};font-size:clamp(12px,1.2vw,18px);letter-spacing:.52em;text-indent:.52em;color:#8d7b56;text-shadow:0 2px 12px rgba(0,0,0,.9);white-space:nowrap}
-      .virgil-choices{position:absolute;left:50%;top:72%;transform:translateX(-50%);display:flex;gap:clamp(24px,5vw,72px)}
-      .virgil-plaque{min-width:210px;padding:15px 32px 13px;border:1px solid #8f7543;outline:1px solid rgba(24,17,8,.9);outline-offset:-5px;background:linear-gradient(165deg,#7e6739,#42331b 48%,#8a7243);box-shadow:0 9px 22px rgba(0,0,0,.7),inset 0 1px rgba(244,220,159,.32);color:#20180d;text-align:center;font-size:14px;letter-spacing:.32em;text-indent:.32em;text-shadow:0 1px rgba(219,194,137,.45);cursor:pointer;transform:rotate(-.35deg)}
-      .virgil-plaque:nth-child(2){transform:rotate(.45deg)}.virgil-plaque:focus,.virgil-plaque:hover{filter:brightness(1.16);outline-color:#d1b775}
-      .virgil-bell-prompt{position:absolute;left:50%;bottom:16%;transform:translateX(-50%);text-align:center;color:#bcab84;font-size:clamp(12px,1.3vw,17px);letter-spacing:.2em;text-shadow:0 2px 14px rgba(0,0,0,.92);white-space:nowrap}
-      .virgil-bell{display:block;position:relative;width:54px;height:33px;margin:0 auto 20px;border:2px solid #9a7d43;border-top-left-radius:28px 26px;border-top-right-radius:28px 26px;border-bottom:0;filter:drop-shadow(0 5px 7px rgba(0,0,0,.7))}
-      .virgil-bell:before{content:'';position:absolute;left:22px;top:-10px;width:7px;height:10px;border:1px solid #9a7d43}.virgil-bell:after{content:'';position:absolute;left:-7px;right:-7px;bottom:-5px;height:5px;background:#8d713b;box-shadow:0 2px #302411}
+      /* 호텔 간판 조판 — 작은 업종명 위, 큰 고유명 아래. 파사드 배경의 마키와 같은 관습이다.
+         세 줄을 한 덩어리로 쌓는다. 줄마다 top% 를 주면 화면비에 따라 글자 상자가 겹친다 */
+      .virgil-signage{position:absolute;left:50%;top:11%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:clamp(12px,1.5vw,22px);text-align:center;white-space:nowrap}
+      .virgil-title-kind{font-family:${DISPLAY};font-size:clamp(13px,1.35vw,21px);line-height:1;letter-spacing:.72em;text-indent:.72em;color:#9c8657;text-shadow:0 2px 14px rgba(0,0,0,.92)}
+      .virgil-title-mark{font-family:${DISPLAY};font-size:clamp(54px,9vw,126px);line-height:1;letter-spacing:.29em;text-indent:.29em;color:#c2a668;text-shadow:0 1px #efe0a9,0 -1px #392f1d,0 0 24px rgba(176,143,75,.2),0 8px 34px rgba(0,0,0,.9)}
+      .virgil-title-sub{font-family:${DISPLAY};font-size:clamp(12px,1.2vw,18px);line-height:1;letter-spacing:.52em;text-indent:.52em;color:#8d7b56;text-shadow:0 2px 12px rgba(0,0,0,.9)}
+      /* 벨과 명패는 한 덩어리다 — 벨을 눌러 체크인한다는 행위 하나를 두 요소로 보인다 */
+      .virgil-actions{position:absolute;left:50%;bottom:8%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:clamp(16px,2vw,26px)}
+      .virgil-choices{display:flex;gap:clamp(24px,5vw,72px)}
+      .virgil-plaque{min-width:210px;padding:15px 32px 13px;border:1px solid #8f7543;outline:1px solid rgba(24,17,8,.9);outline-offset:-5px;background:linear-gradient(165deg,#8a7245,#453620 44%,#93794a);box-shadow:0 9px 22px rgba(0,0,0,.72),inset 0 1px rgba(244,220,159,.3);color:#151007;text-align:center;font-size:14px;letter-spacing:.32em;text-indent:.32em;text-shadow:0 1px rgba(233,211,157,.6);cursor:pointer;transform:rotate(-.35deg);transition:filter 180ms ease,transform 180ms ease}
+      .virgil-plaque:nth-child(2){transform:rotate(.45deg)}
+      .virgil-plaque:focus,.virgil-plaque:hover{filter:brightness(1.16);outline-color:#d1b775;transform:rotate(-.35deg) translateY(-1px)}
+      .virgil-plaque:nth-child(2):focus,.virgil-plaque:nth-child(2):hover{transform:rotate(.45deg) translateY(-1px)}
+      .virgil-bell{display:block;width:clamp(64px,6vw,92px);height:auto;filter:drop-shadow(0 7px 10px rgba(0,0,0,.72))}
+      .virgil-bell svg{display:block}
+      @media (prefers-reduced-motion:reduce){.virgil-plaque{transition:none}}
       .virgil-loading{position:absolute;inset:0;background:radial-gradient(circle at 50% 43%,#10100f,#050608 65%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10vh 12vw}
       .virgil-disclosure{max-width:860px;min-height:5em;color:#b6aa91;font-size:clamp(15px,1.55vw,23px);line-height:2.15;letter-spacing:.12em;text-align:center;text-shadow:0 0 14px rgba(197,173,120,.12)}
       .virgil-disclosure:after{content:'';display:inline-block;width:.56em;height:1.15em;margin-left:.22em;vertical-align:-.18em;background:#8e8065;opacity:.72}
@@ -123,20 +165,30 @@ const title = {
     this.layer.appendChild(this.loading)
 
     this.titleScreen = el('div', 'virgil-glass')
-    this.titleScreen.appendChild(el('div', 'virgil-title-mark', 'VIRGIL'))
-    this.titleScreen.appendChild(el('div', 'virgil-title-sub', '1947 · ROOM 942'))
+    const signage = el('div', 'virgil-signage')
+    signage.append(
+      el('div', 'virgil-title-kind', 'HOTEL'),
+      el('div', 'virgil-title-mark', 'VIRGIL'),
+      el('div', 'virgil-title-sub', '1947 · ROOM 942')
+    )
+    this.titleScreen.appendChild(signage)
+    this.actions = el('div', 'virgil-actions')
+    this.actions.appendChild(bell('title'))
     this.choices = el('div', 'virgil-choices')
-    this.titleScreen.appendChild(this.choices)
-    this.bellPrompt = el('div', 'virgil-bell-prompt', '프런트 벨을 누르십시오')
-    this.bellPrompt.prepend(el('span', 'virgil-bell'))
-    this.titleScreen.appendChild(this.bellPrompt)
+    this.actions.appendChild(this.choices)
+    this.titleScreen.appendChild(this.actions)
     this.layer.appendChild(this.titleScreen)
 
     this.resumeScreen = el('div', 'virgil-glass')
     const resumeLines = el('div', 'virgil-resume-lines')
-    resumeLines.append('돌아오셨습니까 — 벨을 누르십시오', document.createElement('br'), '노트는 두고 가신 그대로입니다.')
-    resumeLines.prepend(el('span', 'virgil-bell'))
+    resumeLines.append('돌아오셨습니까', document.createElement('br'), '노트는 두고 가신 그대로입니다.')
     this.resumeScreen.appendChild(resumeLines)
+    const resumeActions = el('div', 'virgil-actions')
+    resumeActions.appendChild(bell('resume'))
+    const resumeChoice = el('div', 'virgil-choices')
+    resumeChoice.appendChild(plaque('이어서', 'wake'))
+    resumeActions.appendChild(resumeChoice)
+    this.resumeScreen.appendChild(resumeActions)
     this.layer.appendChild(this.resumeScreen)
 
     this.patina = el('div', 'virgil-patina')
@@ -178,7 +230,7 @@ const title = {
   // 배경 A/B 전환. 하네스가 변종마다 호출한다 — window.__ENGINE__.get('title').setBg('image')
   setBg (mode) {
     this.bg = mode === 'image' && BG_IMAGE ? 'image' : 'render'
-    if (this.active) this._show(this.active, this.choices.style.display !== 'none')
+    if (this.active) this._show(this.active, this.saved)
     return { bg: this.bg, src: BG_IMAGE }
   },
 
@@ -202,12 +254,10 @@ const title = {
 
   _paintTitle (forceChoices) {
     const saved = forceChoices || hasCheckpoint()
+    this.saved = saved
     this.choices.textContent = ''
-    this.choices.style.display = saved ? 'flex' : 'none'
-    this.bellPrompt.style.display = saved ? 'none' : 'block'
-    if (saved) {
-      this.choices.append(plaque('이어서', 'resume'), plaque('처음부터', 'new'))
-    }
+    if (saved) this.choices.append(plaque('이어서', 'resume'), plaque('처음부터', 'new'))
+    else this.choices.appendChild(plaque('체크인', 'new'))
   },
 
   _hideAll () {
@@ -233,7 +283,7 @@ const title = {
     const mode = e.target.closest?.('[data-mode]')?.dataset.mode
     if (mode) this._proceed(mode)
     else if (this.active === 'resume') this._proceed('wake')
-    else if (this.active === 'title' && this.choices.style.display === 'none') this._proceed('new')
+    else if (this.active === 'title' && !this.saved) this._proceed('new')
   },
 
   _key (e) {
@@ -241,7 +291,7 @@ const title = {
     if (this.engine.get('settings')?.isOpen?.()) return
     if (e.key === 'Enter' && e.target?.dataset?.mode) this._proceed(e.target.dataset.mode)
     else if (this.active === 'resume') this._proceed('wake')
-    else if (this.active === 'title' && this.choices.style.display === 'none') this._proceed('new')
+    else if (this.active === 'title' && !this.saved) this._proceed('new')
   },
 
   _proceed (mode) {
