@@ -6,3 +6,6 @@ dist/
 
 .claude/
 scratchpad/
+tmp/
+output/
+__pycache__/
