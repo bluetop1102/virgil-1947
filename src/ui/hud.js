@@ -33,7 +33,7 @@ const INSPECT_T = 1.05
 const INSPECT_POSE = 'perspective(720px) rotateX(13deg) rotateY(-9deg) rotate(-2.6deg)'
 // 든 채로 가만히 있는 손은 없다. 컷의 중간부터 끝까지 아주 느리게 이 자세로 흘러간다 —
 // 프레임 사이에 아무것도 안 변하면 "화면에 고정된 패널"로 읽힌다(블라인드 판독 지적).
-const INSPECT_SWAY = 'perspective(720px) rotateX(10deg) rotateY(-6deg) rotate(-1.3deg)'
+const INSPECT_SWAY = 'perspective(720px) rotateX(8deg) rotateY(-4deg) rotate(-0.7deg)'
 const INSPECT_TR = 'opacity .26s ease,transform .34s cubic-bezier(.16,1,.3,1)'
 
 export default {
@@ -470,7 +470,9 @@ export default {
     const size = clamp(Math.round(w * 0.078), 11, 18)
     typed(ctx, '증거 — 노트에 끼움', 14, h * 0.36, { size: size * 0.62, ink: INK.faded, alpha: 0.7, track: 1.4, seed: 3 })
     typed(ctx, this.slip.title, 13, h * 0.72, { size, ink: INK.ribbon, alpha: 0.92, seed: 7 })
-    paperclip(ctx, w - 17, h * 0.30, 0.82, 0.42)
+    // 클립은 종이 **가장자리에 물려야** 클립으로 읽힌다. 안쪽에 작게 놓였을 때 블라인드
+    // 판독이 "이모지 음표(♪)"로 읽었다 — D7 이 정확히 금지하는 인상이라 키우고 위로 물렸다.
+    paperclip(ctx, w - 26, h * 0.1, 1.25, 0.3)
     this.sc = s
     this.sWrap.appendChild(s.c)
   },
@@ -479,10 +481,13 @@ export default {
     if (this.slip && this.engine.time - this.slipT0 > 4.6 && !this.engine.qa) this._hideSlip()
     if (this.cardArm && this.engine.time >= this.cardArm) this._showCard()
     if (this.cardVisible && this.engine.time >= this.cardOff) this._hideCard()
-    if (this.inspecting && !this.inspSway && !this.engine.qa && this.engine.time - this.inspectT0 > 0.3) {
+    // 흔들림은 **빨리 시작해서 느리게 멎어야** 프레임 사이에서 보인다. 처음에 뜸을 들이는
+    // 곡선으로 뒀더니 0.4초 간격 연속 프레임 두 장이 픽셀 단위로 같아서 블라인드 판독이
+    // "고정된 패널"로 읽었다 — 시작을 앞으로 당기고 곡선을 ease-out 으로 바꿨다.
+    if (this.inspecting && !this.inspSway && !this.engine.qa && this.engine.time - this.inspectT0 > 0.14) {
       this.inspSway = true
-      this.iWrap.style.transition = 'opacity .26s ease,transform 1.2s cubic-bezier(.33,0,.25,1)'
-      this.iWrap.style.transform = `translate(-50%,-53%) ${INSPECT_SWAY} scale(1.035)`
+      this.iWrap.style.transition = 'opacity .26s ease,transform .95s cubic-bezier(.12,.72,.3,1)'
+      this.iWrap.style.transform = `translate(-50%,-54%) ${INSPECT_SWAY} scale(1.05)`
     }
     if (this.inspecting && this.engine.time - this.inspectT0 > INSPECT_T) this._endInspect()
   },
