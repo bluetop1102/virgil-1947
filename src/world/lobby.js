@@ -56,7 +56,7 @@ function makeDesk () {
   // 데스크 램프 실물. 조명은 practical('desk')이 정본(fixture:false 로 발광 갓만 끔) — 소품
   // 내장 스팟(5.0)을 살리면 이중 조명으로 숙박부가 타고, 전구 발광 2.2는 헐레이션을 타고
   // 화염 기둥이 된다(이양 프레임 실측 2026-08-10). 이 인스턴스만 내장광 소등·발광 1/3.
-  const dlamp = place(deskLamp(208), [-2.75, 1.09, -3.24], 2.55)
+  const dlamp = place(deskLamp(208), [-4.18, 1.09, -3.32], 2.15) // 숙박부·다이치 조준선 밖(구판 -2.75 가 register 와 동좌표였다)
   dlamp.traverse(o => { if (o.isSpotLight) o.intensity = 0; if (o.material?.emissiveIntensity) o.material.emissiveIntensity *= 0.32 })
   root.add(dlamp)
   // 서랍 전면 5짝. 옛 판은 0.82×0.68 면에 텍스처 한 장이라 도관이 스펙클 노이즈로 뭉갰다
