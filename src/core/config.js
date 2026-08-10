@@ -146,5 +146,7 @@ export function pickQuality (search = '') {
   const q = p.get('q')
   if (q && QUALITY[q]) return QUALITY[q]
   if (q) console.warn(`[config] unknown quality preset: ${q}`)
-  return p.get('qa') === '1' ? QUALITY.cinematic : QUALITY.high
+  // 기본 medium — 첫 실행 렉 실플레이 보고(2026-08-10, 사용자 지시). 심사·제출 프레임은
+  // ?q=high 명시 촬영. QA 경로(cinematic)는 불변이라 기준선 픽셀에 영향 없음.
+  return p.get('qa') === '1' ? QUALITY.cinematic : QUALITY.medium
 }
