@@ -246,7 +246,11 @@ const settings = {
     const preset = this.engine.quality?.name || 'unknown'
     const budget = preset === 'high' ? 16.7 : 33.3
     const verdict = p95 && p95 <= budget ? 'PASS' : p95 ? 'OVER' : 'WARMING'
-    this.stats.textContent = `FRAME LEDGER · ${preset.toUpperCase()}\nP50  ${p50.toFixed(2)} ms\nP95  ${p95.toFixed(2)} ms  ${verdict}\nDRAW  ${info.render.calls} calls\nMEM   ${info.memory.geometries} geo · ${info.memory.textures} tex`
+    // 렌더 스케일은 프레임 시간의 91%를 정하는 값이라(S-L 실측) 레저에 없으면 P95 를 읽어도
+    // 원인을 못 가른다. 예산이 물렸는지 여기서 바로 보인다.
+    const gl = this.engine.renderer.getContext()
+    const scale = `${gl.drawingBufferWidth}×${gl.drawingBufferHeight} @${this.engine.renderer.getPixelRatio().toFixed(2)}x`
+    this.stats.textContent = `FRAME LEDGER · ${preset.toUpperCase()}\nP50  ${p50.toFixed(2)} ms\nP95  ${p95.toFixed(2)} ms  ${verdict}\nSCALE ${scale}\nDRAW  ${info.render.calls} calls\nMEM   ${info.memory.geometries} geo · ${info.memory.textures} tex`
   },
 
   dispose () {
