@@ -14,16 +14,22 @@ export const INTRO_BEATS = Object.freeze([
   { at: 30, id: 'end' }
 ])
 
-// 2026-08-10 사용자 지시 개편 2차: 나는 누구다 → 왜 왔다(신고 접수) → 왜 수상한가(호텔은
-// 조용) → 먼저 뭘. 형사가 모를 수 없는 것만 말한다 — 수도 단수는 인게임 발견(다이치 S3·
-// 민원 장부·수사노트 확인 항목)에 맡긴다. 신고 주체는 정본이 특정하지 않으므로 지어내지
-// 않는다("들어왔다"). 행당 26자 이하(타자기 2초 예산).
+// 2026-08-10 사용자 확정 문안(3차): 날짜 → 나는 누구·신고 접수 → 호텔 미신고의 수상함 →
+// 첫 행동. 신고 주체는 정본 미특정이라 "누군가"로 유지. 행 길이가 갈려(11~42자) 타자기
+// 행 경계를 글자 수 비례로 바꿨다 — 2초 고정이던 구판은 긴 행이 읽기 전에 넘어간다.
 const COPY = [
-  '나는 LAPD 실종계 형사. 1947년 10월 11일.',
-  '버질 호텔 942호. 손님이 이틀째 보이지 않는다.',
-  '누군가는 이틀 만에 신고했고, 호텔은 입을 닫았다.',
-  '가서 들여다보는 게 내 일이다. 프런트부터.'
+  '1947년 10월 11일.',
+  '나는 LAPD 실종계 형사. 누군가 버질 호텔 942호 손님에 대한 실종 신고를 했다.',
+  '호텔에서 먼저 신고하지 않은 것은 조금 이상하다.',
+  '가서 정황을 파악해야 한다. 먼저 프런트부터 조사해보자.'
 ]
+// 4~12초의 8초 창을 글자 수 비례로 나눈 행 경계(초). 마지막 행 끝 = 12.
+const COPY_EDGES = (() => {
+  const total = COPY.reduce((s, c) => s + c.length, 0)
+  const edges = [0]
+  for (const c of COPY) edges.push(edges[edges.length - 1] + (c.length / total) * 8)
+  return edges
+})()
 
 const HANDOFF_AT = 27
 const CAMERA_START = new THREE.Vector3(0, EYE, 8.75)
@@ -201,10 +207,13 @@ const cinematics = {
 
   _typeCopy (t) {
     if (t < 4 || t >= 12) return
-    const row = Math.min(3, Math.floor((t - 4) / 2))
-    const local = (t - 4) - row * 2
+    const at = t - 4
+    let row = 0
+    while (row < COPY.length - 1 && at >= COPY_EDGES[row + 1]) row++
+    const span = COPY_EDGES[row + 1] - COPY_EDGES[row]
+    const local = at - COPY_EDGES[row]
     const source = COPY[row]
-    const count = Math.min(source.length, 1 + Math.floor(local / 2 * source.length))
+    const count = Math.min(source.length, 1 + Math.floor(local / span * source.length))
     const next = source.slice(0, count)
     const key = `${row}:${next}`
     if (!next || key === this.typed) return
