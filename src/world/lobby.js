@@ -327,7 +327,16 @@ function dress (root, evidence, bindings) {
 function makeLights () {
   ambientRig({ sky: [0.024, 0.019, 0.015], ground: [0.010, 0.007, 0.005], intensity: 0.45 })
   return [
-    practical('desk', { pos: [-2.75, 1.54, -3.18], target: [-2.65, 1.04, -3.30], kelvin: 2700, lumens: 560, radius: 4.2, name: 'lobby.desk' }),
+    // hot 2.4(KINDS 기본) → 0.45. 3차 §0-2: 램프 사발이 얼굴의 1.56배 휘도에 평탄면 18.25%라
+    // "화면에서 가장 밝고 가장 넓은 무정보 면"이 인물 옆에 상수로 앉는다. hot 은 기구 발광부
+    // 배수라 **투사광은 그대로**다 — S-B 카메라 회피가 전제한 광원 위치·광속·방향 불변.
+    // HANDOFF 처방이던 개구 회전은 이 기구에 듣지 않는다: fixtures.js SHADE_FRAG 가
+    // abs(dot(N,V)) 라 셰이드 안팎이 같은 밝기로 발광해 어느 쪽으로 돌려도 카메라를 향한 면이
+    // uCore 로 켜진다. lumens 하향도 무효였다(등록 A/B shots/sh-ab5: ×0.70 에서 비 1.622→1.604).
+    // 스윕(shots/sh-ab5·sh-ab7, interrogation-deitch 고정 크롭): hot 2.4→1.622 · 1.32→1.433 ·
+    // 0.96→1.333 · 0.72→1.242 · 0.60→1.186 · 0.45→**1.094** · 0.35→1.013.
+    // 0.45 를 고른 이유는 비 1.1 이하를 만족하는 최댓값이라 전구 코어(p95 196.6)가 남기 때문이다.
+    practical('desk', { pos: [-2.75, 1.54, -3.18], target: [-2.65, 1.04, -3.30], kelvin: 2700, lumens: 560, radius: 4.2, hot: 0.45, name: 'lobby.desk' }),
     practical('chandelier', { pos: [0, 3.45, -2.2], kelvin: 3400, lumens: 2100, radius: 10, name: 'lobby.pendant.back' }),
     practical('chandelier', { pos: [0, 3.45, 4.5], kelvin: 3400, lumens: 1750, radius: 9, name: 'lobby.pendant.front' }),
     // 라디오 눈금판이 뿜는 빛. 발광면은 glowMesh(radio.dial)이 그리고, 주변에 실제로
