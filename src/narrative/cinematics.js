@@ -299,7 +299,7 @@ const cinematics = {
     // 어디로 가야 하는지 알 길이 없었다(JUDGE §0-3 실측 — 가시 텍스트 0건). 목표 제시와
     // 첫 상호작용 유도를 형사 독백 한 줄이 겸한다.
     if (t >= 29.75) this._once('first-goal', () => {
-      this.engine.bus.emit('subtitle', { speaker: '', text: '프런트부터다. 숙박부를 봐야겠다.', dur: 4.2 })
+      this.engine.bus.emit('subtitle', { speaker: '', text: '신고를 안 한 건 프런트다. 숙박부부터.', dur: 4.2 })
     })
   },
 

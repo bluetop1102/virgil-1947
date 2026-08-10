@@ -1,5 +1,10 @@
 // [NARRATIVE] 사건 대사·연출 데이터. 관계는 case-graph-loader.js가 주입하고 판정 로직은 소비자가 소유한다.
-// 원문은 docs/STORY.md 5·6절. 대사는 한 글자도 바꾸지 않는다. 괄호 지문은 action 필드로 분리한다.
+// 원문 출처는 docs/STORY.md 5·6절. 괄호 지문은 action 필드로 분리한다.
+// 대사 문면은 2026-08-10 개고(PROMPT-codex-script.md, 사용자 승인)로 STORY §5와 갈린다 —
+// 갈린 것은 어미·연역 밀도뿐이고 id·진위·camera·사실(날짜·객실·시각·금액·치수)은 불변이다.
+// 형사는 인물의 텔(말끝·시선·대답 지연)을 입으로 지목하지 않는다 — 확정 판별을 주지 않는 것이
+// 심문 시스템의 핵심이다(STORY §2). 오답 분기(onLieWrong)의 형사 대사는 어떤 증거를 들이대도
+// 성립해야 하므로 증거를 지칭하지 않는다.
 //
 // 분기 객체 공통 형태:
 //   { detective, action?, text, grants?, spawns?, flags?, burn?, note? }
@@ -120,33 +125,33 @@ const INTERROGATION_SCRIPT = {
     setting: '새벽 2시. 로비. 다이치는 카운터 뒤에 서 있다. 형사가 배지를 놓는다.',
     intro: [
       { speaker: 'detective', text: '942호.' },
-      { speaker: 'deitch', text: '그 방은 열려 있습니다. 청소도 안 들어갔고요. 필요하신 게 뭡니까.' }
+      { speaker: 'deitch', text: '그 방은 열려 있습니다. 청소도 아직 안 들어갔습니다. 뭘 찾으십니까.' }
     ],
     statements: [
       {
         id: 'deitch.S1', camera: 'pull',
-        text: '밴다이버 양은 10월 2일에 들어왔습니다. 2주치를 현금으로 내셨죠. 그런 손님이 요샌 드물어요.',
-        onTruth: { detective: '2주는 긴 시간입니다.', text: '여기 손님들은 보통 사흘을 못 넘깁니다. 2주치를 미리 내는 사람은 뭔가를 기다리는 겁니다.' },
-        onDoubt: { detective: '장부는 나중에도 씁니다.', text: '장부에 그렇게 적혀 있습니다. 제가 지어낸 게 아니고요.' },
+        text: '밴다이버 양은 10월 2일에 들어왔습니다. 2주치를 현금으로 내셨죠. 요즘은 그런 손님, 드뭅니다.',
+        onTruth: { detective: '2주는 긴 시간입니다.', text: '여기선 사흘도 깁니다. 2주치를 미리 냈다면, 기다릴 게 있었다는 얘기입니다.' },
+        onDoubt: { detective: '장부는 나중에도 씁니다.', text: '장부에 그렇게 적혀 있습니다. 제가 지어낸 게 아닙니다.' },
         onLieCorrect: null,
-        onLieWrong: { detective: '이걸 보시죠.', text: '…저는 장부에 있는 걸 말했습니다. 그게 답니다.', burn: true, note: '이후 진술이 전부 한 문장으로 줄어든다' },
+        onLieWrong: { detective: '드문 손님이면 얼굴도 남겠죠.', text: '…저는 장부에 있는 걸 말했습니다. 그게 답니다.', burn: true, note: '이후 진술이 전부 한 문장으로 줄어든다' },
         wrongVariants: {
-          flask: { detective: '데스크 아래 손을 보여주시죠.', text: '…근무 중에 마신 적 없습니다.', burn: true, note: '이후 진술이 전부 한 문장으로 줄어든다' }
+          flask: { detective: '자주 쥔 자리만 닳았군요.', text: '…근무 중에 마신 적 없습니다.', burn: true, note: '이후 진술이 전부 한 문장으로 줄어든다' }
         }
       },
       {
         id: 'deitch.S2', camera: 'push',
         text: '9일 밤에 나가시는 걸 봤습니다. 열한 시쯤이었을 겁니다. 제 기억으론.',
         onTruth: { detective: '알겠습니다.', text: '그렇게 적어두시면 됩니다. 제 기억으론 그렇습니다.' },
-        onDoubt: { detective: '열한 시.', text: '…열한 시였는지는 확실치 않습니다. 그 시간대는 다 비슷해서요.' },
-        onLieCorrect: { detective: '…객실 청구가 붙었죠. 10일에도, 11일에도. 나간 사람 방에 왜 물수건 값이 붙습니까.', text: '…제가 봤다고 한 건 그 여자가 아닐 수도 있습니다. 로비가 어둡습니다. 그 시간엔 다들 비슷해 보여요.' },
-        onLieWrong: { detective: '이건 어떻습니까.', text: '형사님이 뭘 들고 오시든 저는 본 걸 말한 겁니다.', burn: true }
+        onDoubt: { detective: '열한 시.', text: '…열한 시였는지는 확실치 않습니다. 그 시간대는 다 비슷합니다.' },
+        onLieCorrect: { detective: '…객실 청구가 붙었죠. 10일에도, 11일에도. 나간 사람 방에 왜 물수건 값이 붙습니까.', text: '…제가 봤다고 한 건 그 여자가 아닐 수도 있습니다. 로비가 어둡습니다. 그 시간엔 다들 비슷해 보입니다.' },
+        onLieWrong: { detective: '봤다는 말엔 얼굴이 빠졌군요.', text: '형사님이 뭘 들고 오시든 저는 본 걸 말한 겁니다.', burn: true }
       },
       {
         // 세 번째 진술은 측면 로우앵글이다 — 인물마다 한 번씩. 앞뒤가 전부 정면 미디엄이라
         // 거리만 다른 컷이 이어지던 것을 여기서 끊는다(3차 판정 J3③).
         id: 'deitch.S3', camera: 'low',
-        text: '9일부터 수압이 떨어졌습니다. 3층 위로는 물이 안 올라갔어요. 민원 장부가 여기 있습니다.',
+        text: '9일부터 수압이 떨어졌습니다. 3층 위로는 물이 안 올라갔습니다. 민원 장부가 여기 있습니다.',
         onTruth: { detective: '보겠습니다.', action: '장부를 내준다', text: '도일 씨가 봤습니다. 늘 그 사람이 봅니다.', flags: ['doyle-named'] },
         onDoubt: { detective: '장부부터 봅시다.', action: '장부를 밀어 놓는다', text: '…보시죠. 저는 접수만 합니다.', note: '도일 이야기는 나오지 않는다' },
         onLieCorrect: null,
@@ -162,15 +167,15 @@ const INTERROGATION_SCRIPT = {
           keyrack: { detective: '고리가 비었더군요.', text: '…분실입니다. 그런 건 늘 있습니다.', flags: ['deitch-partial'], note: '부분 성공 — 2막 재심문 개방' },
           roofkey: { detective: '그 여자 매트리스 밑에서 나왔습니다. 당신 필적으로 태그가 붙어 있고.', action: '안경을 벗는다', text: '…20달러였습니다. 딸 학비가 밀렸습니다. 그 여자가 옥상에서 뭘 하려는지 내가 어떻게 압니까. 사진을 찍는다고 했습니다. 야경을.', act: 2, note: '3막 도일 지목 시 정황 보강' }
         },
-        onLieWrong: { detective: '이겁니다.', text: '…열쇠 얘기는 여기까지 하겠습니다.', burn: true, flags: ['deitch-sealed'], note: '2막 재심문 불가' }
+        onLieWrong: { detective: '관리인만 쥐면 책임도 하나죠.', text: '…열쇠 얘기는 여기까지 하겠습니다.', burn: true, flags: ['deitch-sealed'], note: '2막 재심문 불가' }
       },
       {
         id: 'deitch.S5', camera: 'slide',
-        text: '944호 프라이스 씨. 그 양반은 여기 4년 살았습니다. 전에는 호텔에서 일했고요.',
+        text: '944호 프라이스 씨. 그 양반은 여기 4년 살았습니다. 전에는 호텔에서 일했습니다.',
         onTruth: { detective: '전에는.', text: '왜 그만뒀는지는 안 묻는 게 좋습니다. 물어보면 대답을 해버리거든요.', flags: ['pryce-known'] },
         onDoubt: { detective: '4년.', text: '…4년입니다. 그건 장부에 있습니다.' },
         onLieCorrect: null,
-        onLieWrong: { detective: '그 양반 얘기를 해보시죠.', text: '…그 양반 얘기는 제가 할 게 아닙니다.', burn: true }
+        onLieWrong: { detective: '4년을 봤으니 아는 게 있겠죠.', text: '…그 양반 얘기는 제가 할 게 아닙니다.', burn: true }
       }
     ],
     outcomes: {
@@ -194,7 +199,7 @@ const INTERROGATION_SCRIPT = {
         onTruth: { detective: '팻말.', text: '그 팻말, 손님이 건 게 아니에요. 우리 팻말은 파란색인데 그건 회색이었어요. 창고 거예요.', flags: ['grey-tag'] },
         onDoubt: { detective: '팻말이 걸리면 그냥 지나갑니까.', text: '…팻말이 걸리면 안 들어가요. 그게 규칙이에요.' },
         onLieCorrect: null,
-        onLieWrong: { detective: '문 안은 보셨겠죠.', text: '…저는 문 앞까지만 가요. 그 이상은 몰라요.', burn: true }
+        onLieWrong: { detective: '문 안 얘기만 비었군요.', text: '…저는 문 앞까지만 가요. 그 이상은 몰라요.', burn: true }
       },
       {
         id: 'ruiz.S2', camera: 'push',
@@ -202,7 +207,7 @@ const INTERROGATION_SCRIPT = {
         onTruth: { detective: '알겠습니다.', text: '…네. 6시예요.' },
         onDoubt: { detective: '6시.', text: '…늦게까지 있는 날도 있어요. 그날이 그날인지는 모르겠어요.' },
         onLieCorrect: { detective: '9일 밤 열한 시에 902호 민원을 당신이 받았습니다. 여기 서명이 있고.', action: '천을 비튼다', text: '…네. 남아 있었어요. 물 때문에. 위층에서 소리가 났어요. 두 사람이었어요. 한 사람은 여자였고, 다른 사람은… 말을 안 했어요. 걷는 소리만 났어요.' },
-        onLieWrong: { detective: '이건 어떻습니까.', text: '…저는 모르는 일이에요. 진짜예요.', burn: true, flags: ['footprints-lost'], note: '발자국 증거를 영영 못 얻는다' }
+        onLieWrong: { detective: '6시 뒤는 모르면서 단정했죠.', text: '…저는 모르는 일이에요. 정말이에요.', burn: true, flags: ['footprints-lost'], note: '발자국 증거를 영영 못 얻는다' }
       },
       {
         id: 'ruiz.S3', camera: 'low',
@@ -210,7 +215,7 @@ const INTERROGATION_SCRIPT = {
         onTruth: { detective: '닦으면서 생각한 게 있겠죠.', text: '닦으면서 생각했어요. 이 물은 위에서 내려온 게 아니라, 위로 올라간 거구나.', flags: ['water-upward'] },
         onDoubt: { detective: '닦은 게 확실합니까.', text: '…닦은 건 저예요. 그건 확실해요.' },
         onLieCorrect: null,
-        onLieWrong: { detective: '그 자리를 봅시다.', text: '…보여드릴 수가 없어요. 닦았으니까요.', burn: true }
+        onLieWrong: { detective: '닦아도 자국은 남죠.', text: '…보여드릴 수가 없어요. 닦았으니까요.', burn: true }
       },
       {
         id: 'ruiz.S4', doubtAccepted: true, camera: 'push',
@@ -218,7 +223,7 @@ const INTERROGATION_SCRIPT = {
         onTruth: { detective: '알겠습니다.', text: '…네. 그냥 관리인이에요.' },
         onDoubt: { detective: '말을 안 하는 이유가 있겠죠.', text: '…무섭냐고 물으시면, 네. 이유는 말 못 해요.', flags: ['ruiz-afraid'] },
         onLieCorrect: { detective: '이 발자국은 작업화입니다. 265mm. 여기 사람 중에 이 신발 신는 사람은 하나뿐이고.', action: '앉는다', text: '…작년에도 그랬어요. 밴스 아가씨 때도요. 그때도 물이 이상했어요. 아무도 안 물어봤어요.', note: '3막 지목 필수는 아니나 엔딩 텍스트가 달라진다' },
-        onLieWrong: { detective: '이겁니다.', text: '…그 사람 얘기는 안 할래요. 저 일해야 해요.', burn: true, flags: ['ruiz-closed'] }
+        onLieWrong: { detective: '말 안 해도 본 건 있겠죠.', text: '…그 사람 얘기는 안 할래요. 저 일해야 해요.', burn: true, flags: ['ruiz-closed'] }
       }
     ],
     outcomes: {
@@ -242,15 +247,15 @@ const INTERROGATION_SCRIPT = {
         onTruth: { detective: '알겠습니다.', text: '…그게 답니다.' },
         onDoubt: { detective: '두어 번.', text: '복도에서 마주친 사람 얼굴을 다 기억할 나이는 지났습니다.' },
         onLieCorrect: { detective: '당신 이름이 세 번 나옵니다. 마지막 장에는 이 방 호수가 적혀 있고.', action: '반박자 늦게', text: '…들어온 적 있습니다. 두 번. 세 번인가.', flags: ['pryce-admits'] },
-        onLieWrong: { detective: '이건 어떻습니까.', text: '…그 아가씨 얼굴도 잘 기억 안 납니다. 이제 그만하시죠.', burn: true, flags: ['photos-lost'], note: '사진을 얻지 못한다. 게임 최대의 손실' }
+        onLieWrong: { detective: '두어 번이면 얼굴은 남겠죠.', text: '…그 아가씨 얼굴도 잘 기억 안 납니다. 이제 그만하시죠.', burn: true, flags: ['photos-lost'], note: '사진을 얻지 못한다. 게임 최대의 손실' }
       },
       {
         id: 'pryce.S2', camera: 'pull',
-        text: '저는 여기 하우스 디텍티브였습니다. 이 방엔 4년 살았고, 배지는 작년까지 달았죠. 지금은 그냥 세입자고요.',
+        text: '저는 여기 하우스 디텍티브였습니다. 이 방엔 4년 살았고, 배지는 작년까지 달았죠. 지금은 그냥 세입자입니다.',
         onTruth: { detective: '작년까지.', text: '그만둔 게 아니라 잘렸습니다. 이유는 서류에 안 적혀 있습니다. 그런 건 원래 안 적습니다.', flags: ['pryce-fired'] },
         onDoubt: { detective: '세입자.', text: '…46년 8월입니다. 날짜까지 대셔야 합니까.' },
         onLieCorrect: null,
-        onLieWrong: { detective: '경력을 확인해보죠.', text: '…인사기록을 떼십시오. 저는 도와드릴 게 없습니다.', burn: true }
+        onLieWrong: { detective: '기록은 날짜를 남기죠.', text: '…인사기록을 떼십시오. 저는 도와드릴 게 없습니다.', burn: true }
       },
       {
         id: 'pryce.S3', camera: 'low',
@@ -258,8 +263,8 @@ const INTERROGATION_SCRIPT = {
         note: 'photos는 S1을 통과해야 얻는다. S1 실패 시 DOUBT이 최선이며 자백에 도달하지 못한다',
         onTruth: { detective: '알겠습니다.', text: '…네. 나온 뒤였습니다.' },
         onDoubt: { detective: '나온 뒤였다.', text: '…제 소관이 아니었다는 말은 취소하겠습니다. 그 이상은 말 안 합니다.', flags: ['pryce-retracts'] },
-        onLieCorrect: { detective: '이 사진들, 당신 카메라입니다. 그리고 넬 밴스가 죽은 날 찍혔고.', action: '사진을 뒤집는다', text: '…제가 찍었습니다. 아무도 안 봤습니다. 제출했더니 이틀 뒤에 잘렸습니다. 4장을 빼돌린 건 그때가 처음이자 마지막입니다.', note: '넉 장째 유리 반사의 두 번째 형체를 플레이어가 스크럽하며 발견한다' },
-        onLieWrong: { detective: '이겁니다.', text: '…그 사건에 제 이름을 붙이지 마십시오.', burn: true }
+        onLieCorrect: { detective: '이 사진들, 당신 사진기입니다. 그리고 넬 밴스가 죽은 날 찍혔고.', action: '사진을 뒤집는다', text: '…제가 찍었습니다. 아무도 안 봤습니다. 제출했더니 이틀 뒤에 잘렸습니다. 4장을 빼돌린 건 그때가 처음이자 마지막입니다.', note: '넉 장째 유리 반사의 두 번째 형체를 플레이어가 스크럽하며 발견한다' },
+        onLieWrong: { detective: '소관 밖인데 사건은 아는군요.', text: '…그 사건에 제 이름을 붙이지 마십시오.', burn: true }
       },
       {
         id: 'pryce.S4', camera: 'push',
@@ -271,7 +276,7 @@ const INTERROGATION_SCRIPT = {
           autopsy: { detective: '언니 부검 사본이 그 방에 있었습니다. 유족한테는 안 나가는 서류입니다. 나갈 수 있는 사람은 이 호텔에 하나뿐이고.', text: '…줬습니다. 급수 일지도 줬습니다. 그 아가씨가 그걸 들고 뭘 할지 알면서 줬습니다. 나는 늙었고 그 아가씨는 젊었습니다. 그게 다입니다. 그게 제가 한 겁니다.' },
           'water-log': { detective: '급수 일지 여백이 당신 필적입니다.', text: '…옮겨 적은 건 접니다. 원본은 그 아가씨한테 줬습니다. 언니 부검 사본도 같이 줬습니다. 알면서 줬습니다. 나는 늙었고 그 아가씨는 젊었습니다. 그게 제가 한 겁니다.' }
         },
-        onLieWrong: { detective: '이겁니다.', text: '…없습니다. 그 얘기는 끝입니다.', burn: true, flags: ['water-log-hidden'], note: 'water-log는 944호 수색으로만 얻어야 한다' }
+        onLieWrong: { detective: '아무것도 없다면 흔적도 없죠.', text: '…없습니다. 그 얘기는 끝입니다.', burn: true, flags: ['water-log-hidden'], note: 'water-log는 944호 수색으로만 얻어야 한다' }
       },
       {
         id: 'pryce.S5', camera: 'slide',
