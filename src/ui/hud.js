@@ -470,9 +470,9 @@ export default {
     const size = clamp(Math.round(w * 0.078), 11, 18)
     typed(ctx, '증거 — 노트에 끼움', 14, h * 0.36, { size: size * 0.62, ink: INK.faded, alpha: 0.7, track: 1.4, seed: 3 })
     typed(ctx, this.slip.title, 13, h * 0.72, { size, ink: INK.ribbon, alpha: 0.92, seed: 7 })
-    // 클립은 종이 **가장자리에 물려야** 클립으로 읽힌다. 안쪽에 작게 놓였을 때 블라인드
-    // 판독이 "이모지 음표(♪)"로 읽었다 — D7 이 정확히 금지하는 인상이라 키우고 위로 물렸다.
-    paperclip(ctx, w - 26, h * 0.1, 1.25, 0.3)
+    // 클립은 종이 가장자리에 물려야 클립으로 읽힌다. 안쪽에 작게 놓였을 때 블라인드 판독이
+    // "이모지 음표(♪)"로 읽었다 — D7 이 금지하는 인상이다. y 는 절대값이어야 한다(윗머리 16px).
+    paperclip(ctx, w - 26, 17, 1.25, 0.3)
     this.sc = s
     this.sWrap.appendChild(s.c)
   },
