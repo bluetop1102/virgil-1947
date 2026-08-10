@@ -1,15 +1,15 @@
 // [AUDIO] 음악층. audio/engine.js 소유의 분권 파일이다(graph.js·ir.js·dsp.js 와 같은 위치).
 //
-// 이 게임의 계약은 "비디제틱 BGM 0, 예외는 엔딩뿐"이다(E7 §3). 그래서 여기서 만드는 것은 곡이
-// 아니라 **물의 리트모티프를 음정화한 저역**이다. 배관·보일러는 실제로 41Hz 근처에서 공진하고,
-// 같은 음이 3막에서 콘트라베이스로 되돌아온다 — 1막의 드론은 그 음의 첫 진술이지 반주가 아니다.
+// 이 파일에는 두 층이 있다. **드론 큐**(musicCue)는 곡이 아니라 물의 리트모티프를 음정화한
+// 저역이다 — 배관·보일러는 실제로 41Hz 근처에서 공진하고, 같은 음이 3막에서 콘트라베이스로
+// 되돌아온다. 1막의 드론은 그 음의 첫 진술이지 반주가 아니다. **긴장 침대**(bedStart)는
+// 심문·지목 구간에만 서는 외부 CC BY 4.0 트랙이고, E7 §3 "비디제틱 BGM 0" 계약의 사용자
+// 지시 개정분이다(2026-08-10 — 아래 긴장 침대 절 참조).
 //
 // 타이틀에는 음악을 넣을 수 없다. 브라우저 자동재생 정책상 첫 제스처 전에는 어떤 소리도 낼 수
 // 없고(제스처 전 AudioContext 생성 = 콘솔 경고 = 루브릭 실격), 이 게임의 첫 제스처가 곧 벨을
 // 누르는 진행 입력이다. 그래서 타이틀의 자리는 음악이 아니라 **벨 자신**이고, 그 벨이 인트로의
 // 드론을 연다(cues.js).
-
-import { rng } from '../core/util.js'
 
 const E1 = 41.2      // 물의 리트모티프 기음. 2·3막이 같은 음으로 되돌아온다
 const D1 = 36.71     // 엔딩 — 온음 하강. 고조가 아니라 물이 빠지는 소리다(E2 V4)
@@ -139,73 +139,78 @@ export function musicCue (a, kind) {
 
 export const MUSIC_CUES = CUES
 
-// ── 심문 긴장층 ───────────────────────────────────────────────────────────
+// ── 긴장 침대 (외부 CC BY 트랙) ───────────────────────────────────────────
 // 발주 근거: 심문이 게임에서 **가장 조용한 구간**이었다(lines 평균 -42.7dB vs 배회 -34.5dB 실측).
 // 감쇠 0.42가 환경을 낮추는데 그 자리를 채우는 소리가 없어서, 긴장이 올라야 할 순간에 소리가
-// 내려갔다. 여기서 채우는 것은 곡이 아니다 — 인트로 드론과 **같은 목소리(E1 41.2Hz의 부분음)**를
-// 심문의 시간축으로 늘린 지속층이고, 위에 얹히는 것도 선율이 아니라 한 번의 압력 상승이다.
+// 내려갔다. 그 자리를 절차 생성 지속층으로 채운 것이 구판인데, **사용자 실청취에서 기각됐다**
+// (2026-08-10) — 0.27Hz 트레몰로가 주기적인 북소리로 들렸고 압력 노이즈는 질감이 되지 못했다.
+// E7 §3 계약을 그 지시로 개정해, 긴장층만 외부 CC BY 4.0 트랙으로 바꾼다. sfx·룸톤·리버브·
+// 스팅어는 그대로 절차 생성이고, 라이선스·실측값은 docs/credits.md §1.2 가 진실원이다.
 //
 // **진위를 소리로 새지 않는다.** `interrogation:statement`는 `truth`를, `perf:state`는 그 파생인
 // 연기 상태를 실어 나르지만 긴장층은 둘 다 구독하지 않는다. 음악이 정답을 알려주면 심문이
 // 무너진다(E5 진위 비노출). 구동은 전부 **플레이어의 행동과 구조적 비트**다 —
-// 진입 · 선택 요구 · 증거 겨눔 · 판정 결과 · 종료.
+// 진입 · 선택 요구 · 증거 겨눔 · 판정 결과 · 지목 · 종료.
+const FILES = import.meta.glob('../../assets/bed-*.mp3', { eager: true, query: '?url', import: 'default' })
+const url = (kind) => FILES[Object.keys(FILES).find(p => p.includes(`bed-${kind}-`)) ?? ''] ?? null
+
+// hp/lp 는 침대를 대사 자막의 읽기 뒤로 물리는 자리다 — 초저역은 물의 리트모티프에 양보하고,
+// 초고역은 잘라 "방 안에서 울리는 것"으로 남긴다. peak 은 level 1.0 에서의 버스 게인.
+const BED = {
+  unease: { peak: 0.34, hp: 42, lp: 4200, rise: 3.4 },   // 심문·불온 — 느린 다크 앰비언트
+  urge: { peak: 0.30, hp: 55, lp: 5600, rise: 2.4 }      // 지목·박진 — 고동 계열
+}
+
+// 침대의 상태 사다리. 진실/거짓 대칭이라 진위와 무관하다.
 const TENSION = {
   enter: 0.68,   // 진입 — 방이 닫히고 바닥이 생긴다
-  prompt: 0.80,  // 선택을 요구받은 자리(진실/거짓 대칭 — 진위 무관)
+  prompt: 0.80,  // 선택을 요구받은 자리
   aim: 1.0,      // 증거를 겨누는 동안. 되돌릴 수 없는 순간의 압력(E7 §1 LIE 행)
   ease: 0.42,    // 판정 직후 해소
   dip: 0.14      // 소각 — 방이 물러날 때 같이 물러난다(E7 §3 침묵의 사용)
 }
-const T_PEAK = 0.052   // 기음 진폭 @ level 1.0. 인트로 드론(0.085)보다 낮다 — 바닥이지 진술이 아니다
-// [배수, 상대 진폭, 맥놀이 Hz]. 인트로 드론의 배열(기음·5도·옥타브)에 12도를 더했다 —
-// 41Hz는 노트북 스피커에서 재생되지 않는다(judge-plan §5-2). 123.6Hz가 그 대역의 대리인이다.
-const T_PARTIALS = [[1, 1, 0.061], [1.5, 0.39, 0.083], [2, 0.5, 0.047], [3, 0.17, 0.104]]
 
-// 압력층용 노이즈. 6초 루프, 끝 120ms를 앞머리와 교차 페이드해 이음매를 지운다.
-function pressureNoise (c, seed) {
-  const n = Math.round(c.sampleRate * 6)
-  const d = new Float32Array(n)
-  const r = rng(seed)
-  let lp = 0
-  for (let i = 0; i < n; i++) {
-    lp += 0.19 * ((r() * 2 - 1) - lp)
-    d[i] = lp * 3.4
-  }
-  const x = Math.round(c.sampleRate * 0.12)
-  for (let i = 0; i < x; i++) {
-    const k = i / x
-    d[n - x + i] = d[n - x + i] * (1 - k) + d[i] * k
-  }
-  const b = c.createBuffer(1, n - x, c.sampleRate)
-  b.copyToChannel(d.subarray(0, n - x), 0)
-  return b
+// 트랙을 스트리밍으로 문다. 7분짜리를 decodeAudioData 로 펴면 트랙당 60MB가 넘는다.
+function stream (a, kind, spec) {
+  const c = a.ctx
+  const src = url(kind)
+  if (!src || typeof c.createMediaElementSource !== 'function') return null
+  const el = new Audio()
+  el.loop = true
+  el.preload = 'auto'
+  el.src = src
+  const node = c.createMediaElementSource(el)
+  const hp = c.createBiquadFilter()
+  hp.type = 'highpass'
+  hp.frequency.value = spec.hp
+  hp.Q.value = 0.7
+  const lp = c.createBiquadFilter()
+  lp.type = 'lowpass'
+  lp.frequency.value = spec.lp
+  lp.Q.value = 0.6
+  const out = c.createGain()
+  out.gain.value = 0.0001
+  node.connect(hp); hp.connect(lp); lp.connect(out)
+  el.play?.().catch(() => { /* 제스처·코덱 거부 — 침대 없이도 심문은 성립한다 */ })
+  return { out, nodes: [node, hp, lp, out], el }
 }
 
-export function tensionStart (a) {
+// 트랙이 없거나(에셋 미배치) 스트리밍이 불가한 컨텍스트(OfflineAudioContext — 자체검증 렌더)의
+// 대체 침대. 물의 리트모티프 E1 을 늘인 지속층만 남기고, 실청취에서 기각된 주기 트레몰로와
+// 압력 노이즈는 넣지 않는다. 외부 음원 없이도 심문의 레벨 역전은 재발하지 않는다.
+function pad (a) {
   const c = a.ctx
-  if (!c || a.silent || a.tension || !a.tensionBus) return false
   const now = c.currentTime
-  const nodes = []
-
-  const out = c.createGain()        // 상태 게인 — set()이 여기만 움직인다
+  const out = c.createGain()
   out.gain.value = 0.0001
-  out.connect(a.tensionBus)
-  // 요동은 전용 전단에 건다. LFO를 out.gain에 직접 물리면 상태 램프와 합산돼 값이 뒤집힌다
-  // (graph.js 험이 같은 함정을 밟았다).
-  const mix = c.createGain()
-  mix.gain.value = 1
-  mix.connect(out)
-  nodes.push(out, mix)
-
-  let root = null
-  for (const [mul, rel, beat] of T_PARTIALS) {
+  const nodes = [out]
+  for (const [mul, rel, beat] of [[1, 1, 0.061], [1.5, 0.39, 0.083], [2, 0.5, 0.047], [3, 0.17, 0.104]]) {
     const o = c.createOscillator()
     o.type = 'sine'
     o.frequency.value = E1 * mul
-    if (!root) root = o
     const g = c.createGain()
-    g.gain.value = T_PEAK * rel
-    o.connect(g); g.connect(mix)
+    g.gain.value = 0.16 * rel
+    o.connect(g); g.connect(out)
     const lfo = c.createOscillator()   // 맥놀이 — 고정 사인은 합성으로 들린다
     lfo.frequency.value = beat
     const lg = c.createGain()
@@ -214,71 +219,71 @@ export function tensionStart (a) {
     o.start(now); lfo.start(now)
     nodes.push(o, g, lfo, lg)
   }
+  return { out, nodes, el: null }
+}
 
-  // 배관이 잠긴 방의 공기. 저역 덩어리 하나와 그 위 얇은 숨 하나 — 톤이 아니라 질감이다.
-  for (const [f, q, g0, seed] of [[132, 1.3, 0.016, 90210], [640, 0.9, 0.0042, 90211]]) {
-    const s = c.createBufferSource()
-    s.buffer = pressureNoise(c, seed)
-    s.loop = true
-    const bp = c.createBiquadFilter()
-    bp.type = 'bandpass'
-    bp.frequency.value = f
-    bp.Q.value = q
-    const g = c.createGain()
-    g.gain.value = g0
-    s.connect(bp); bp.connect(g); g.connect(mix)
-    s.start(now)
-    nodes.push(s, bp, g)
-  }
-
-  // 0.27Hz — 심박이 아니라 건물이 숨쉬는 속도다. 심박으로 들리면 장르 상투가 된다.
-  const trem = c.createOscillator()
-  trem.frequency.value = 0.27
-  const tg = c.createGain()
-  tg.gain.value = 0.17
-  trem.connect(tg); tg.connect(mix.gain)
-  trem.start(now)
-  nodes.push(trem, tg)
+// kind: 'unease'(심문) · 'urge'(지목·박진). 둘은 서로 다른 슬롯이라 겹쳐 설 수 있다.
+export function bedStart (a, kind = 'unease') {
+  const c = a.ctx
+  const spec = BED[kind]
+  if (!c || a.silent || !spec || a.tensions?.[kind] || !a.tensionBus) return false
+  const s = stream(a, kind, spec) ?? pad(a)
+  s.out.connect(a.tensionBus)
 
   const t = {
+    kind,
     level: 0,
+    // 스트리밍 침대인지 대체 패드인지. 에셋 누락·코덱 거부는 조용히 폴백하므로, 검증 프로브가
+    // "무엇을 듣고 있는지"를 구분할 수 있어야 한다(폴백 상태의 PASS 는 PASS 가 아니다).
+    streamed: !!s.el,
     set (key, dur = 1.6) {
       const to = TENSION[key] ?? key
       if (!(to >= 0)) return
       t.level = to
       const n = c.currentTime
-      const p = out.gain
+      const p = s.out.gain
       p.cancelScheduledValues(n)
       p.setValueAtTime(Math.max(p.value, 0.0001), n)
-      p.exponentialRampToValueAtTime(Math.max(to, 0.0001), n + Math.max(dur, 0.05))
+      p.exponentialRampToValueAtTime(Math.max(to * spec.peak, 0.0001), n + Math.max(dur, 0.05))
     },
     // 판정 직후 한 번 풀었다가 바닥으로 되돌린다. 심문은 아직 끝나지 않았다.
     release (ok) {
       t.set(ok ? 'ease' : 'dip', ok ? 1.1 : 0.35)
       const n = c.currentTime
-      const p = out.gain
-      p.setValueAtTime(Math.max(ok ? TENSION.ease : TENSION.dip, 0.0001), n + (ok ? 1.1 : 3.0))
-      p.exponentialRampToValueAtTime(TENSION.enter, n + (ok ? 4.2 : 6.0))
+      const p = s.out.gain
+      p.setValueAtTime(Math.max((ok ? TENSION.ease : TENSION.dip) * spec.peak, 0.0001), n + (ok ? 1.1 : 3.0))
+      p.exponentialRampToValueAtTime(TENSION.enter * spec.peak, n + (ok ? 4.2 : 6.0))
       t.level = TENSION.enter
     },
     stop (dur = 3.2) {
       const n = c.currentTime
-      const p = out.gain
+      const p = s.out.gain
       p.cancelScheduledValues(n)
       p.setValueAtTime(Math.max(p.value, 0.0001), n)
       p.exponentialRampToValueAtTime(0.0001, n + dur)
-      for (const node of nodes) {
-        try { node.stop?.(n + dur + 0.2) } catch (e) { /* 이미 정지 */ }
-      }
-      // 노드 해제는 소리가 멎은 뒤 한 번만. 기음 오실레이터를 대표로 삼는다.
-      root.onended = () => { for (const node of nodes) { try { node.disconnect() } catch (e) { /* 이미 해제 */ } } }
-      a.tension = null
+      for (const node of s.nodes) { try { node.stop?.(n + dur + 0.2) } catch (e) { /* 이미 정지 */ } }
+      // 해제는 소리가 멎은 뒤 한 번만. 스트리밍 침대는 엘리먼트도 같이 놓는다.
+      setTimeout(() => {
+        try { s.el?.pause(); s.el?.removeAttribute('src'); s.el?.load() } catch (e) { /* 이미 해제 */ }
+        for (const node of s.nodes) { try { node.disconnect() } catch (e) { /* 이미 해제 */ } }
+      }, (dur + 0.4) * 1000)
+      if (a.tensions) a.tensions[kind] = null
+      if (kind === 'unease') a.tension = null
     }
   }
-  a.tension = t
-  t.set('enter', 3.4)
+  a.tensions = a.tensions ?? {}
+  a.tensions[kind] = t
+  if (kind === 'unease') a.tension = t     // cues.js·tools/test-audio.mjs 가 잡는 이름
+  t.set(kind === 'unease' ? 'enter' : 'aim', spec.rise)
   return true
 }
+
+export function bedStop (a, kind = 'unease', dur) {
+  a.tensions?.[kind]?.stop(dur)
+}
+
+// 심문 침대의 옛 이름. 계약(cues.js 배선·자체검증 하네스)이 이 이름으로 잡고 있어 유지한다.
+export function tensionStart (a) { return bedStart(a, 'unease') }
 
 // 증거를 겨누는 순간의 스팅어. 되돌릴 수 없다는 신호이지 정답 신호가 아니다 —
 // 진실 진술에 겨눠도 똑같이 울린다. 활로 켠 저현 한 번: 낮은 톱니가 필터를 열며 올라온다.
@@ -320,5 +325,5 @@ export function tensionStinger (a) {
 }
 
 export function tensionStop (a, dur) {
-  a.tension?.stop(dur)
+  bedStop(a, 'unease', dur)
 }

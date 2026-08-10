@@ -9,6 +9,14 @@ const SPEC = {
   volume: { label: '음량', values: [0, 0.25, 0.5, 0.75, 1] }
 }
 
+// CC BY 4.0 귀속. 곡명은 incompetech 카탈로그 표기 그대로다("Long note One" 의 소문자 n 포함).
+// 라디오 3곡은 로비 소품에서 나오는 디제틱 음원이고, 침대 2곡은 심문·지목 구간에만 선다.
+const CREDIT = [
+  '음악  "Night on the Docks - Sax" · "Dark Times" · "Vanishing" · "Long note One" · "Impending Boom"',
+  'Kevin MacLeod (incompetech.com) · Creative Commons: By Attribution 4.0 — creativecommons.org/licenses/by/4.0/',
+  '음량·형식만 조정했고 연주를 더하거나 곡을 자르지 않았습니다. 그 밖의 모든 소리는 실행 중 절차 생성입니다.'
+]
+
 function node (tag, className, text = '') {
   const result = document.createElement(tag)
   result.className = className
@@ -65,7 +73,7 @@ const settings = {
     const style = document.createElement('style')
     style.textContent = `
       .virgil-settings{position:fixed;inset:0;z-index:140;display:none;pointer-events:auto;font-family:${TYPEFACE};color:#211b14;background:radial-gradient(ellipse at 50% 50%,rgba(15,12,9,.28),rgba(2,3,4,.82))}
-      .virgil-settings *{box-sizing:border-box}.virgil-file{position:absolute;left:50%;top:50%;width:min(720px,82vw);height:min(590px,82vh);transform:translate(-50%,-50%) rotate(-.35deg);padding:58px 68px 46px;background:linear-gradient(102deg,rgba(128,103,67,.22),transparent 4%),repeating-linear-gradient(0deg,rgba(82,62,39,.035) 0 1px,transparent 1px 5px),#b8a57c;box-shadow:-24px 30px 40px rgba(0,0,0,.72),inset 0 0 70px rgba(66,43,22,.35);border:1px solid #5c4930}
+      .virgil-settings *{box-sizing:border-box}.virgil-file{position:absolute;left:50%;top:50%;width:min(720px,82vw);height:min(650px,88vh);transform:translate(-50%,-50%) rotate(-.35deg);padding:58px 68px 46px;background:linear-gradient(102deg,rgba(128,103,67,.22),transparent 4%),repeating-linear-gradient(0deg,rgba(82,62,39,.035) 0 1px,transparent 1px 5px),#b8a57c;box-shadow:-24px 30px 40px rgba(0,0,0,.72),inset 0 0 70px rgba(66,43,22,.35);border:1px solid #5c4930}
       .virgil-file:before{content:'';position:absolute;left:28px;right:28px;top:28px;bottom:28px;border:1px solid rgba(57,42,26,.36);pointer-events:none}.virgil-file:after{content:'ROOM 942 · GUEST SERVICES';position:absolute;right:54px;top:21px;font-size:9px;letter-spacing:.22em;color:#67533b}
       .virgil-settings-title{font-size:21px;letter-spacing:.34em;text-indent:.34em;text-align:center;padding-bottom:22px;border-bottom:2px solid rgba(54,39,24,.58);text-shadow:0 1px rgba(255,244,208,.45)}
       .virgil-setting-row{height:67px;display:grid;grid-template-columns:1fr 34px 160px 34px;align-items:center;border-bottom:1px solid rgba(67,49,30,.31);font-size:13px;letter-spacing:.12em}
@@ -73,8 +81,8 @@ const settings = {
       .virgil-setting-keys{padding-right:9px;font-size:12px;letter-spacing:.15em;color:#3f3020}
       .virgil-setting-label{padding-left:9px}.virgil-setting-value{text-align:center;font-size:14px;letter-spacing:.13em;color:#34271a}.virgil-setting-turn{height:30px;line-height:28px;text-align:center;border:1px solid #6f5733;background:linear-gradient(145deg,#a2864d,#614923);color:#21170b;cursor:pointer;box-shadow:inset 0 1px rgba(239,213,151,.5),0 2px 3px rgba(45,29,14,.35);user-select:none}
       .virgil-setting-turn:hover,.virgil-setting-turn:focus{filter:brightness(1.14);outline:1px solid #3d2b18}.virgil-settings-foot{display:flex;justify-content:space-between;align-items:flex-end;padding:18px 8px 0;color:#665239;font-size:10px;letter-spacing:.09em}
-      .virgil-settings-credit{margin-top:7px;font-size:9px;letter-spacing:.05em;color:#3f3020}
-      .virgil-settings-close{padding:10px 22px 9px;border:1px solid #705631;background:linear-gradient(155deg,#9d814a,#5d4524);box-shadow:0 4px 8px rgba(50,32,15,.38),inset 0 1px rgba(238,212,151,.48);color:#24190d;font-size:12px;letter-spacing:.2em;cursor:pointer}
+      .virgil-settings-credit{margin-top:6px;max-width:412px;font-size:8.5px;line-height:1.5;letter-spacing:.03em;color:#3f3020}.virgil-settings-credit>div+div{margin-top:1px}
+      .virgil-settings-close{flex:0 0 auto;white-space:nowrap;margin-left:22px;padding:10px 22px 9px;border:1px solid #705631;background:linear-gradient(155deg,#9d814a,#5d4524);box-shadow:0 4px 8px rgba(50,32,15,.38),inset 0 1px rgba(238,212,151,.48);color:#24190d;font-size:12px;letter-spacing:.2em;cursor:pointer}
       .virgil-settings-close:hover,.virgil-settings-close:focus{filter:brightness(1.14);outline:1px solid #3d2b18}
       .virgil-stats{position:fixed;right:18px;top:18px;z-index:200;pointer-events:none;min-width:250px;padding:12px 15px;border-left:3px solid #9b7a3e;border-top:1px solid rgba(190,161,99,.5);background:rgba(8,9,9,.88);color:#c6b588;font-family:${TYPEFACE};font-size:11px;line-height:1.72;letter-spacing:.08em;white-space:pre;text-shadow:0 0 6px rgba(195,166,98,.22)}
     `
@@ -112,10 +120,14 @@ const settings = {
     const foot = node('div', 'virgil-settings-foot')
     const notes = node('div', '')
     notes.appendChild(node('div', '', '변경 사항은 프런트 원장에 자동 기록됩니다.'))
-    // 로비 라디오 BGM 3곡이 CC BY 4.0 이라 저작자 표기가 라이선스 의무다. 곡별 표기와
-    // 라이선스 전문은 docs/credits.md §1.2 — 게임 안에는 저작자·출처·라이선스만 낸다.
-    notes.appendChild(node('div', 'virgil-settings-credit',
-      '음악: Kevin MacLeod (incompetech.com) · Creative Commons: By Attribution 4.0'))
+    // 음악 5곡이 CC BY 4.0 이라 저작자 표기가 라이선스 의무이고, incompetech Music FAQ 가
+    // 게임의 게시 위치를 "설정 메뉴 안의 크레딧"으로 지정한다 — 이 카드가 그 자리다.
+    // FAQ 의 개작 조항("어느 파트가 당신 것인지 밝혀라")도 같이 이행한다: 이 프로젝트는
+    // 파트를 더하지 않았고 가공만 했으므로 그 가공 내역을 한 줄로 적는다.
+    // 곡별 실측값·후처리 명세·라이선스 전문은 docs/credits.md §1.2 가 진실원이다.
+    const credit = node('div', 'virgil-settings-credit')
+    for (const line of CREDIT) credit.appendChild(node('div', '', line))
+    notes.appendChild(credit)
     foot.appendChild(notes)
     const close = node('div', 'virgil-settings-close', '카드 닫기')
     close.tabIndex = 0

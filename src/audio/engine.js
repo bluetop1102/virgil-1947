@@ -46,12 +46,13 @@ const audio = {
     this.titleBed = null
     this.pendingTitleBed = false
     this.tension = null
+    this.tensions = {}      // 긴장 침대 슬롯 — unease(심문) · urge(지목). music.js 소유
     this.radioDuck = 1
     this.introFadeAt = null
     this.act = engine.state?.act ?? 1
     this.room = roomKey(engine.state?.room ?? 'lobby')
     this.mix = ROOM_MIX[this.room]
-    this.next = { drip: 5, tick: 11, knock: 27, far: 9 }
+    this.next = { drip: 12, tick: 20, knock: 27, far: 55 }
     this.roam = false      // 조작을 넘겨받은 뒤에만 원거리 단발음이 돈다(ambience.js)
     this.lastFar = -1
     this.tone = [null, null]
@@ -80,7 +81,7 @@ const audio = {
   },
 
   dispose () {
-    try { this.tension?.stop(0.05) } catch (e) { /* 이미 해제 */ }
+    for (const k in this.tensions) { try { this.tensions[k]?.stop(0.05) } catch (e) { /* 이미 해제 */ } }
     try { this.titleBed?.stop(0.05) } catch (e) { /* 이미 해제 */ }
     radioDispose(this)
     try { this.radio?.src.stop() } catch (e) { /* 이미 정지 */ }
@@ -459,9 +460,14 @@ const audio = {
 
   _footstep (p) {
     const sp = clamp(p?.speed ?? 1, 0, 2)
+    // 보폭이 고정(0.72m)이라 질주는 걸음 **주기**만 빨라진다 — 게인이 속도 비례뿐이면 걷기 대비
+    // +2.6dB 라 "빨리 걷는다"로 들리고 "달린다"가 안 된다. 걷기(1.2)~질주(1.9) 구간에만 얹히는
+    // 항을 따로 세워 질주를 걷기 위 +5dB 로 올리고, 발이 더 세게 닿는 만큼 조금 높고 짧게 낸다.
+    // 상수는 gameplay/player.js 의 WALK 1.2 · RUN 1.9 m/s 에서 온다.
+    const run = clamp((sp - 1.35) / 0.55, 0, 1)
     this.play(`foot:${p?.material ?? this.room}`, {
-      gain: 0.26 + 0.34 * sp,
-      rate: 0.94 + this.rand() * 0.13,
+      gain: 0.26 + 0.34 * sp + 0.30 * run,
+      rate: (0.94 + this.rand() * 0.13) * (1 + 0.05 * run),
       delay: this.rand() * 0.014
     })
   },

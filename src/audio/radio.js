@@ -19,6 +19,13 @@ export const HAS_MUSIC = MUSIC.length > 0
 // 방송(절차 생성 웅얼거림)과 같은 자리에서 균형을 잡은 값이다. 자막 낭독을 덮으면 안 되고
 // (judge-plan §5-4), 라디오 앞까지 걸어갔을 때 "음악이 나온다"가 성립해야 한다.
 const MUSIC_LEVEL = 0.62
+// 곡마다 AM 대역(320~3300Hz)을 통과한 뒤의 라우드니스가 다르다. 실측(ffmpeg ebur128, 런타임과
+// 같은 필터 체인): 라디오-1 −21.7 · 라디오-2 −27.5 · 라디오-3 −20.1 LUFS. 「Dark Times」는 저현이
+// 본체라 하이패스가 곡을 깎아 5.8dB 내려앉는다. 파일을 더 크게 굽는 대신 여기서 되올린다 —
+// **다이얼을 돌려도 라디오 한 대의 음량은 그대로여야** 하기 때문이다(라디오는 볼륨 노브가 하나다).
+// 값은 라디오-1 을 기준으로 한 보정비. 파일명 앞자리로 잡으므로 빌드 해시가 붙어도 산다.
+const TRIM = [['radio-2', 1.95], ['radio-3', 0.83]]
+const trimFor = (url) => TRIM.find(([k]) => String(url).includes(k))?.[1] ?? 1
 
 function ramp (param, to, now, dur) {
   param.cancelScheduledValues(now)
@@ -94,7 +101,7 @@ export function tune (a, index, dur = 1.4) {
   const m = url ? ensureMusic(a) : a.radio.music
   ramp(r.voiceG.gain, url ? 0 : 1, now + 0.1, dur)
   if (!m) return !url                       // 트랙이 없으면 방송만 남는다 — 게임은 그대로 성립한다
-  ramp(m.gain.gain, url && !m.failed ? MUSIC_LEVEL : 0, now + 0.1, dur)
+  ramp(m.gain.gain, url && !m.failed ? MUSIC_LEVEL * trimFor(url) : 0, now + 0.1, dur)
   if (!url) { stopSoon(m, dur + 0.6); return true }
   if (m.url !== url) { m.url = url; m.el.src = url }
   m.el.play?.().catch(() => { /* 제스처·코덱 거부 — 방송 쪽으로 남는다 */ })

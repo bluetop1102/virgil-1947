@@ -5,7 +5,7 @@
 // 서명도 마찬가지였다. 소리를 다는 쪽은 오디오 소유자다 — 레벨·UI 파일을 건드리지 않고
 // 기존 이벤트만 구독해서 붙인다.
 
-import { musicCue, tensionStart, tensionStinger, tensionStop } from './music.js'
+import { musicCue, tensionStart, tensionStinger, tensionStop, bedStart, bedStop } from './music.js'
 import { titleBedStart, titleBedStop } from './title-bed.js'
 import { tune } from './radio.js'
 
@@ -83,6 +83,15 @@ export function wireCues (a, bus) {
     else a.play('note.scribble', { gain: 0.22, rate: 0.85 })
   })
   bus.on('deduction:sign', () => a.play('note.scribble', { gain: 0.6, rate: 0.8 }))
+  // 지목판이 열리는 자리가 이 게임의 박진 구간이다 — 증거를 다 모아 놓고 이름 하나를 고른다.
+  // 심문의 불온한 침대와 다른 결(고동 계열)을 세운다.
+  // **`deduction:open` 에 물리면 안 된다** — 아무도 발화하지 않는 이름이고(narrative/deduction.js
+  // 가 구독만 한다) 실제 지목판은 수사노트가 `ui:open{ui:'deduction'}` 으로 연다. 그 이름에 걸면
+  // 번들만 되고 게임에서는 영영 안 들린다(제출 감사 지적, 2026-08-10).
+  bus.on('ui:open', (p) => { if (p?.ui === 'deduction') bedStart(a, 'urge') })
+  // 판정 없이 판을 닫으면 같이 닫히고, 판정이 나면 엔딩 쪽으로 넘기며 더 길게 물러난다.
+  bus.on('ui:close', (p) => { if (p?.ui === 'deduction') bedStop(a, 'urge', 3.0) })
+  bus.on('deduction:resolve', () => bedStop(a, 'urge', 5.5))
 
   // 음악 — 계약상 1막 비디제틱 BGM 0. 여기서 도는 것은 물의 리트모티프의 음정 진술뿐이다(music.js).
   bus.on('cinematic:start', (p) => {
