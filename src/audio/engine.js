@@ -19,6 +19,7 @@ import { tune, radioDispose } from './radio.js'
 
 const FOOT_VARIANTS = 6
 const SFX_VARIANTS = 3
+const FOOT_HP = 200   // 발소리 저역 컷(Hz). 판정은 원시 버퍼가 아니라 체인 출력에서 — SM-final §12
 
 function ramp (param, to, now, dur) {
   param.cancelScheduledValues(now)
@@ -346,7 +347,13 @@ const audio = {
     const g = c.createGain()
     g.gain.value = clamp(opts.gain ?? 1, 0, 4)
     src.connect(g)
-    let tail = g
+    let tail = g; const chain = [g]
+    // opts.hp 는 **리버브 센드보다 앞**에 선다 — 소스만 말리면 잔향이 저역을 도로 만든다.
+    if (opts.hp) {
+      const hp = c.createBiquadFilter()
+      hp.type = 'highpass'; hp.frequency.value = opts.hp; hp.Q.value = 0.7
+      tail.connect(hp); tail = hp; chain.push(hp)
+    }
     if (opts.pos) {
       const p = c.createPanner()
       p.panningModel = 'HRTF'
@@ -359,8 +366,9 @@ const audio = {
         p.positionY.value = opts.pos[1] ?? 0
         p.positionZ.value = opts.pos[2] ?? 0
       }
-      g.connect(p)
+      tail.connect(p)
       tail = p
+      chain.push(p)
     }
     tail.connect(this.dry)
     const s = c.createGain()
@@ -370,8 +378,8 @@ const audio = {
     src.start(now + clamp(opts.delay ?? 0, 0, 2))
     src.onended = () => {
       try {
-        src.disconnect(); g.disconnect(); s.disconnect()
-        if (tail !== g) tail.disconnect()
+        src.disconnect(); s.disconnect()
+        for (const n of chain) n.disconnect()
       } catch (e) { /* 이미 해제 */ }
     }
     return src
@@ -468,7 +476,8 @@ const audio = {
     this.play(`foot:${p?.material ?? this.room}`, {
       gain: 0.26 + 0.34 * sp + 0.30 * run,
       rate: (0.94 + this.rand() * 0.13) * (1 + 0.05 * run),
-      delay: this.rand() * 0.014
+      delay: this.rand() * 0.014,
+      hp: FOOT_HP
     })
   },
 
