@@ -277,8 +277,8 @@ export default {
     const h = Math.round(w * 0.60)
     const pad = Math.round(w * 0.082)
     const size = clamp(Math.round(w * 0.058), 15, 26)
-    const top = h * 0.418
-    const step = h * 0.149
+    const top = h * 0.39 // 행 수가 변해도 마지막 기준선이 종이 안(0.84h)에 오도록 간격을 역산한다
+    const step = (h * 0.84 - top) / Math.max(CARD_ROWS.length - 1, 1)
     const s = sheet({
       w, h, seed: 1947, tone: 'card', creases: 2, deckle: 2.7, grain: 0.42, light: 0.72,
       ruleGap: step, ruleTop: top + size * 0.26, ruleInset: pad
