@@ -4181,3 +4181,21 @@ pipeline.js·hud.js·interrogation.js 500줄 도달(다음 편집자 분할 선�
 **하네스 메모**: stale .vite 의존성 캐시 + 신규 소스 파일 조합에서 three 이중 로드 경고
 ("Multiple instances")가 재현됨 — 코드 결함 아님, `rm -rf node_modules/.vite` 후 소멸 실측.
 통합 게이트·배포 빌드 전 경고가 보이면 캐시 삭제를 선행할 것.
+
+### [ ] S-P 플레이 루프 → [ARCH] 소유자 — 전환 연출 이벤트 2종 §5 등재 요청 (CONTRACT_CHANGE_REQUEST)
+
+`src/world/transit.js`(신규, world 축)와 `src/ui/finale.js`(신규, ui 축)가 아래 두 이름을 쓴다.
+ARCHITECTURE §5 표준 이벤트 표에 없고, 같은 절의 **구독 어휘 폐집합** 규칙상 등재가 필요하다.
+
+| 이벤트 | payload | 발신 → 구독 | 성격 |
+|---|---|---|---|
+| `transit:veil` | `{on, dur, delay?, caption?}` | world(transit) → ui(finale) | 막 전환 암전 + 막 표제. 판정 무관, 연출 통지 전용 |
+| `finale:show` | `{delay}` | world(transit) → ui(finale) | 종막 카드 개시. 판정 무관 |
+
+폐쇄 쌍 1:1 이라 기존 소비자 영향 0이고, 실행 검증에서 콘솔 이슈 0·1막 완주 봇 PASS·
+배터리 112/0 을 확인했다. 코드 수정 요청이 아니라 **문서 등재 요청**이다.
+
+부가 정보(연출 근거 — 같은 절에 남길 값): 새 공간(corridor-night·room-dusk)의 첫 렌더는
+셰이더 컴파일·섀도맵 때문에 **실측 11.5초**가 걸리고 그동안 `engine.time` 이 dt 클램프에
+걸려 사실상 멈춘다. 그래서 transit 의 암전 해제는 시간이 아니라 **프레임 수**로 걸려 있고,
+그 구간을 막 표제("9층"/"942호")로 덮는다. 시간 기반 예약으로 되돌리면 검은 화면이 그대로 돌아온다.
