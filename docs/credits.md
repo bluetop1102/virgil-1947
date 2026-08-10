@@ -39,8 +39,9 @@ git ls-files src assets index.html \
 `docs/reviews/**` 의 jpg 는 체험 리뷰 증거 스크린샷이고, 과거 커밋의 `scratchpad/` 스크린샷은
 QA 진단 산출물이다 — 둘 다 게임 에셋도 빌드 대상도 아니다.)
 
-**왜 이 제약을 걸었나**: 오프라인 재현성과 라이선스 리스크 0. 심사자가 어떤 계정·키·네트워크
-없이 링크만으로 실행할 수 있어야 한다는 요건과 같은 방향이다.
+**왜 이 제약을 걸었나**: 오프라인 재현성과 외부 의존·라이선스 의무의 명시적 관리. 라이선스
+위험이 없다고 보장하는 뜻은 아니며, 심사자가 어떤 계정·키·네트워크 없이 링크만으로 실행할 수
+있어야 한다는 요건과 같은 방향이다.
 
 ### 1.1 AI 생성 에셋 — 1건
 
@@ -52,7 +53,7 @@ QA 진단 산출물이다 — 둘 다 게임 에셋도 빌드 대상도 아니�
 | 모델 | `gpt-image-2` · quality high · size 2048×1152 |
 | 후처리 | macOS `sips` 로 PNG(2.6 MB) → JPEG q72(270 KB) 변환. 그 외 편집 없음 |
 | 생성일 | 2026-08-09 |
-| 라이선스 | OpenAI 이미지 생성물 — 생성자에게 귀속. 제3자 저작물 차용 없음 |
+| 권리·주의 | [OpenAI 이용약관](https://openai.com/policies/row-terms-of-use/) Content 조항에 따라 당사자 사이 출력 권리를 사용자에게 배정. 출력의 고유성이나 제3자 권리 비침해를 보장한다는 뜻은 아니며, 사람 검수로 실존 인물·상표·텍스트를 배제 |
 
 생성 프롬프트 전문:
 
@@ -108,11 +109,13 @@ sfx·룸톤·리버브 IR·발소리·스팅어는 전부 절차 생성이라는
   `https://incompetech.com/music/royalty-free/pieces.json` 의 `filename` 필드가 진실원이고 곡명과
   다를 수 있다. 1·4·5번은 2026-08-09, 2·3번은 2026-08-10 에 내려받았고, 2026-08-10 에 전 곡을
   같은 후처리로 다시 구웠다.
-- **후처리 도구**: ffmpeg 8.1 (Homebrew, macOS arm64). 2패스 loudnorm 이다 — 1패스로 측정하고
-  그 값을 `measured_*` 로 넣어 `linear=true` 로 적용한다.
+- **후처리 도구와 재구성 템플릿**: ffmpeg 8.1 (Homebrew, macOS arm64)의 2패스 loudnorm을
+  사용했다. 최종 파일과 곡별 트림·실측값은 오디오 소유 커밋 `fe11510`과
+  `docs/reports/SM-final.md` §5로 확인했다. 다만 원본 1패스 JSON의 `measured_*` 값은 보존하지
+  않았으므로, 아래 명령은 처리 절차를 복원한 **템플릿**이지 그대로 재실행할 수 있는 원시 로그가 아니다.
 
   ```bash
-  # 1패스(측정)
+  # 절차 재구성 템플릿 — 1패스(측정)
   ffmpeg -i <원본> -vn -af loudnorm=I=-18:TP=-2:LRA=11:print_format=json -f null -
   # 2패스(적용) — 라디오 3곡
   ffmpeg -i <원본> -vn -map_metadata -1 -map 0:a:0 \
@@ -153,28 +156,38 @@ sfx·룸톤·리버브 IR·발소리·스팅어는 전부 절차 생성이라는
 - **라이선스 전문**: https://creativecommons.org/licenses/by/4.0/ ·
   법적 전문 https://creativecommons.org/licenses/by/4.0/legalcode.en
 
-**표준 표기(incompetech 트랙 페이지의 `Attribution Code` 블록 원문 그대로)**:
+**복사 가능한 귀속·변경 고지 블록**(incompetech `Attribution Code` 형식 + 원곡 `Source`):
 
 ```text
 "Night on the Docks - Sax" Kevin MacLeod (incompetech.com)
-Licensed under Creative Commons: By Attribution 4.0 License
-http://creativecommons.org/licenses/by/4.0/
+Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100137
+Licensed under Creative Commons: By Attribution 4.0
+https://creativecommons.org/licenses/by/4.0/
 
 "Dark Times" Kevin MacLeod (incompetech.com)
-Licensed under Creative Commons: By Attribution 4.0 License
-http://creativecommons.org/licenses/by/4.0/
+Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100747
+Licensed under Creative Commons: By Attribution 4.0
+https://creativecommons.org/licenses/by/4.0/
 
 "Vanishing" Kevin MacLeod (incompetech.com)
-Licensed under Creative Commons: By Attribution 4.0 License
-http://creativecommons.org/licenses/by/4.0/
+Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1600050
+Licensed under Creative Commons: By Attribution 4.0
+https://creativecommons.org/licenses/by/4.0/
 
 "Long note One" Kevin MacLeod (incompetech.com)
-Licensed under Creative Commons: By Attribution 4.0 License
-http://creativecommons.org/licenses/by/4.0/
+Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100418
+Licensed under Creative Commons: By Attribution 4.0
+https://creativecommons.org/licenses/by/4.0/
 
 "Impending Boom" Kevin MacLeod (incompetech.com)
-Licensed under Creative Commons: By Attribution 4.0 License
-http://creativecommons.org/licenses/by/4.0/
+Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100198
+Licensed under Creative Commons: By Attribution 4.0
+https://creativecommons.org/licenses/by/4.0/
+
+Changes made: the tracks listed above were loudness-normalized, peak-limited, downmixed to mono, resampled
+and re-encoded as MP3. In game, radio tracks also pass through per-track level compensation, AM-band
+filtering, EQ, saturation, distance attenuation and room reverb; tension tracks pass through high/low-pass
+filtering and gain automation.
 ```
 
 incompetech Music FAQ 가 **게시 위치**도 지정한다: "Video Games — Most commonly, credits are
@@ -218,16 +231,24 @@ E1(41.2Hz)을 늘인 절차 생성 패드로 떨어진다(`music.js` `pad()`). �
 이 프로젝트는 AI를 **보조 작성기가 아니라 제작 공정 그 자체**로 썼다. 사람이 한 일은
 목표·루브릭·게이트 설계와 판정이고, 코드·문서·검증기는 에이전트가 썼다.
 
-| 도구 | 모델 | 역할 | 산출 흔적 |
+| 도구 | 기록한 모델 범위 | 역할 | 산출 흔적 |
 |---|---|---|---|
-| Claude Code | Claude Opus 5 / Fable 5 | 기획 라운드(E0~E10 요소 문서)·구현 라운드·통합·판정·시스템 구축 | 커밋 이력 전체 · `docs/design/**` · `PROMPT-*.md` |
-| Claude Code (서브에이전트) | Opus 5 / Sonnet 5 | 병렬 전담(재질·파이프라인·이펙트·소품·대기)·블라인드 채점자·반증 에이전트 | `docs/ROUNDS.md` 라운드 로그 · `docs/HANDOFF.md` 교차 요청 큐 |
-| OpenAI Codex | — | 독립 2차 코드 리뷰·**P0 발주 티켓 3장 구현·머지**(T-P0-01 계약 린트 · T-P0-05 텔 상관 · T-P0-06 low 프리셋) | `tools/calibration/report.md` · 머지 커밋 3건(발주 커밋 해시 명기) |
-| Grok build | — | 캘리브레이션 파일럿 ① 대조군(산출은 계약 개정으로 미머지) | `tools/calibration/report.md` §1·§4.1 |
+| Claude Code 세션 | 정확 모델 ID 미보존 | 기획 라운드(E0~E10 요소 문서)·구현 라운드·통합·판정·시스템 구축 | 커밋 이력 전체 · `docs/design/**` · `PROMPT-*.md` |
+| Claude Code 서브에이전트 세션 | 정확 모델 ID 미보존 | 병렬 전담(재질·파이프라인·이펙트·소품·대기)·블라인드 채점자·반증 에이전트 | `docs/ROUNDS.md` 라운드 로그 · `docs/HANDOFF.md` 교차 요청 큐 |
+| OpenAI Codex 세션 | 정확 모델 ID 미보존 | 독립 2차 코드 리뷰·**P0 발주 티켓 3장 구현·머지**(T-P0-01 계약 린트 · T-P0-05 텔 상관 · T-P0-06 low 프리셋) | `tools/calibration/report.md` · 머지 커밋 3건(발주 커밋 해시 명기) |
+| Grok build 세션 | 정확 모델 ID 미보존 | 캘리브레이션 파일럿 ① 대조군(산출은 계약 개정으로 미머지) | `tools/calibration/report.md` §1·§4.1 |
+| Codex `image_gen` | `gpt-image-2`(생성 기록 보존) | 타이틀 배경 이미지 생성 | `assets/title-bg.jpg` · §1.1 |
+
+Claude·Codex·Grok의 세션별 정확한 API model ID와 사용량 원장은 별도로 보존하지 않았다. 따라서
+저장소의 별칭으로 세부 모델 버전을 추정하지 않고 제품·세션 수준으로만 적는다. 타이틀 이미지의
+생성 모델만 생성 기록에 남은 `gpt-image-2`로 기재한다.
 
 - **프롬프트 원문은 저장소에 있다**: `PROMPT-plan-v1.md`(기획) · `PROMPT-build-p0.md`·
   `PROMPT-build-p1.md`(구현) · `PROMPT-system-v1.md`(위임 시스템) · `packets/PACKET-*.md`
-  (티켓별 자동 생성 발사문 15장). 제출물 4번의 "주요 프롬프트·지시사항" 항목은 이 파일들을 인용한다.
+  (티켓별 작업 패킷 18장). 이 18장은 후속 계약 수정을 반영한 **현재 스냅샷**이며, 각 에이전트가
+  처음 발주받은 순간의 불변 원본은 별도로 보존하지 않았다. 생성기에도 현재 매니페스트와 패킷의
+  바이트 drift를 판정하는 `--check`가 없으므로 언제나 최신인 자동 산출물이라고 주장하지 않는다.
+  제출물 4번의 "주요 프롬프트·지시사항" 항목은 이 파일들을 인용한다.
 - **런타임 AI 없음**: 출하 빌드는 API 키를 요구하지 않는다. 심문 판정은 전 스크립트이고,
   자유 서술 판정(2단 커널)은 별도 플래그로 분리된 후속 단계다(E5 §6). 제출 요건
   "별도 유료 라이선스 없이 심사자가 실행 가능"의 이행이다.
@@ -238,6 +259,6 @@ E1(41.2Hz)을 늘인 절차 생성 패드로 떨어진다(`music.js` `pad()`). �
 (재허구화 계약: `docs/MASTER-PLAN.md` §1, 명칭 검증: `docs/design/E0-index.md` §0).
 로딩 화면이 허구 고지문을 타자기로 찍는 것이 이 계약의 화면 측 이행이다(E8 §3).
 
-**미해소 잔여 1건**: 배포 산출물의 `<title>`·부트 화면에 구 작품명이 남아 있다.
-`docs/HANDOFF.md` 큐 등재분이며, 제출 전 체크리스트(`docs/submission/checklist.md`)의
-차단 항목이다.
+현재 작품명은 **HOTEL VIRGIL — 1947**이다. 이 문서 초안에서 미해소로 적었던 구 작품명은
+이미 제거됐다. `index.html`의 `<title>`과 `src/ui/title.js`의 화면 간판은 현재 작품명을 쓰며,
+`window.__CECIL__`은 화면에 노출하지 않는 내부 QA 하네스 식별자로만 남는다.
