@@ -71,7 +71,9 @@ export class Deduction {
     this.engine = engine
     this._useScript(await loadScript())
     const b = engine.bus
-    this._off.push(b.on('deduction:open', () => this.start()))
+    // notebook.openBoard() 가 발화하는 실제 이벤트를 구독한다 — 구 'deduction:open' 은 발화자가
+    // 없는 죽은 이름이라 정상 플레이에서 start() 가 한 번도 안 불렸다(S-M 배선 감사 2026-08-10).
+    this._off.push(b.on('ui:open', (p) => { if (p?.ui === 'deduction') this.start() }))
     this._off.push(b.on('qa:state', (s) => { if (s?.ui === 'deduction') this.start() }))
   }
 
