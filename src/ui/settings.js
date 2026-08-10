@@ -106,7 +106,7 @@ const settings = {
     // 놓친 사람이 되돌아와 확인할 자리를 여기 하나 둔다.
     const note = node('div', 'virgil-setting-note')
     note.appendChild(node('div', 'virgil-setting-label', '조작'))
-    note.appendChild(node('div', 'virgil-setting-keys', '이동 W·A·S·D   조사 E   수첩 Tab   카드 Esc'))
+    note.appendChild(node('div', 'virgil-setting-keys', '이동 W·A·S·D   달리기 Shift   조사 E   수첩 Tab   카드 Esc'))
     card.appendChild(note)
 
     const foot = node('div', 'virgil-settings-foot')
