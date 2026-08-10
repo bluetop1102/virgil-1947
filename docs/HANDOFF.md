@@ -3827,3 +3827,357 @@ fog.ambient 파이프라인 미도달 · 판정 리액션 컷 흔들림 초점.
 - **요청자가 처리한 부분**: `script.js` 헤더에 갈림의 범위와 불변 축(id·진위·camera·사실)을 명시하고,
   형사가 텔을 입으로 지목하지 않는다는 규칙(STORY §2 파생)을 주석으로 결박했다. STORY 본문과
   `deduction.js` 는 내 소유가 아니라 손대지 않았다.
+
+### [x] SUBMISSION-AUDIT → INTERROGATION·GAMEPLAY·QA 소유자 — 핵심 비가역 고지와 실제 증거 상태가 반대다 (제출 P0)
+- **파일**: `src/narrative/interrogation.js:285` · `src/core/state.js:14-22` ·
+  `src/ui/notebook.js:28,214-216` · `tools/playthrough.mjs:351-410`
+- **루브릭**: E1 U1 · N1/N4 · X5 · 제출물 2·3의 핵심 카피 사실성
+- **문제**: 설계와 화면은 **"제시한 증거는 회수되지 않는다"**고 약속한다(`docs/design/E1-core.md:60`,
+  `docs/design/E8-ui.md:23`). 하지만 실제 구현은 `evidence:presented` 이벤트만 발화하고 구독자가 0명이다.
+  `GameState`에도 증거 삭제 API가 없어 제시한 증거가 계속 `state.evidence`에 남는다. 2026-08-10 fresh
+  `node tools/playthrough.mjs --fast --act 1`에서도 LIE에 쓴 `register`·`keyrack`이 끝까지 남았고,
+  완주 봇은 오히려 네 증거가 모두 남아 있어야 PASS하도록 검사한다. `test-interrogation` 108/108도
+  소모 여부를 assert하지 않는다. 즉 **설계·UI·소개서·영상 대본 ↔ 구현·게이트가 정면충돌**한다.
+- **지시**: 소유자가 둘 중 하나를 명시적으로 택하고 전 축을 같은 계약으로 맞춰라.
+  1. U1을 유지하면 제시 즉시 증거를 상태에서 제거하고, 정답/오답 각각 재사용 불가를 E2E로 검증한다.
+     `playthrough.mjs`의 기대값도 "최종 4종 보유"가 아니라 사용 증거 제외로 바꾼 뒤 완주를 재검증한다.
+  2. 현 구현을 유지하면 `notebook.js`의 회수 불가 고지와 E1/E8 계약을 철회하고, 제출 문서·영상의
+     중심 카피를 **"오답이면 해당 진술이 영구 폐쇄된다"**로 전면 정정한다.
+- **수용 기준**: UI에 적힌 한 문장과 `qa.state().evidence`가 정답·오답 제시 직후 모두 일치 ·
+  `node tools/test-interrogation.mjs`와 `node tools/playthrough.mjs --fast --act 1` PASS · 소개 PDF와
+  30~60초 영상 대본의 카피가 같은 규칙을 말함.
+- **요청자가 처리한 부분**: 코드 소유권을 침범하지 않고 진단·fresh 재현·문서 카피의 임시 정정만 한다.
+- **해소(2026-08-10)**: 선택지 ② 채택. `42a3814`에서 E1·E8·노트 고지를 실제 동작인 “증거
+  아이템은 남고, 제시 판정과 오답이 닫은 진술은 무르지 못함”으로 정렬했다. 이후 fresh
+  `test-interrogation` 108/0, `--burn` 9/0, `playthrough --fast --act 1`(증거 4종 유지·act 2·콘솔 0)
+  PASS를 확인했고 제출 원고·영상 대본도 같은 규칙을 쓴다.
+
+### [ ] SUBMISSION-AUDIT → AUDIO·UI·CREDITS 소유자 — 5곡 후보의 커밋·가시 귀속·사람 청감이 미완료다 (제출 P0)
+- **파일**: `assets/radio-1-night-on-the-docks-sax.mp3` · `assets/radio-2-i-knew-a-guy.mp3` ·
+  `src/ui/settings.js:116-119` · `docs/credits.md` §1.1~§1.2
+- **루브릭**: NAN 제출물 4 외부 에셋 출처 · AGENTS 에셋 예외 ② · CC BY 4.0 귀속
+- **문제**: 2026-08-10 fresh `ffprobe`에서 1·2번 MP3에 각각 400×400 PNG video stream이 남았다.
+  기존 후처리의 `-map_metadata -1`은 메타데이터만 지우고 attached picture를 제거하지 않았다. 이 때문에
+  “외부 이미지 없음/메타데이터 제거 완료”라는 크레딧 문구를 그대로 제출할 수 없다. 또한 설정 화면은
+  `음악: Kevin MacLeod (incompetech.com) · Creative Commons: By Attribution 4.0` 한 줄뿐이라 곡명
+  3개, 라이선스 URL, 변경 표시가 없다. Creative Commons deed는 적절한 귀속·라이선스 링크·변경 표시를
+  요구하고 Incompetech FAQ는 곡명을 넣은 표준 문안과 게임 설정의 Credits 화면을 안내한다.
+- **추가 실측**: 세 파일의 integrated loudness는 순서대로 `-18.9/-19.7/-19.1 LUFS`, true peak는
+  `+0.4/+0.3/+0.3 dBTP`였다. 기존 `-18 LUFS` 표기는 정확한 결과가 아니라 변환 목표값이다. 양의
+  true peak는 재인코딩·재생 경로에서 클리핑 여지를 남기므로 오디오 전용 재출력 때 ceiling도 함께
+  정하고 실측값을 갱신해야 한다.
+- **지시**: ①원본 권리가 불명확한 커버 스트림을 제거해 오디오 스트림만 남기고 3개 파일을 `ffprobe`로
+  재검사한다. ②설정의 Credits 경로에 세 곡의 곡명·Kevin MacLeod·incompetech·CC BY 4.0 URL·
+  `모노 22.05kHz/48kbps 변환, 편곡·구간 절단 없음`과 변경 여부를 읽을 수 있게 표시한다. ③재출력 뒤
+  integrated loudness와 true peak를 다시 측정해 양의 dBTP를 해소하고 실제 수치를 기록한다.
+  ④`docs/credits.md`
+  의 “생성자 귀속/제3자 차용 없음”, 잘못된 모델 별칭, 패킷 15장, 구 작품명 미해소 등 제출 감사가 찾은
+  낡은 주장을 실제 상태로 갱신한다.
+- **수용 기준**: 세 MP3 모두 `ffprobe`의 `codec_type=audio` 1개만 존재 · fresh true peak 0 dBTP 이하 ·
+  시크릿 창 설정에서 표준 귀속 정보 판독 · `docs/credits.md`와 AI 기술 PDF가 같은 사실을 말함 · 공개
+  빌드 오디오 재생·콘솔 0 재검증.
+- **요청자가 처리한 부분**: 소유 파일은 수정하지 않고 공식 CC/Incompetech 조건, 파일 스트림, 화면 문구를
+  fresh 대조했으며 AI 기술 원고를 DRAFT 상태로 낮췄다.
+- **검증된 변환 후보(소스 미적용)**: `tmp/submission-audio-330cOy/minus1p0/`에서 기존 mono
+  22.05kHz/48kbps를 유지한 채 `-map 0:a:0 -vn -sn -dn -map_metadata -1 -map_chapters -1
+  -af 'volume=-1.0dB:precision=double' -ac 1 -ar 22050 -c:a libmp3lame -b:a 48k
+  -write_xing 1 -id3v2_version 0 -write_id3v1 0`로 한 번 재인코드했다. 세 출력은 오디오 스트림
+  정확히 1개·태그/커버 0이며, I `-20.3/-21.1/-20.5 LUFS`, true peak
+  `-1.1/-1.2/-1.2 dBTP`였다. `-0.9dB`는 1번이 `-0.9dBTP`라 안전 여유 목표를 못 채워 기각했다.
+  소유자는 임시 파일을 같은 디렉터리에 만든 뒤 `ffprobe`·EBU 결과를 확인하고 원자적으로 교체한다.
+- **변경 고지 문안**: `Changes made: converted to mono 22.05 kHz/48 kbps MP3, static level reduced
+  by 1.0 dB, and metadata/embedded cover art removed. No arrangement or excerpting.` 곡명 3개·Kevin
+  MacLeod·incompetech·CC BY 4.0 URL과 함께 설정/credits/영상 설명에 표시한다. 이 후보는 사람 청감을
+  수행하지 않았으므로 적용 뒤 청감 시트를 별도로 통과해야 한다.
+- **후속 후보 감사(17:03 KST)**: 소유 세션은 라디오를 `Night on the Docks - Sax`·`Dark Times`·
+  `Vanishing`으로 교체하고 외부 긴장층 `Long note One`·`Impending Boom`을 추가했다. 다섯 파일은
+  오디오 스트림 1개·attached picture 0, I `-19.7/-22.5/-21.1/-21.1/-19.0 LUFS`, true peak
+  `-1.4/-3.6/-3.2/-1.2/-1.9 dBTP`다. 그러나 asset만 staged이고 코드·radio-1은 unstaged라 아직
+  authoritative commit이 아니다. `docs/credits.md`·설정은 구 3곡/절차 긴장층을 주장해 더 낡았다.
+  또한 `cues.js`가 `deduction:open`을 기다리지만 실제 지목판 경로는 그 이벤트를 발화하지 않아
+  `Impending Boom`이 번들만 되고 들리지 않는다. 실제 경로에 배선하거나 미사용 파일을 제거하고,
+  정확한 export/정적 gain 이력·곡명 5개·출처·CC URL·변경 표시를 credits와 설정에 동기화하라.
+- **후속 배선 감사(17:17 KST)**: `cues.js`가 실제 `notebook.openBoard()`가 발화하는
+  `ui:open { ui: 'deduction' }`에서 `bedStart(a, 'urge')`를 호출하도록 바뀌었다. 다섯 오디오의
+  스트림·실측값, settings/credits 필수 문자열과 이 3단 정적 연결은 최신 final 빌더를 통과한다.
+  다만 제출본은 1막이라 정상 진행으로 최종 증거판을 열 수 없다. 일반 런타임에서
+  `window.__ENGINE__.get('notebook').openBoard()`를 호출해 `tensions.urge.streamed === true`와 실제
+  청감을 확인하고, 아래 설정 레이아웃 P0와 소유자 커밋/정확한 export 이력을 함께 닫아야 한다.
+- **후속 동결 감사(17:43 KST)**: 소유자 커밋 `fe11510`과 `docs/reports/SM-final.md`가 다섯 출력의
+  스트림·실측·곡별 trim·처리 순서를 확정했고 fresh 재측정도 일치했다. 소유자 확인과 결과 검증은
+  PASS다. 다만 credits의 2-pass 예시는 실제 1패스 `measured_*`를 보존하지 않은 템플릿이므로 완전한
+  명령 재현성은 PARTIAL이다. 남은 차단점은 사람 헤드폰 청감과 final Pages 재확인이다.
+
+### [x] SUBMISSION-AUDIT → UI 소유자 — 설정 크레딧 아래 세 줄이 카드 밖으로 잘린다 (제출 P0)
+- **파일**: `src/ui/settings.js`의 `.virgil-file`·`.virgil-settings-foot`·`.virgil-settings-credit` ·
+  `shots/submission-r20-settings/ui-settings.png`
+- **문제**: `SHOT_PORT=5984 node tools/shoot.mjs ui-settings --out shots/submission-r20-settings`는
+  실행 1/1 PASS·콘솔 0이었지만, 2560×1440 PNG에서 CC BY URL과 가공/절차음 고지가 카드 하단 밖으로
+  내려가 `카드 닫기` 버튼 뒤와 어두운 배경에 걸렸다. 문자열이 소스에 있다는 것과 사람이 읽을 수
+  있다는 것은 다르므로 라이선스 가시 귀속은 FAIL이다.
+- **지시**: 고정 카드 높이 안에서 크레딧 영역만 스크롤/접기하거나 카드·본문 레이아웃을 조정해 다섯
+  곡명, Kevin MacLeod, incompetech, CC BY URL, 변경 고지가 모두 경계 안에 오게 한다.
+- **수용 기준**: 2560×1440 `ui-settings`와 일반 실행 1920×1080에서 전 문구 판독 · 닫기 버튼과 겹침
+  0 · 화면 밖 잘림 0 · 콘솔 에러/경고 0. 그 뒤에만 final 빌더의 `설정 화면 육안 PASS`를 입력한다.
+- **요청자가 처리한 부분**: UI 소유 파일은 건드리지 않고 실제 렌더·원본 PNG를 육안 검사해 실패를
+  재현했으며 제출 원고와 체크리스트를 DRAFT 상태로 유지했다.
+- **해소(17:28 KST)**: 소유 세션이 카드를 650px로 늘리고 귀속을 3줄로 축약했다. fresh
+  `SHOT_PORT=5986 node tools/shoot.mjs ui-settings --out shots/submission-r21-settings`는 1/1 PASS·
+  콘솔 0이고, 1280×720 CSS(2× 캡처 2560×1440)에서 곡명 5개·저작자/출처·CC BY 주소·변경 고지와
+  닫기 버튼이 모두 내부 경계에 있으며 겹침 0이다. final 빌더도 보이는 `CREDIT` 배열만 대상으로
+  곡명·저작자·출처·라이선스 주소·변경/무추가/무절단 의미 계약을 PASS했다. 최종 Pages는 재확인한다.
+
+### [ ] SUBMISSION-AUDIT → CREDITS 소유자 — 권리·오디오·AI provenance를 실제 근거 범위로 맞춘다 (제출 P1)
+- **파일**: `docs/credits.md:42,55,104-144,221-241` · `docs/submission/ai-tech.md` §1.2·§6.1~§6.2
+- **문제**: `라이선스 리스크 0`, `생성자에게 귀속. 제3자 저작물 차용 없음`은 OpenAI ROW Terms가
+  보장하는 범위를 넘는다. 약관은 당사자 사이 출력 권리를 사용자에게 배정하지만 출력의 고유성이나
+  제3자 권리 비침해를 보장하지 않는다. 또 credits는 정확 모델 별칭과 패킷 15장을 확정하고 구 작품명
+  미해소를 적지만, AI 문서는 정확 모델 ID 미보존·패킷 18장을 밝히고 현재 `index.html`은 이미
+  `HOTEL VIRGIL`이다. 오디오 소유자 결과·곡별 trim은 `fe11510`과 보고서로 확인됐지만, 2-pass 예시는
+  실제 1패스 `measured_*`가 빠진 템플릿이므로 완전한 명령 재현 기록은 아니다.
+- **지시**: 이미지 문구를 약관의 정확한 범위와 비고유성/비침해 비보장으로 바꾸고, 모델 ID 미보존·
+  패킷 18장·현재 작품명으로 AI 이력을 맞춘다. 오디오에는 소유자 확인·결과 실측과
+  raw 명령 재현성의 한계를 구분해 적고, 템플릿을 완전한 실행 로그처럼 제시하지 않는다.
+- **수용 기준**: credits와 AI 기술 문서가 같은 제한 범위를 말함 · 절대적인 `리스크 0`/비침해 보장
+  0건 · 모델/패킷/작품명 일치 · export 결과에는 소유자 근거가 있고 명령 템플릿의 한계가 명시됨.
+- **요청자가 처리한 부분**: credits 소유 파일은 수정하지 않고 OpenAI ROW Terms와 두 문서의 표현을
+  대조해 큐에 등록했다.
+
+### [x] 게이트 3기 → SUBMISSION-AUDIT 항목 처리 — 카피를 구현에 맞춘다 (옵션 2 채택)
+- **판정 근거**: 옵션 1(제시 즉시 증거 소모)은 마감 수 시간 전의 게임플레이 변경이고, 골든패스가
+  LIE 에 쓴 register 를 이후 지목·연출이 다시 참조할 수 있어 소프트락 검증 비용이 크다. 실재하는
+  메커니즘(오답 → 진술+하류 영구 소각, --burn 9/0 통과)이 이미 U1 차별점의 본체다 — 카피만 거짓이었다.
+- **처리분(게이트)**: `src/ui/notebook.js` 고지 2문자열 "제시한 증거는 회수되지 않는다" →
+  **"내민 증거는 무르지 못한다"** · `docs/design/E8-ui.md` 원문 2곳 동기 · `docs/design/E1-core.md`
+  U1 "재사용·재시도 불가" 구절을 "제시는 진술 단위 무르기·재시도 불가(아이템 잔존)"로 정정.
+- **미처리(분담)**: `docs/submission/*` 는 SUBMISSION-AUDIT 이 임시 정정 진행 중이라 충돌 회피 —
+  video-plan §0 촬영 보류 블록의 해제는 게이트 문서 일괄 커밋에서 최종 확인한다.
+- **검증**: lint 기준선 4건 유지 · notebook.js 410줄 · UI 실렌더 확인은 통합 게이트 base-r5 샷과
+  제출 프레임 재촬영(sub-30-picker)에서 육안 판정.
+
+### [x] SUBMISSION-AUDIT → 저장소 관리자 — 공개 GitHub 설명이 외부 에셋 현황과 반대다 (제출 P0)
+- **대상**: <https://github.com/bluetop1102/virgil-1947> 저장소 Description
+- **루브릭**: NAN 제출물 4 외부 에셋 출처 · 공개 소스의 사실성
+- **문제**: 2026-08-10 16:21 KST GitHub API와 비로그인 페이지에서 Description이
+  `외부 에셋 0, 전부 절차 생성`으로 공개되고 있다. 실제 저장소에는 사용자 승인 예외인 AI 생성
+  `assets/title-bg.jpg` 1건과 Kevin MacLeod CC BY 4.0 라디오 음원 3건이 있다. AI 기술 PDF와
+  `docs/credits.md`는 이 4건을 공개하므로 심사자가 소스 링크를 열면 첫 화면부터 제출 문서와 모순된다.
+- **지시**: GitHub 저장소 Description을 예를 들어
+  `절차 생성 3D 월드 · AI 생성 타이틀 배경 1건 · CC BY 4.0 라디오 음원 3건`처럼 실제 범위로
+  바꾼다. `README.md`는 저장소에 없으므로 Description 자체를 수정해야 한다.
+- **수용 기준**: 비로그인 GitHub 페이지와 `GET /repos/bluetop1102/virgil-1947` API가 새 설명을
+  반환하고, AI 기술 PDF·credits의 외부 에셋 인벤토리와 일치한다.
+- **요청자가 처리한 부분**: 외부 저장소 메타데이터를 임의로 변경하지 않고 read-only로 불일치를
+  확인해 큐에 등록했다.
+- **해소(16:48 KST)**: 저장소 관리자가 Description을 `1947 LA 호텔 추리 공포 — 절차 생성 3D
+  월드. 외부 에셋은 AI 생성 타이틀 배경과 CC BY 4.0 음원뿐(전수 docs/credits.md 기재)`로
+  변경했다. fresh `GET /repos/bluetop1102/virgil-1947`이 같은 문자열을 반환해 수용 기준을 통과했다.
+
+### [x] SUBMISSION-AUDIT → UI 소유자 — Shift 추가 뒤 조작 카드 마지막 행이 잘린다 (영상 P0)
+- **파일**: `src/ui/hud.js:279-300` (`_drawCard`) · 검증 샷
+  `shots/submission-r17-controls-ui/controls-card.png`
+- **루브릭**: D7 · J5 · NAN 30~60초 실제 플레이 영상의 조작 가독성
+- **문제**: `b5d3677`에서 `CARD_ROWS`를 4행에서 5행으로 늘렸지만 카드 배치 비율은
+  `top = h*0.418`, `step = h*0.149` 그대로다. 마지막 `i=4` 기준선은
+  `0.418 + 4*0.149 = 1.014h`라 카드 바깥이며, fresh UI 렌더에서 `카드 · Esc`가 하단과 화면에
+  잘려 보인다. `npm run shot -- controls-card`는 WebGL shotlist에 없는 이름이라 FAIL했고, 올바른
+  `SHOT_PORT=5972 node tools/ui-shoot.mjs controls-card --out shots/submission-r17-controls-ui`는 실행
+  PASS했지만 PNG 육안 판정은 FAIL이다.
+- **지시**: 행 수에 따라 마지막 기준선이 카드 안에 오도록 간격을 계산한다. 예를 들어 첫/마지막
+  기준선을 `0.39h/0.84h`로 두고 `step=(last-top)/(CARD_ROWS.length-1)`로 만들면 이후 행 수 변경도
+  버틴다. 종이 크기·화면 하단 위치까지 함께 보고 글자가 덱클 밖으로 내려가지 않게 한다.
+- **수용 기준**: 1280×720 UI selftest와 최종 1920×1080 실제 인트로 이양 화면에서 다섯 행
+  `이동·달리기·조사·수첩·카드`와 키가 모두 완전히 판독됨 · 콘솔 0 · 최종 영상 C 구간에 사용 가능.
+- **요청자가 처리한 부분**: 새 Shift 조작을 게임 소개 PDF와 52초 영상 대본에 반영했고, UI 소유
+  파일은 수정하지 않았다.
+- **해소(16:37 KST)**: `999dafa`가 `top=.39h`, 마지막 기준선 `.84h`에서 행 수로 간격을
+  역산하도록 수정했다. 1280×720 UI selftest는 5행·콘솔 0을 통과했다. 이어 일반 게임 경로를
+  1920×1080으로 열어 입장 게이트→타이틀→인트로 종료까지 실제 키 입력으로 진행한 프레임
+  `shots/submission-r19-controls-integration/controls-1920x1080-actual.png`에서도 5행 전부 판독,
+  카드 경계 `(1422.2,763.5)–(1871.1,1041.2)`가 화면 안, 콘솔 에러·경고 0을 확인했다.
+
+### [x] 게이트 3기 → GitHub Description 정정 완료 (2026-08-10)
+- **처리**: `gh repo edit` 로 Description 을 "1947 LA 호텔 추리 공포 — 절차 생성 3D 월드. 외부
+  에셋은 AI 생성 타이틀 배경과 CC BY 4.0 음원뿐(전수 docs/credits.md 기재)" 로 교체.
+  개수를 못 박지 않은 이유: S-M 이 긴장층 트랙을 추가 중이라 "3곡" 표기는 시간 안에 다시
+  낡는다 — credits.md 전수 기재를 진실원으로 가리키는 문면이 유지 가능하다.
+- **검증**: 16:48 KST fresh `GET /repos/bluetop1102/virgil-1947`이 새 Description을 반환해 수용 기준 충족.
+
+### [x] 게이트 3기 → 안내 카드 5행 잘림 수리 완료 (2026-08-10)
+- **처리**: `hud.js` 행 간격을 행 수 역산(top 0.39h · last 0.84h · step=(last-top)/(행수-1))으로
+  교체. ui-shoot controls-card 재촬영 후 PNG 육안 판정 — 5행 전부 종이 안 완전 판독, 실행 PASS.
+- **검증**: 일반 게임 경로를 1920×1080으로 열어 입장 게이트→타이틀→인트로 종료까지 실제 입력으로
+  진행한 `shots/submission-r19-controls-integration/controls-1920x1080-actual.png`에서도 5행 전부
+  판독·카드 경계 화면 안·콘솔 에러/경고 0을 확인했다. 최종 Pages 재배포 뒤 동일 화면만 재확인한다.
+
+### [ ] S-M 오디오 → [NARRATIVE] 소유 — `deduction:open` 은 아무도 발화하지 않는 죽은 이름이다
+- **파일**: `src/narrative/deduction.js:74` (구독) · 발화자 없음
+- **문제**: `deduction.js` 가 `b.on('deduction:open', () => this.start())` 로 지목 단계를 여는데,
+  `src` 전체에서 이 이벤트를 `emit` 하는 곳이 없다. 실제 지목판은 `ui/notebook.js:296` 의
+  `openBoard()` 가 `ui:open{ui:'deduction'}` 으로 열고, `deduction.start()` 는 QA 경로
+  (`qa:state{ui:'deduction'}`)로만 도달한다. 즉 **정상 플레이에서 `deduction.start()` 가 한 번도
+  안 불린다** — 지목 인트로 대사(`this.intro`)와 시작 시 초기화가 통째로 건너뛰어진다.
+- **오디오측 처리(완료)**: 지목 긴장 침대를 `deduction:open` 이 아니라
+  `ui:open{ui:'deduction'}` / `ui:close{ui:'deduction'}` / `deduction:resolve` 에 물렸다
+  (`src/audio/cues.js`). 오디오는 이 결함을 우회했을 뿐 고치지 않았다.
+- **지시**: `openBoard()` 가 `deduction:open` 도 발화하게 하거나, `deduction.js` 가
+  `ui:open{ui:'deduction'}` 을 구독하도록 정렬한다. 어느 쪽이든 **오디오 배선은 그대로 유효**하다.
+- **수용 기준**: 정상 플레이(완주 봇 3막)에서 `deduction.start()` 가 1회 이상 호출되고 지목 인트로가
+  뜬다 · 콘솔 0.
+- **발견 경위**: 제출 감사(`docs/submission/README.md` P0 2번)가 "Impending Boom 이 번들되지만
+  들리지 않는다"로 먼저 잡았고, 이벤트 발화자 전수 검색으로 원인을 특정했다.
+
+### [i] S-M 오디오 → 게이트 — 내 소유 파일을 다른 세션이 같은 시간대에 편집했다(정보)
+- **파일**: `docs/submission/audio-listen-check.md` §C·§D
+- **사실**: 세션 시작 시점 이 파일은 clean 이었는데, 작업 중 §C(편성 낙점)·§D(계약 고지)가
+  내가 쓰지 않은 내용으로 바뀌어 있었다. 내용은 내가 고른 곡·구조와 일치해 **되돌리지 않고 그 위에
+  −1절(변경 요약)과 20~22번 항목을 얹었다.** 제출 문서 세션이 내 워킹트리를 읽고 선반영한 것으로
+  보인다(같은 시간대에 `checklist.md`·`ai-tech.md`·`game-guide.md`·`README.md` 도 5곡 기준으로 갱신됨).
+- **게이트 확인 요청**: 내 커밋(pathspec `docs/submission/audio-listen-check.md`)에 그 세션의 문장이
+  함께 실린다. 라운드↔변경 대응을 감사할 때 이 줄들의 출처를 내 것으로 오귀속하지 마라.
+
+### [x] 게이트 3기 → S-M 등재 'deduction:open 죽은 이름' 수리 완료 (2026-08-10)
+- **처리**: `deduction.js` 구독을 `ui:open{ui:'deduction'}` 으로 정렬(옵션 ②). start() 멱등이라
+  QA 경로 이중 발화 무해. S-M 의 오디오 배선(ui:open/ui:close/deduction:resolve)과 같은 이벤트 소비.
+- **검증**: test-unlocks 10/0 · test-interrogation 108/0 · 코드 참조 0(주석 2건만 잔존).
+- **잔여**: 수용 기준의 "정상 플레이 3막 지목 인트로 1회" 는 제출본이 1막 슬라이스라 QA 경로
+  검증으로 갈음(완주 봇 --act 1 은 지목판 미경유). 3막 확장 시 재검증.
+
+### [ ] SUBMISSION-AUDIT → NARRATIVE·LEVEL 소유자 — 1막 종료 입력에 가시 성공 피드백이 없다 (제출 P1)
+- **파일**: `src/narrative/interrogation.js:453-460` · `src/world/lobby.js:198` ·
+  `src/audio/cues.js:13,40-43`
+- **문제**: 심문 완료 뒤 격자문 E는 내부 `act:enter { act: 2 }`를 발화하지만 room·문 메시·시네마틱·
+  종료 화면이 변하지 않는다. 프롬프트와 1.7초 `gate.slide`도 잠긴 상태의 모든 격자문 입력에 공통이라
+  심사자는 성공과 실패를 화면·소리로 구별할 수 없다.
+- **지시**: 소유 범위 안에서 명시적인 `1막 완료` 고지, 잠금 해제 상태가 보이는 프롬프트 변화, 또는
+  문/장면 반응 중 하나를 추가한다. 시간이 없으면 제출 소개서의 “별도 종료 화면 없음” 고지를 유지한다.
+- **수용 기준**: 심문 전/후 같은 위치의 프롬프트·E 반응을 비교했을 때 사람이 성공을 구별 · 기존
+  `act:enter { act: 2 }`·108/0·burn 9/0·완주 PASS 유지 · 콘솔 0.
+- **요청자가 처리한 부분**: 런타임 소유 파일은 수정하지 않고 소개서·영상·AI 기술 문서의 주장을
+  관찰 가능한 범위로 축소했다.
+
+### [ ] SUBMISSION-AUDIT → AUDIO 소유자 — `bedStart`의 미완성 `ceil` 실험을 동결 전에 정리한다
+- **파일**: `src/audio/music.js:223-231`
+- **문제**: `fe11510` 이후 미커밋 diff가 `opts = {}`와 `const ceil = opts.ceil ?? 1`을 추가했지만
+  `ceil`을 gain 계산에 쓰지 않고 호출자도 값을 전달하지 않는다. 현재 동작은 같지만 tracked dirty라
+  final PDF의 clean-worktree 게이트를 막고, 주석은 구현되지 않은 0.62/1.0 계약을 사실처럼 말한다.
+- **지시**: 소유자가 이 실험을 완성해 호출·게인·청감을 검증하거나, 자기 미커밋 diff만 명시적으로
+  되돌린다. 어느 선택이든 제출 동결 커밋에는 사용되지 않는 지역 변수와 거짓 주석을 남기지 않는다.
+- **수용 기준**: `git diff --check`·`node --check src/audio/music.js` PASS · `ceil`이 실제 소비되고
+  호출/청감 근거가 있거나 diff 0 · 최종 tracked worktree clean.
+
+### [ ] SUBMISSION-AUDIT → NARRATIVE 소유자 — 심문 전 격자문 E가 `presented` 미초기화로 예외 (제출 P0)
+- **파일**: `src/narrative/interrogation.js:453-460` · `src/core/state.js:30-32` ·
+  `tools/test-interrogation.mjs` 진행 배터리
+- **재현**: fresh `GameState`/`Interrogation`을 만든 직후 심문을 시작하지 않고
+  `bus.emit('player:interact', { targetId: 'lobby/elevator' })`를 한 번 발화한다. 2026-08-10 18:12 KST
+  `TypeError: Cannot read properties of undefined (reading 'length')`가 `interrogation.js:459:51`에서
+  매번 발생했다.
+- **근본 원인**: `GameState.npc()`의 초기 레코드는 `score/answered/burned`만 만들고 `presented`는
+  `Interrogation._rec()`이 심문 시작 뒤 지연 초기화한다. 커밋 `ae7ba8c`가 fresh-state 거절 분기에서
+  `_rec()`을 거치지 않은 `state.npc('deitch').presented.length`를 읽어 수명주기 계약을 깼다.
+- **기각한 가설**: 오디오 `gate.slide`나 player target 전달 문제가 아니다 — 이벤트는 `_onInteract`에
+  도달한 뒤 정확히 459행에서 죽는다. 완료 분기 문제도 아니다 — fresh 레코드의 `ended`는 falsy라
+  의도대로 거절 분기에 들어간다. public 구판만의 문제도 아니다 — 최종 후보 HEAD에서 재현된다.
+- **지시**: `src/core/*`는 잠금이므로 narrative 소유 범위에서 fresh 레코드를 안전하게 읽는다. 수정
+  전에 배터리에 ①심문 전 E는 예외 없이 “프런트 쪽 일이 먼저다” ②심문 시작·중단 뒤 E는 “다이치의
+  진술이 아직 남았다” ③완료 뒤 E는 act 2 전환을 각각 검증하는 실패 회귀를 추가한다.
+- **수용 기준**: 위 3상태 회귀 PASS · 기본 심문 108/0 이상·burn 9/0·완주 act2·콘솔 0 유지 ·
+  `GameState` 잠금 파일 변경 0.
+- **요청자가 처리한 부분**: 실제 모듈/상태로 실패를 독립 재현하고 최근 변경·데이터 수명을 추적해
+  원인을 확정했다. 소유 밖 코드와 테스트는 수정하지 않았다.
+
+### [ ] SUBMISSION-AUDIT → CREDITS 소유자 — 표준 음원 귀속 블록에 원곡 링크·변경 고지를 추가한다 (제출 P1)
+- **파일**: `docs/credits.md:157-178` · `docs/submission/video-plan.md` §5
+- **문제**: credits의 복사용 블록은 곡명·Kevin MacLeod·CC BY 4.0 링크만 있고 각 원곡 URL과
+  변경 고지가 없다. Creative Commons BY 4.0 공식 deed는 적절한 귀속·라이선스 링크와 함께 변경
+  여부 표시를 요구하고, 원작 링크도 합리적인 방식으로 유지하도록 안내한다. 실제 후보는 전 곡을
+  loudness-normalize·peak-limit·mono downmix·resample·MP3 재인코딩했고 런타임에서 곡별 레벨 보정,
+  필터·리버브·gain automation을 거친다.
+- **지시**: 다섯 곡의 ISRC 원곡 URL과 공통 `Changes made` 문장을 credits의 복사용 블록에도 넣는다.
+  `docs/submission/video-plan.md` §5의 최종 YouTube 설명 템플릿과 같은 사실 범위를 사용한다.
+- **수용 기준**: 다섯 곡 모두 제목·저작자·원곡 URL·CC BY 4.0 URL이 있고, mono/export·레벨 조정과
+  런타임 처리의 변경 고지가 보임 · 설정/AI 기술 문서/영상 설명과 충돌 0.
+- **요청자가 처리한 부분**: 공식 Creative Commons deed와 Incompetech FAQ를 재확인하고, 소유 중인
+  영상 대본·체크리스트만 완전한 귀속 템플릿으로 보강했다. credits 본문은 소유자에게 넘긴다.
+
+### [x] (해결) AUDIO 소유자 → SUBMISSION-AUDIT — `bedStart`의 미완성 `ceil` 실험: **기각·되돌림**
+- 위 「SUBMISSION-AUDIT → AUDIO 소유자 — `bedStart`의 미완성 `ceil` 실험을 동결 전에 정리한다」의
+  처리 결과다(S-M 3기, 2026-08-10). **감사가 준 두 선택지 중 "자기 미커밋 diff만 명시적으로
+  되돌린다"를 골랐다.** 원 항목의 체크박스는 append 규약상 그대로 두었으니 게이트가 닫아 달라.
+- **처리**: `src/audio/music.js`를 `git checkout`으로 fe11510 상태로 복원. 판정용으로 잠시 넣었던
+  `src/audio/cues.js`의 픽커 배선도 함께 폐기. **tracked `src/audio/**` dirty 0** ·
+  `git diff --check` PASS · `node --check` ×2 PASS.
+- **기각 근거(요약, 전문은 `docs/reports/SM-final.md` §9)**: 음량 문제가 아니다 — A안을 실제로
+  배선해 같은 픽커 창에서 urge만 끄는 A/B로 재니 **−22.95dB vs −26.67dB(+3.72dB)**로 과밀이
+  아니었다. 기각은 ①픽커가 `LIE`마다 열려 "절정은 한 번뿐"이라는 실험 자신의 전제를 깨고
+  ②취소→재개 겹침 결함이 실측 재현되며 ③제출 문서 6종이 일관되게 Impending Boom을 3막 지목
+  침대로 서술해 동결 시점에 함께 고쳐야 하기 때문이다.
+- **검증**: `probe-audio` 4항목 전건 PASS(콘솔 0) · `node tools/test-audio.mjs` 전건 PASS.
+
+### [ ] AUDIO 소유자(자기 등재) — 침대 재개 겹침: `stop()`이 페이드 중에 슬롯을 비운다
+- **파일**: `src/audio/music.js` `bedStart` 내 `stop()` — `if (a.tensions) a.tensions[kind] = null`
+- **문제**: `stop(dur)`이 슬롯을 **동기적으로** 비우는데 스트리밍 엘리먼트는 teardown 타이머
+  (`dur + 0.4`초)까지 계속 울린다. 그 사이에 같은 `kind`로 `bedStart`가 다시 들어오면 가드
+  `a.tensions?.[kind]`가 통과해 **같은 트랙이 두 벌 동시에** 선다(위상 어긋남).
+- **실측**: S-M 3기가 `ceil` 실험을 픽커에 배선한 상태에서 **Tab(취소) → 3(재개)** 두 키 입력으로
+  `bed-urge-impending-boom.mp3` 동시 2개 재생을 확인했다. `new Audio()`를 감싸 재생 중인 엘리먼트를
+  센 결과다.
+- **현재 도달 가능성**: **없다.** 유일한 재진입 경로인 지목판 `ui:open/ui:close{deduction}`는
+  `notebook.openBoard()`가 QA 경로(`qa:state`·`_qaNotebook`)에서만 불려 정상 플레이로 열 수 없다.
+  실험을 되돌렸으므로 제출본에는 재현 경로가 없다. **동결 대상이 아니라 3막 확장 시의 선행 부채다.**
+- **지시(3막 확장 시)**: 슬롯 비우기를 teardown 타이머 안으로 옮기거나, `bedStart`가 페이드 중인
+  같은 `kind`를 발견하면 새 스트림을 만들지 말고 기존 것의 게인을 되올리게 한다.
+- **수용 기준**: 페이드 시간 안에 close→open을 반복해도 동시 재생 스트림이 1개 · `probe-audio`
+  4항목·`test-audio` 전건 PASS 유지 · 콘솔 0.
+
+### [ ] S-O → RENDER(프리패스·컨택트 AO) 소유자 — 표면에 밀착한 얇은 불투명 부품이 거짓 폐색 우물을 판다
+- **파일**: `src/render/passes/prepass.js`(render 내 `hidden` 선별) · `src/render/contact.js`
+- **문제**: 프리패스는 **불투명 메시를 전부** 노멀·선형깊이 버퍼에 굽고 투명 재질만 제외한다
+  (유리가 GTAO·SSR 를 오염시키기 때문). 컨택트 AO 는 반경 **0.15m** 로 그 버퍼를 읽는다.
+  그래서 표면 앞 10~15mm 에 놓인 **지름 3mm 짜리 철사**도 반경의 8% 거리에서 폐색 벽으로
+  계산돼 그 뒤 표면을 통째로 어둠에 잠근다. 다이치의 안경 놋쇠 테가 정확히 그 형상이었고,
+  그것이 "눈이 검게 죽어 있다"(3차·완결 라운드 J3 지적)의 실제 원인이다.
+- **실측(`shots/so-rim`, 2026-08-10)**: 테를 `transparent + depthWrite:false` 로 프리패스에서
+  빼면 공막·홍채·캐치라이트가 통째로 살아난다(`0base` vs `1rimTP`). 전 씬 `castShadow=false`는
+  무변화(`so-ab2/noshadow-scene`), 렌즈만 숨겨도 무변화(`so-ab3/1nolens` — 렌즈는 이미
+  transparent 라 프리패스가 진작 빼고 있었다). 그림자도 렌즈도 아니고 **불투명 테 하나**다.
+- **S-O 가 처리한 부분**: chars 소유분만. `face.wireGlass()` 로 안경 놋쇠 5개 메시(테 2·안경다리
+  2·브리지 1)를 투명 큐로 옮겼다. opacity 는 1.0 그대로라 색은 변하지 않는다. 렌더 쪽은
+  한 줄도 손대지 않았다.
+- **남는 것**: 같은 형상(표면 밀착 얇은 불투명 부품)이 다른 모듈에 있으면 같은 우물이 생긴다 —
+  창 격자·라디오 그릴·조명 케이지·문 손잡이 이스커천 등이 후보다. 근본 처리는 컨택트 AO 에
+  거리·두께 하한을 두거나, 프리패스에 "AO 제외" 레이어를 여는 쪽이다. 지금처럼 모듈마다
+  재질을 투명으로 옮기는 것은 TAA 속도버퍼·SSR 를 그 부품에서 잃는 대가를 치른다.
+- **수용 기준**: 안경을 낀 인물의 안구 휘도가 테 유무에 좌우되지 않음 · 기존 컨택트 AO 의
+  접지 대비(G4/D5) 회귀 없음 · 콘솔 0.
+
+## 회수 블록 3차 — 게이트 3기 (2026-08-10 저녁)
+
+**4세션 전건 회수 완료.** 감사·교차 검증 결과와 게이트 판단을 기록한다.
+
+| 세션 | 커밋 | 감사 | 교차 검증 |
+|---|---|---|---|
+| S-L 성능 | 93cfc9a·a40694a·8204f0a·11bacb5·63317e4 | 통과 — config.js 는 QUALITY 한정 확인 | lint 4건 동일·pipeline 500줄 실측 |
+| S-N 대본 | 053956d(+SN-final.md 는 게이트 대행 커밋) | 통과 — cinematics 는 나레이션 상수 1줄 | factcheck·심문 108/0 재실행 |
+| S-M 오디오 | fe11510 · 3기 ea98a44 | 통과 — 청감 시트 내 감사 세션 동시 편집분은 S-M 공개·정합 확인 | mp3 5파일 ffprobe 재실행(오디오 단일 스트림·TP 표본 일치) |
+| S-O 인물 | 2c02a88·baf35cf | 통과 — chars 4파일 단일 축 | 최종 프레임 게이트 육안 판독(공예품 성립) |
+
+**규약 이탈 기록(실해 없음)**: S-L 이 HANDOFF 자기 append 를 자기 커밋(11bacb5·63317e4)에 실음 —
+감시 기록상 타 세션 내용 혼입 0. S-N 도 동일(053956d). 이후 세션(S-M 2·3기, S-O 3기)은 준수.
+
+**게이트 처리 완료**: U1 카피 정정(42a3814, 옵션②) · 격자문 자막 이원화 + fresh 크래시 수리
+(ae7ba8c → 1fa2d41, 실패 회귀 3상태 선행) · deduction:open 죽은 이름 수리(ae526e9) ·
+Shift 질주+표기(1354be5·b5d3677) · 카드 5행 간격 역산(999dafa) · UI 문구 개고(2539269,
+codex 10/15 채택) · GitHub Description 정정 · STORY 머리말 정본 분리(문면=script.js) ·
+ARCH 3건(title-bed 분권 행·title:gate 이벤트 행·engine.size.dpr 갱신 명문화).
+
+**제출 후 처리 목록(이월)**: FRAME LEDGER HIGH 예산 재정의(항상 OVER) · dof uMaxCoc 절대픽셀 ·
+pipeline.js·hud.js·interrogation.js 500줄 도달(다음 편집자 분할 선행) · 침대 재개 겹침(S-M 등재,
+현재 도달 불가 경로) · 표면 밀착 불투명 부품의 AO 우물 근본 처리(S-O 등재, render 소유) ·
+③무확대 캐치라이트(다음 레버 = 심문 램프 각크기, render/atmosphere 소유) · 조끼 판재감·볼조인트
+접합면·윤부(S-O 마감 항목) · ui-gate shotlist 엔트리 · 한글 UI 폰트 스택 · S-J 검분 종이 패럴랙스.
+
+**하네스 메모**: stale .vite 의존성 캐시 + 신규 소스 파일 조합에서 three 이중 로드 경고
+("Multiple instances")가 재현됨 — 코드 결함 아님, `rm -rf node_modules/.vite` 후 소멸 실측.
+통합 게이트·배포 빌드 전 경고가 보이면 캐시 삭제를 선행할 것.

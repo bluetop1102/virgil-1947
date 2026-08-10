@@ -106,6 +106,8 @@ src/
   audio/
     engine.js      [AUDIO] WebAudio 그래프·공간 리버브·발소리
     dsp.js graph.js ir.js music.js cues.js radio.js  [AUDIO] 분권
+    title-bed.js      [AUDIO] 분권 — 타이틀 침대(빗소리·원거리 천둥·E1 드론). 공개 심볼
+                      titleBedStart(a)·titleBedStop(a,dur), 구동 사건 title:gate(개시)·title:proceed(정지)
     ambience.js    [AUDIO] 분권 — 이산 환경 사건 스케줄·배회 스웰·원거리 단발음.
                    공개 심볼 buildSwell(a)·ambienceTick(a,t)·swellAt(t)·ACT_WATER(engine _levels 소비)
   ui/
@@ -160,7 +162,8 @@ engine.camera     // THREE.PerspectiveCamera  (연출은 이 카메라를 직접
 engine.bus        // EventBus
 engine.state      // GameState
 engine.quality    // config.js의 활성 프리셋 객체
-engine.size       // {w, h, dpr}
+engine.size       // {w, h, dpr}. dpr 은 렌더 스케일 예산이 배율을 조정하면 render/renderscale.js 가
+                  // 같이 갱신한다(2026-08-10) — 소비자는 항상 최신 값을 읽는다
 engine.get(name)  // 다른 모듈 인스턴스. 없으면 undefined — 항상 optional chaining으로 접근할 것
 engine.register(mod)
 engine.time       // 결정론적 시간(초). Date.now() 사용 금지 — 이 값만 쓸 것
@@ -255,6 +258,7 @@ engine.bus.emit('interrogation:start', {npc: 'deitch'})
 | `deduction:sign` | `{}` | ui(board) — 조서 서명 = 지목 종결 선언. deduction이 성립 링크 수로 엔딩 분기(E5 §5) *(v2)* |
 | `deduction:end` | `{ending, links, flags}` | deduction — 지목 종결 확정 통지(ending ∈ full/partial/cold). cinematics(cin-end-* 개시)·save(**엔딩을 비가역 레코드에 기록, 회차 종결 — "이어서" 소멸, E8 §4**)가 소비 *(v2)* |
 | `boot:progress` | `{done, total}` | main.js — 부트 진행(모듈 init 계수+첫 프레임). 로딩 화면(E8 §3)이 구독 *(v2)* |
+| `title:gate` | `(payload 없음)` | ui(title) — 입장 게이트 첫 입력. 이 입력이 곧 첫 제스처라 audio 가 이 사건에서 AudioContext 를 열고 타이틀 침대를 건다 |
 | `title:proceed` | `{mode}` | ui(title) — 타이틀·재입장 통과 신호. mode `new`(첫 입력/처음부터) → cinematics가 cin-intro 개시. mode `resume` → title.js 자신이 `?resume=1` 재작성+리로드(수신자 없음, 로그 목적). mode `wake`(재제스처 화면 첫 입력 — E8 §4) → 각 모듈이 제스처 후 재개(audio 컨텍스트 활성·입력 홀드 해제·복원 지점 플레이 개시) *(v2)* |
 | `game:pause` | `{on}` | ui(settings 카드) — 일시정지 전파. **구독·정지 대상: physics·chars(perf)·cinematics·interrogation·audio(디제틱 감쇠) — 각 모듈이 자기 update를 스킵한다(core 무수정, engine.time은 계속 흐른다). 렌더·pipeline은 지속** — FOV·감도 즉시 반영을 카드 뒤 화면으로 확인하는 것이 목적이다. 시네마틱 재생 중 pause = 재생 정지(스킵 아님) *(v2)* |
 | `perf:state` | `{npc, state}` | interrogation — 연기 상태 idle/anxious/lying/breaking. perf.js는 이것만 구독하며 진위를 모른다. 산출 규칙(기계): 진술 제시 중 `truth:false`→lying, `anxiousTell:true`→anxious, 그 외→idle. **breaking은 case-graph `breakingOn:true` 진술의 lieCorrect 판정 직후에만**(현행 3건: deitch.S4·ruiz.S4·pryce.S3) *(v2)* |

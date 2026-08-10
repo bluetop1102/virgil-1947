@@ -1,8 +1,10 @@
 # HOTEL VIRGIL — 사건 성서 v2 (NARRATIVE / INTERROGATION 구현 명세)
 
-> 이 문서는 **사양**이다. `src/narrative/script.js`는 여기 있는 데이터를 그대로 옮긴 것이어야 하고,
-> `src/narrative/interrogation.js`는 여기 정의된 규칙을 그대로 구현해야 한다.
-> 대사를 새로 지어내지 마라. 부족하면 CONTRACT_CHANGE_REQUEST로 보고하라.
+> 이 문서는 **사양**이다. 정본은 축으로 갈린다(2026-08-10 개정 — 대본 개고 053956d 이후):
+> **id·진위·camera·사실(날짜·객실·시각·금액·치수)·규칙은 이 문서가 정본**이고 `script.js`·
+> `interrogation.js`가 그대로 따라야 한다. **대사 문면은 `script.js`가 정본**이다 — §5 원문은
+> 개고 전 판이며 문면 대조용으로만 남는다. 사실·진위를 바꾸는 개고는 여전히 금지, 부족하면
+> CONTRACT_CHANGE_REQUEST로 보고하라.
 >
 > **v2 (2026-08-05)**: 재허구화(버질 호텔·계단참 사진 — MASTER-PLAN §1) · 개연성 결함 3건 수정
 > (해고 시점·도일 동기·roofkey — factcheck R1~R3 회귀 감시) · 괴담 유닛 §7 신설.
