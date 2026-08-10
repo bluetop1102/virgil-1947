@@ -638,6 +638,95 @@ def run_checked(command: list[str], label: str, timeout: int = 600) -> str:
     return output
 
 
+ELEVATOR_3_STATE_JS = """
+import { fresh, pump, walk, FLAGS } from './tools/interrogation-harness.mjs'
+
+const subtitle = ctx => ctx.events
+  .filter(event => event.type === 'subtitle')
+  .at(-1)?.payload?.text || ''
+const actEnters = ctx => ctx.events.filter(event => event.type === 'act:enter').length
+
+const before = await fresh()
+const beforeEnters = actEnters(before)
+before.bus.emit('player:interact', { targetId: 'lobby/elevator' })
+if (
+  !subtitle(before).includes('프런트 쪽 일이 먼저다') ||
+  before.state.act !== 1 ||
+  actEnters(before) !== beforeEnters
+) {
+  throw new Error('pre-interrogation gate state mismatch')
+}
+
+const interrupted = await fresh({ flags: FLAGS })
+interrupted.m.start('deitch')
+pump(interrupted.m)
+interrupted.m.choose('TRUTH')
+pump(interrupted.m)
+interrupted.m._leave()
+const interruptedEnters = actEnters(interrupted)
+interrupted.bus.emit('player:interact', { targetId: 'lobby/elevator' })
+if (
+  !subtitle(interrupted).includes('다이치의 진술이 아직 남았다') ||
+  interrupted.state.act !== 1 ||
+  actEnters(interrupted) !== interruptedEnters
+) {
+  throw new Error('interrupted gate state mismatch')
+}
+
+const completed = await fresh({ flags: FLAGS })
+completed.m.start('deitch')
+pump(completed.m)
+walk(completed, 'TRUTH')
+if (!completed.state.npc('deitch').ended) {
+  throw new Error('completion precondition failed')
+}
+const enterBefore = completed.events.filter(event => event.type === 'act:enter').length
+completed.bus.emit('player:interact', { targetId: 'lobby/elevator' })
+const enterAfter = actEnters(completed)
+if (completed.state.act !== 2 || enterAfter !== enterBefore + 1) {
+  throw new Error('completed gate did not enter act 2 exactly once')
+}
+completed.bus.emit('player:interact', { targetId: 'lobby/elevator' })
+if (completed.state.act !== 2 || actEnters(completed) !== enterAfter) {
+  throw new Error('completed gate re-entered act 2')
+}
+console.log('PASS elevator 3-state regression')
+""".strip()
+
+
+ALLOWED_UNTRACKED_PREFIXES = ("output/", "tmp/", "dist/", "shots/")
+
+
+def validate_repository_snapshot(expected_head: str | None = None) -> str:
+    tracked_changes = run_checked(
+        ["git", "status", "--porcelain", "--untracked-files=no"],
+        "tracked-worktree",
+        timeout=30,
+    )
+    if tracked_changes:
+        raise SystemExit("Final PDF build requires a clean tracked worktree; commit the frozen source first")
+
+    untracked_raw = run_checked(
+        ["git", "ls-files", "--others", "--exclude-standard", "-z"],
+        "untracked-worktree",
+        timeout=30,
+    )
+    unexpected_untracked = [
+        path
+        for path in untracked_raw.split("\0")
+        if path and not path.startswith(ALLOWED_UNTRACKED_PREFIXES)
+    ]
+    if unexpected_untracked:
+        raise SystemExit(
+            "Final PDF build found untracked source/provenance paths: " + ", ".join(unexpected_untracked)
+        )
+
+    head = run_checked(["git", "rev-parse", "HEAD"], "git-head", timeout=30)
+    if expected_head is not None and head != expected_head:
+        raise SystemExit(f"Final repository HEAD changed during PDF build: {expected_head} -> {head}")
+    return head
+
+
 def tracked_submission_inputs() -> list[Path]:
     inputs = [
         SUBMISSION / "build-pdfs.py",
@@ -657,26 +746,8 @@ def tracked_submission_inputs() -> list[Path]:
     return sorted(set(inputs))
 
 
-def validate_final_repository(evidence_status: str) -> list[Path]:
-    tracked_changes = run_checked(
-        ["git", "status", "--porcelain", "--untracked-files=no"], "tracked-worktree", timeout=30
-    )
-    if tracked_changes:
-        raise SystemExit("Final PDF build requires a clean tracked worktree; commit the frozen source first")
-
-    untracked_raw = run_checked(
-        ["git", "ls-files", "--others", "--exclude-standard", "-z"], "untracked-worktree", timeout=30
-    )
-    allowed_untracked_prefixes = ("output/", "tmp/", "dist/", "shots/")
-    unexpected_untracked = [
-        path
-        for path in untracked_raw.split("\0")
-        if path and not path.startswith(allowed_untracked_prefixes)
-    ]
-    if unexpected_untracked:
-        raise SystemExit(
-            "Final PDF build found untracked source/provenance paths: " + ", ".join(unexpected_untracked)
-        )
+def validate_final_repository(evidence_status: str) -> tuple[list[Path], str]:
+    validated_head = validate_repository_snapshot()
 
     inputs = tracked_submission_inputs()
     missing_files = [str(path) for path in inputs if not path.is_file()]
@@ -697,10 +768,14 @@ def validate_final_repository(evidence_status: str) -> list[Path]:
     sha = sha_match.group(0)
     run_checked(["git", "cat-file", "-e", f"{sha}^{{commit}}"], "evidence-commit", timeout=30)
     run_checked(["git", "merge-base", "--is-ancestor", sha, "HEAD"], "evidence-ancestry", timeout=30)
+    run_checked(
+        ["node", "--input-type=module", "--eval", ELEVATOR_3_STATE_JS],
+        "elevator-3-state",
+    )
     run_checked(["node", "tools/test-interrogation.mjs"], "interrogation-108")
     run_checked(["node", "tools/test-interrogation.mjs", "--burn"], "interrogation-burn")
     run_checked(["node", "tools/playthrough.mjs", "--fast", "--act", "1"], "act-1-playthrough")
-    return inputs
+    return inputs, validated_head
 
 
 def deduction_bed_reachability_gaps(notebook: str, cues: str, music: str) -> list[str]:
@@ -1024,6 +1099,7 @@ def main() -> None:
 
     register_fonts()
     final_inputs: list[Path] = []
+    validated_head: str | None = None
     audio_metrics: dict[str, dict[str, float]] = {}
     if args.final:
         if not args.video_url or not args.evidence_status or not args.audio_status:
@@ -1032,7 +1108,7 @@ def main() -> None:
         for label, value in (("evidence", args.evidence_status), ("audio", args.audio_status)):
             validate_resolved_status(label, value)
         validate_video_reachability(args.video_url)
-        final_inputs = validate_final_repository(args.evidence_status)
+        final_inputs, validated_head = validate_final_repository(args.evidence_status)
         audio_metrics = validate_audio_files_and_credit()
         validate_claimed_audio_metrics(args.audio_status, audio_metrics)
         replacements = {
@@ -1110,6 +1186,9 @@ def main() -> None:
         )
         manifest = None
         if args.final:
+            if validated_head is None:
+                raise SystemExit("Internal error: final repository snapshot is missing")
+            validate_repository_snapshot(validated_head)
             manifest = {
                 "schema": 1,
                 "mode": "final",
@@ -1117,7 +1196,7 @@ def main() -> None:
                 "video_url": args.video_url,
                 "evidence_status": args.evidence_status,
                 "audio_status": args.audio_status,
-                "git_head": run_checked(["git", "rev-parse", "HEAD"], "git-head", timeout=30),
+                "git_head": validated_head,
                 "inputs": {
                     str(source.relative_to(ROOT)): hashlib.sha256(source.read_bytes()).hexdigest()
                     for source in final_inputs
@@ -1132,8 +1211,15 @@ def main() -> None:
                     "pdfplumber": pdfplumber.__version__,
                 },
                 "audio_metrics": audio_metrics,
+                "verification": {
+                    "elevator_3_state": "PASS",
+                    "interrogation": "PASS",
+                    "interrogation_burn": "PASS",
+                    "act_1_playthrough": "PASS",
+                },
                 "files": {guide_name: guide_report, tech_name: tech_report},
             }
+            validate_repository_snapshot(validated_head)
         publish_pair(staged, destinations, final=args.final, manifest=manifest, build_dir=build_dir)
 
     for destination in destinations:
