@@ -98,14 +98,20 @@ src/
     interrogation.js [INTERROGATION] 심문 상태기계 (규칙: docs/design/E5-interrogation.md)
     deduction.js   [INTERROGATION] 증거판
     cinematics.js  [CINEMATICS] ※ P1 신설 예정(T-P1-07·08) — 카메라 시퀀스·타임라인·심문 카메라 (E7 §1·§2)
-    camera.js      [INTERROGATION] 심문 진술 단위 카메라 — 5점 차폐 레이캐스트·회피각 폴백·역산 렌즈
+    camera.js      [INTERROGATION] 심문 진술 단위 카메라 — 5점 차폐 레이캐스트·회피각 폴백·역산 렌즈.
+                   추가 계약(v2.5): 컷 종류 low(range 2.10, script camera:'low') · opts.facing(측면 컷은
+                   후보각 기준이 인물 정면 — 나머지는 진입 각 유지) · move.then 체인과 _land()(눈높이
+                   -0.14m 초과 저각 컷 종료 시 자동 복귀 — player.js 가 매 프레임 pos.y+EYE 로 되쓰기 때문)
     case-graph-loader.js [NARRATIVE] ※ P0 신설 허용(T-P0-03) — case-graph.json 관계 데이터 로더
   audio/
     engine.js      [AUDIO] WebAudio 그래프·공간 리버브·발소리
     dsp.js graph.js ir.js music.js cues.js radio.js  [AUDIO] 분권
+    ambience.js    [AUDIO] 분권 — 이산 환경 사건 스케줄·배회 스웰·원거리 단발음.
+                   공개 심볼 buildSwell(a)·ambienceTick(a,t)·swellAt(t)·ACT_WATER(engine _levels 소비)
   ui/
     hud.js         [UI] 크로스헤어·프롬프트
     notebook.js    [UI] 수사노트 (+ board.js casebook.js casefile.js paper.js photos.js sketch.js type.js wall.js 분권)
+    inspect.js     [UI] hud.js 분권 — 증거 검분 소품(집어 읽기 컷)
     subtitles.js   [UI] 자막
     settings.js    [UI] ※ P1 신설 예정 — 설정 (order 80, E8 §2)
   physics/
