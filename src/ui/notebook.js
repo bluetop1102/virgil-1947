@@ -228,7 +228,7 @@ export default {
     const tw = Math.round(w * 0.5)
     const th = Math.round(tw * 0.30)
     const tg = sheet({ w: tw, h: th, seed: 313, tone: 'bond', creases: 0, deckle: 1.1, grain: 0.5, light: 0.6 })
-    typed(tg.ctx, '엘리베이터 · 4장', 8, th * 0.72, { size: clamp(th * 0.54, 9, 15), ink: INK.ribbon, alpha: 0.95, seed: 9 })
+    typed(tg.ctx, '엘리베이터 사진 4장', 8, th * 0.72, { size: clamp(th * 0.54, 9, 15), ink: INK.ribbon, alpha: 0.95, seed: 9 })
     s.ctx.save()
     s.ctx.translate(w * 0.05, h * 0.70)
     s.ctx.rotate(-0.045)

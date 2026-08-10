@@ -23,7 +23,7 @@ const BASE = [
   ['photos', '엘리베이터 사진 4장', 'photos', 2, '2막 프라이스'],
   ['journal', '찢긴 일기', 'pickup', 2, '2막 942호 침대 밑'],
   ['roofkey', '옥상 열쇠', 'pickup', 2, '2막 942호 매트리스'],
-  ['sink-trap', '세면대 트랩 침전물', 'observe', 2, '2막 942호 욕실'],
+  ['sink-trap', '세면대 트랩의 침전물', 'observe', 2, '2막 942호 욕실'],
   ['autopsy', '넬 밴스 부검 사본', 'pickup', 2, '2막 942호 여행가방'],
   ['water-log', '급수 일지', 'pickup', 2, '2막 944호'],
   ['footprints', '젖은 발자국', 'observe', 2, '2막 복도'],
@@ -161,7 +161,7 @@ export default {
   promptFor (obj) {
     const e = this.byObject.get(obj)
     if (!e || e.mode === 'observe') return null
-    if (e.mode === 'photos') return '사진을 본다'   // 넉 장은 몇 번이고 다시 본다
+    if (e.mode === 'photos') return '사진을 살핀다'   // 넉 장은 몇 번이고 다시 본다
     return this.has(e.id) ? null : '집는다'
   },
 

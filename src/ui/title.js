@@ -1,7 +1,7 @@
 import { createRain } from './title-rain.js'
 
-const DISCLOSURE = '이 이야기의 인물·사건·호텔은 전부 허구다. 실존하는 어떤 인물·사건·업체와도 무관하다.'
-const GATE_LINE = '아무 키나 누르십시오'
+const DISCLOSURE = '본 이야기의 인물·사건·호텔은 모두 허구입니다. 실존하는 인물·사건·업체와는 아무런 관련이 없습니다.'
+const GATE_LINE = '키를 눌러 입장하십시오'
 const TYPEFACE = "'Courier New', Courier, 'AppleMyungjo', Georgia, serif"
 const DISPLAY = "'Baskerville', 'Iowan Old Style', 'Times New Roman', serif"
 
@@ -207,7 +207,7 @@ const title = {
 
     this.resumeScreen = el('div', 'virgil-glass')
     const resumeLines = el('div', 'virgil-resume-lines')
-    resumeLines.append('돌아오셨습니까', document.createElement('br'), '노트는 두고 가신 그대로입니다.')
+    resumeLines.append('돌아오셨습니까', document.createElement('br'), '수첩은 두고 가신 그대로입니다.')
     this.resumeScreen.appendChild(resumeLines)
     const resumeActions = el('div', 'virgil-actions')
     resumeActions.appendChild(bell('resume'))

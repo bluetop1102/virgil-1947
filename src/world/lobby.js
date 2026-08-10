@@ -234,7 +234,7 @@ function makeAnchors () {
     anchor.visible = visible
     if (name === 'npc/deitch') {
       anchor.userData.qaId = name
-      anchor.userData.interact = { id: name, kind: 'npc', npc: 'deitch', prompt: '다이치에게 묻는다' }
+      anchor.userData.interact = { id: name, kind: 'npc', npc: 'deitch', prompt: '다이치를 심문한다' }
     }
     root.add(anchor)
   }

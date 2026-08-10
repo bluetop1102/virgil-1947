@@ -4,7 +4,7 @@ const TYPEFACE = "'Courier New', Courier, 'AppleMyungjo', Georgia, serif"
 const SPEC = {
   quality: { label: '품질 프리셋', values: ['high', 'medium', 'low'] },
   fov: { label: '시야각', values: [60, 65, 70, 75, 80] },
-  sensitivity: { label: '마우스 감도', values: [0.5, 0.75, 1, 1.25, 1.5] },
+  sensitivity: { label: '시점 감도', values: [0.5, 0.75, 1, 1.25, 1.5] },
   subtitles: { label: '자막', values: [true, false] },
   volume: { label: '음량', values: [0, 0.25, 0.5, 0.75, 1] }
 }
@@ -114,12 +114,12 @@ const settings = {
     // 놓친 사람이 되돌아와 확인할 자리를 여기 하나 둔다.
     const note = node('div', 'virgil-setting-note')
     note.appendChild(node('div', 'virgil-setting-label', '조작'))
-    note.appendChild(node('div', 'virgil-setting-keys', '이동 W·A·S·D   달리기 Shift   조사 E   수첩 Tab   카드 Esc'))
+    note.appendChild(node('div', 'virgil-setting-keys', '이동 W·A·S·D   달리기 Shift   조사 E   수첩 Tab   안내 Esc'))
     card.appendChild(note)
 
     const foot = node('div', 'virgil-settings-foot')
     const notes = node('div', '')
-    notes.appendChild(node('div', '', '변경 사항은 프런트 원장에 자동 기록됩니다.'))
+    notes.appendChild(node('div', '', '조정 내용은 프런트 원장에 기록됩니다.'))
     // 음악 5곡이 CC BY 4.0 이라 저작자 표기가 라이선스 의무이고, incompetech Music FAQ 가
     // 게임의 게시 위치를 "설정 메뉴 안의 크레딧"으로 지정한다 — 이 카드가 그 자리다.
     // FAQ 의 개작 조항("어느 파트가 당신 것인지 밝혀라")도 같이 이행한다: 이 프로젝트는
