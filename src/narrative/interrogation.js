@@ -456,8 +456,8 @@ export class Interrogation {
       state.setAct(2)
       this._phase('early')
     } else if (targetId === 'lobby/elevator' && state.act === 1) {
-      // 잠긴 격자문에 무응답이면 입력이 씹힌 것으로 읽힌다 — 거절을 한 줄로 알린다
-      this.engine.bus.emit('subtitle', { speaker: '', text: '격자문이 열리지 않는다. 프런트 쪽 일이 먼저다.', dur: 2.4 })
+      const talked = state.npc('deitch').presented.length > 0 // 심문을 걸어놓고 안 끝낸 상태를 갈라 남은 일을 짚는다(실플레이 보고 2026-08-10)
+      this.engine.bus.emit('subtitle', { speaker: '', text: talked ? '격자문이 열리지 않는다. 다이치의 진술이 아직 남았다.' : '격자문이 열리지 않는다. 프런트 쪽 일이 먼저다.', dur: 2.4 })
     }
     if (targetId === 'stairs-roof/door' && state.act === 2 &&
       state.npc('ruiz').ended && state.npc('pryce').ended) {
