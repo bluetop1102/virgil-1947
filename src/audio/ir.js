@@ -23,14 +23,15 @@ export function roomKey (name) {
   return 'lobby'
 }
 
-// wet=리버브 센드, tone=룸톤 레벨, hum=형광등 험, water=배관 수위, drip=낙수 빈도
+// wet=리버브 센드, tone=룸톤 레벨, hum=형광등 험, water=배관 수위
+// drip(낙수 빈도)은 배회 물방울 큐와 함께 제거됐다(사용자 지시 2026-08-10, ambience.js 참조).
 export const ROOM_MIX = {
-  lobby: { wet: 0.30, tone: 0.50, hum: 0.16, water: 0.16, drip: 0.05 },
-  corridor: { wet: 0.34, tone: 0.55, hum: 0.30, water: 0.34, drip: 0.14 },
-  room: { wet: 0.14, tone: 0.42, hum: 0.05, water: 0.50, drip: 0.30 },
-  bath: { wet: 0.46, tone: 0.50, hum: 0.10, water: 0.85, drip: 0.85 },
-  roof: { wet: 0.05, tone: 0.78, hum: 0.02, water: 1.00, drip: 0.18 },
-  elevator: { wet: 0.26, tone: 0.60, hum: 0.22, water: 0.30, drip: 0.06 }
+  lobby: { wet: 0.30, tone: 0.50, hum: 0.16, water: 0.16 },
+  corridor: { wet: 0.34, tone: 0.55, hum: 0.30, water: 0.34 },
+  room: { wet: 0.14, tone: 0.42, hum: 0.05, water: 0.50 },
+  bath: { wet: 0.46, tone: 0.50, hum: 0.10, water: 0.85 },
+  roof: { wet: 0.05, tone: 0.78, hum: 0.02, water: 1.00 },
+  elevator: { wet: 0.26, tone: 0.60, hum: 0.22, water: 0.30 }
 }
 
 // RT60 은 E7 §3 사양이 진실원이다(로비 1.6 · 복도 0.9 · 942호 0.5 · 엘리베이터 0.3 · 옥상 잔향 없음).
