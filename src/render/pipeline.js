@@ -17,6 +17,16 @@ installPcss()
 
 const PASS_MODULES = import.meta.glob('./passes/*.js')
 
+// 이양 직후 노출 적응. 3차 J1 ②: 인트로 컷이 끝나는 자리가 데스크 코앞이라 화면 7할이
+// 밝은 벽지고(fr-20-handover mean 93.8) 타이틀에서 받은 명암이 인게임 첫 프레임에서 끊긴다.
+// 노출을 한 번 눌렀다가 어둠에 눈이 트이듯 되돌린다 — 자동노출의 **목표값에 곱하는 배수**라
+// 계측(히스토그램·앵커) 자체는 건드리지 않고, 벽시계가 아니라 engine.time 을 쓰므로
+// 헤드리스의 시계 배속(실시간의 0.4배)에서도 같은 곡선을 그린다.
+// 0.34 는 이양 +0.5s 프레임 평균을 60 이하로 내리는 값이고(mean ∝ 노출^0.67 실측),
+// 2.4s 면 3초 게이트 안에서 정상 복귀한다.
+const ADAPT_FROM = 0.34
+const ADAPT_DUR = 2.4
+
 // [파일명, quality 플래그]
 const EFFECT_CHAIN = [
   ['gtao', 'gtao'],
@@ -181,6 +191,13 @@ const pipeline = {
     this.expo = new AutoExposure()
     this.expo.init(this.ctx)
     engine.bus.on('qa:shot', () => this.expo.reset())
+    // 유일한 발화점은 cinematics.js 의 인트로 종결이다. id 로 잠가 두면 다른 컷이 생겨도
+    // 이양 연출이 따라 붙지 않는다.
+    this.adapt = null
+    engine.bus.on('cinematic:end', ({ id } = {}) => {
+      if (id !== 'cin-intro') return
+      this.adapt = { t0: engine.time }
+    })
 
     this.aoApply = this.applyMaterial(AO_FRAG, {
       tAo: { value: this.ctx.targets.ao.texture },
@@ -445,6 +462,11 @@ const pipeline = {
 
     this.composite.src = this.taa.output.texture
     this.composite.bloomTex = fx.bloom ? targets.bloom.texture : null
+    if (this.adapt) {
+      const x = Math.min(Math.max((this.engine.time - this.adapt.t0) / ADAPT_DUR, 0), 1)
+      this.expo.bias = ADAPT_FROM + (1 - ADAPT_FROM) * x * x * (3 - 2 * x)
+      if (x >= 1) { this.adapt = null; this.expo.bias = 1 }
+    }
     // 노출은 톤매퍼 바로 앞에서 결정한다. 계측 대상은 composite가 실제로 읽는 텍스처와 같아야
     // 하고, 계측값 자체는 노출 이전 값이라 되먹임 진동이 생기지 않는다.
     this.composite.exposure = this.expo.measure(ctx, this.composite.src, dt || 1 / 60) * (look.exposure ?? 1)
