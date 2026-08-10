@@ -14,6 +14,7 @@ import { buildGraph } from './graph.js'
 import { ambienceTick, ACT_WATER } from './ambience.js'
 import { wireCues } from './cues.js'
 import { musicCue } from './music.js'
+import { titleBedStart } from './title-bed.js'
 import { tune, radioDispose } from './radio.js'
 
 const FOOT_VARIANTS = 6
@@ -42,6 +43,8 @@ const audio = {
     this.musicOn = false
     this.pendingMusic = null
     this.musicRelease = null
+    this.titleBed = null
+    this.pendingTitleBed = false
     this.tension = null
     this.radioDuck = 1
     this.introFadeAt = null
@@ -78,6 +81,7 @@ const audio = {
 
   dispose () {
     try { this.tension?.stop(0.05) } catch (e) { /* 이미 해제 */ }
+    try { this.titleBed?.stop(0.05) } catch (e) { /* 이미 해제 */ }
     radioDispose(this)
     try { this.radio?.src.stop() } catch (e) { /* 이미 정지 */ }
     this.radio = null
@@ -230,6 +234,8 @@ const audio = {
     const m = this.pendingMusic
     this.pendingMusic = null
     if (m) musicCue(this, m)
+    // 입장 게이트의 첫 입력은 컨텍스트를 여는 그 제스처다. 타이틀 침대도 같은 경합에 걸린다.
+    if (this.pendingTitleBed) { this.pendingTitleBed = false; titleBedStart(this) }
     if (!this.silent) this._prewarm()
   },
 

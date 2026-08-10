@@ -6,6 +6,7 @@
 // 기존 이벤트만 구독해서 붙인다.
 
 import { musicCue, tensionStart, tensionStinger, tensionStop } from './music.js'
+import { titleBedStart, titleBedStop } from './title-bed.js'
 import { tune } from './radio.js'
 
 // 상호작용 대상 id → 소리. 정확 일치가 먼저고, 없으면 아래 부분 일치로 떨어진다.
@@ -45,9 +46,19 @@ export function wireCues (a, bus) {
     if (cue?.[0] === 'radio.dial') tune(a, (a.radio?.station ?? 0) + 1)
   })
 
+  // 입장 게이트의 첫 입력이 이 게임의 첫 제스처다(ui/title.js). 그 제스처가 AudioContext 를 열고
+  // 같은 프레임에 이 사건이 온다 — 컨텍스트가 아직 없으면 engine 이 열릴 때 흘려보낸다
+  // (playOrDefer 와 같은 계약). 여는 것은 곡이 아니라 화면 안의 비다(title-bed.js).
+  bus.on('title:gate', () => {
+    if (a.ctx) titleBedStart(a)
+    else a.pendingTitleBed = true
+  })
+
   // 게임의 첫 소리. 벨을 누르라고 써 있는데 벨이 울리지 않았다.
   // 이 이벤트는 첫 제스처와 같은 프레임에 온다 — 컨텍스트가 아직 없으면 engine 이 열릴 때 흘려보낸다.
   bus.on('title:proceed', (p) => {
+    // 문이 열리면 비는 인트로의 물소리로 넘어간다. 끊지 않고 겹쳐 보낸다.
+    titleBedStop(a)
     if (p?.mode !== 'new') return
     a.playOrDefer('desk.bell', { gain: 0.62 })
     a.playOrDefer('desk.bell', { gain: 0.2, rate: 1.008, delay: 0.185 })
