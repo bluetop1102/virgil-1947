@@ -453,10 +453,10 @@ export class Interrogation {
   _onInteract (targetId) {
     const state = this.engine.state
     if (targetId === 'lobby/elevator' && state.act === 1 && state.npc('deitch').ended) {
-      state.setAct(2)
-      this._phase('early')
+      this.engine.bus.emit('subtitle', { speaker: '', text: '격자문이 열린다.', dur: 2.0 })
+      state.setAct(2); this._phase('early')
     } else if (targetId === 'lobby/elevator' && state.act === 1) {
-      const talked = state.npc('deitch').presented.length > 0 // 심문을 걸어놓고 안 끝낸 상태를 갈라 남은 일을 짚는다(실플레이 보고 2026-08-10)
+      const talked = (state.npc('deitch').presented?.length ?? 0) > 0 // presented 는 _rec() 지연 초기화 — 심문 전엔 없다(감사 P0)
       this.engine.bus.emit('subtitle', { speaker: '', text: talked ? '격자문이 열리지 않는다. 다이치의 진술이 아직 남았다.' : '격자문이 열리지 않는다. 프런트 쪽 일이 먼저다.', dur: 2.4 })
     }
     if (targetId === 'stairs-roof/door' && state.act === 2 &&

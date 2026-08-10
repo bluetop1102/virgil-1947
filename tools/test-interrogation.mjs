@@ -226,6 +226,25 @@ async function testReinterrogation () {
   console.log('PASS  deitch.S4 재심문')
 }
 
+async function testElevatorGateStates () {
+  // ae7ba8c 회귀(SUBMISSION-AUDIT 독립 재현): 심문을 연 적 없는 fresh 상태의 격자문 E 가
+  // presented 지연 초기화(Interrogation._rec 이후에만 존재) 때문에 459행에서 예외를 던졌다.
+  // 3상태 계약을 못 박는다 — ①심문 전: 예외 없이 "프런트 쪽 일" ②중단: "진술이 아직 남았다"
+  // ③완료: act 2 전환(기존 testProgressionAndResume 이 검증).
+  const cold = await fresh({ flags: FLAGS })
+  cold.bus.emit('player:interact', { targetId: 'lobby/elevator' })
+  equal(cold.state.act, 1, '심문 전 격자문은 1막 유지')
+  ok(eventsOf(cold, 'subtitle').at(-1)?.payload.text?.includes('프런트 쪽 일'), '심문 전 거절 자막')
+
+  const mid = await fresh({ flags: FLAGS })
+  mid.m.start('deitch')
+  pump(mid.m)
+  mid.bus.emit('player:interact', { targetId: 'lobby/elevator' })
+  equal(mid.state.act, 1, '중단 상태 격자문은 1막 유지')
+  ok(eventsOf(mid, 'subtitle').at(-1)?.payload.text?.includes('진술이 아직 남았다'), '중단 상태 거절 자막')
+  console.log('PASS  격자문 3상태 — 심문 전·중단 거절(완료 전환은 아래)')
+}
+
 async function testProgressionAndResume () {
   const ctx = await complete(statement => statement.truth
     ? ['TRUTH', null]
@@ -369,6 +388,7 @@ if (burnMode) {
   await testDoubtReplacement()
   await testTierAndEvents()
   await testReinterrogation()
+  await testElevatorGateStates()
   await testProgressionAndResume()
   await testUiStateMachine()
 }
