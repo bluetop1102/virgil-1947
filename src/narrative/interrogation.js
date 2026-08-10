@@ -27,25 +27,9 @@ const PHASE = { IDLE: 'idle', LINES: 'lines', CHOICE: 'choice', EVIDENCE: 'evide
 // 순간 세션이 끊겨 진술이 되묻기로 돌아간다 — 계약은 못 지키면서 조작만 적대적이 된다.
 const LEAVE = 4.2
 
-// STORY 4-2 점수표. 이 함수가 사양이다. 데이터도 UI도 판정에 관여하지 않는다.
-export function judge (truth, choice, evidenceId, correct = []) {
-  if (truth) {
-    if (choice === 'TRUTH') return { delta: 1, burn: false, correct: true, beat: 'trust' }
-    if (choice === 'DOUBT') return { delta: -1, burn: false, correct: false, beat: 'defend' }
-    return { delta: -2, burn: true, correct: false, beat: 'burn' }
-  }
-  if (choice === 'TRUTH') return { delta: 0, burn: false, correct: false, beat: 'pass' }
-  if (choice === 'DOUBT') return { delta: 0.5, burn: false, correct: false, beat: 'shaken' }
-  const ok = evidenceId != null && correct.indexOf(evidenceId) >= 0
-  return ok
-    ? { delta: 2, burn: false, correct: true, beat: 'break' }
-    : { delta: -2, burn: true, correct: false, beat: 'burn' }
-}
-
-// 배터리와 디버그가 쓰는 이론상 최대 점수. 종료 등급은 상태식으로만 정한다.
-export function maxScore (data) {
-  return (data.statements || []).reduce((s, st) => s + (st.truth ? 1 : 2), 0)
-}
+// 판정 점수표는 judgment.js 로 분권(500줄 계약). 소비자 호환을 위한 재수출.
+export { judge, maxScore } from './judgment.js'
+import { judge } from './judgment.js'
 
 // 진술의 분기 객체를 고른다. script.js 상단이 규정한 소비 규약 그대로다.
 export function branch (s, beat, evId) {
@@ -213,7 +197,20 @@ export class Interrogation {
       this._go(PHASE.LINES, 'choice')
       return
     }
+    // "지금 물을 게 없음"과 "다 물었음"은 다르다 — requires 미충족 진술은 단서를 모으면
+    // 열린다. 소진 전 종료가 심문을 통째로 건너뛰게 하던 실플레이 결함(2026-08-10).
+    if (!this._exhausted(rec)) {
+      this._say('', '지금 물을 수 있는 건 여기까지다. 단서를 더 찾고 다시 오자.')
+      this._go(PHASE.LINES, 'end')
+      return
+    }
     this._finish()
+  }
+
+  // 남을 수 있는 진술이 하나라도 있으면 false — 미래 막·미충족 requires 는 "아직"이지 "끝"이 아니다.
+  _exhausted (rec) {
+    return this.list.every(s => (s.act != null && this.engine.state.act < s.act) || rec.burned.includes(s.id) ||
+      ((rec.answered.includes(s.id) || rec.presented.includes(s.id)) && !(rec.reopen.includes(s.id) && this._variantAvailable(s))))
   }
 
   // UI가 보는 상태. 진위·정답 증거는 절대 노출하지 않는다 (STORY 4-5).
@@ -421,7 +418,7 @@ export class Interrogation {
     // 물을 것이 하나도 안 남았는데 마무리 대사 중에 자리를 뜬 것은 이탈이 아니라 종료다.
     // 여기서 세션을 그냥 버리면 rec.ended 가 서지 않아 막이 열리지 않는다 — E2 골든패스는
     // 마지막 진술 판정 직후 엘리베이터로 걸어간다(완주 봇 실측: interrogation:end 미발화).
-    if (!rec.ended && this.list.every(s => !this._eligible(s, rec))) {
+    if (!rec.ended && this._exhausted(rec)) {
       this._finish()
       this.queue.length = 0            // 자리에 없는 사람에게 마무리 대사를 읽어주지 않는다
       this.now = null
