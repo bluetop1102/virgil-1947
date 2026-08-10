@@ -25,7 +25,9 @@ const SLOT_L = [
   { x: 0.490, y: 0.808, w: 0.240, rot: -2.2 }
 ]
 
-const AIMING_NOTICE = '제시한 증거는 회수되지 않는다. 닫힌 진술은 다시 열리지 않는다. 수사는 계속된다.'
+// 첫 문장은 실구현과 일치해야 한다 — 증거 아이템은 소모되지 않고, 무를 수 없는 것은
+// 제시 행위와 그 판정이다(SUBMISSION-AUDIT 2026-08-10, 게이트 판정: 카피를 구현에 맞춘다).
+const AIMING_NOTICE = '내민 증거는 무르지 못한다. 닫힌 진술은 다시 열리지 않는다. 수사는 계속된다.'
 
 export default {
   name: 'notebook',
@@ -211,7 +213,7 @@ export default {
     const ctx = s.ctx
     const size = clamp(Math.round(h * 0.135), 10, 15)
     typed(ctx, '증거 제시 수칙', w * 0.06, h * 0.24, { size: size * 0.72, ink: INK.stamp, alpha: 0.72, track: 1.8, seed: 5 })
-    typed(ctx, '제시한 증거는 회수되지 않는다.', w * 0.06, h * 0.49, { size, ink: INK.ribbon, alpha: 0.88, seed: 11 })
+    typed(ctx, '내민 증거는 무르지 못한다.', w * 0.06, h * 0.49, { size, ink: INK.ribbon, alpha: 0.88, seed: 11 })
     typed(ctx, '닫힌 진술은 다시 열리지 않는다.', w * 0.06, h * 0.69, { size, ink: INK.ribbon, alpha: 0.86, seed: 23 })
     typed(ctx, '수사는 계속된다.', w * 0.06, h * 0.89, { size, ink: INK.ribbon, alpha: 0.88, seed: 37 })
     const d = document.createElement('div')
