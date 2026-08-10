@@ -1,117 +1,119 @@
-# NAN 2026 사전 과제 제출 — 상태판
+# NAN 2026 사전 과제 제출 — 통제판
 
-> 마감 **2026-08-10** · 제출물 5종 중 **하나라도 누락하면 심사 제외**다.
-> 요강 원문: `../../../hackathon-2026/docs/nan2026-requirements.md`
-> 갱신 2026-08-10(완결 라운드 반영) · 배포 `gh-pages 56c576d`
+> 공식 사이트·배포 번들 재확인: **2026-08-10 KST**
+> 마감: **2026-08-10 23:59:59 KST** · 마감 후 변경 불가
+> 근거 기록: [audit-2026-08-10.md](audit-2026-08-10.md)
 
-## 제출물 5종
+## 결론
 
-| # | 제출물 | 형태 | 이 저장소의 재료 | 상태 |
-|---|---|---|---|---|
-| 1 | 플레이 가능한 빌드 + 소스 | GitHub 링크 | 배포·소스 모두 공개 (§링크) | **성립** — 1막 완주 · 실배포 검증 PASS · 콘솔 0 |
-| 2 | 플레이 동영상 30~60초 | YouTube 링크 | **조작 대본 확정**: [video-plan.md](video-plan.md) | **촬영 대기 — 사람 몫.** 52초 대본·타임코드·누르는 키까지 확정 |
-| 3 | 게임 소개·설명 문서 | PDF | [game-guide.md](game-guide.md) | **본문 완성** — PDF 변환·스크린샷 3장 삽입만 남음 |
-| 4 | AI 활용 기술 문서 | PDF | [ai-tech.md](ai-tech.md) · 출처: [../credits.md](../credits.md) | **본문 완성** — PDF 변환만 남음 |
-| 5 | 팀원 롤 기술서 | PDF | **2인 이상만 해당** — 1인 참가면 제출 대상 아님 | 해당 없음(1인 기준) |
+**1인 참가로 확인됐으므로 PDF는 두 개만 만든다.** 그러나 전체 제출은 아래 **1~4번이 모두 필수**다.
+5번 팀원 역할 PDF는 해당 없다. 한 항목이라도 빠지면 심사 대상에서 제외된다.
 
-제출 전 최종 관문: [checklist.md](checklist.md) · 사람 몫 목록: [§남은 것](#남은-것--사람-몫)
-
-## 링크 (심사 종료까지 유지)
-
-| 대상 | URL | 상태 |
-|---|---|---|
-| 플레이 | https://bluetop1102.github.io/virgil-1947/ | **가동 · `gh-pages 56c576d`** — JUDGE 라운드 + 마감 수정 + 완결 라운드(로비 비네트·램프 대비·측면 컷·트래킹 감속·증거 검분 컷·배회 긴장 기복·종이 어절 조판) 반영. serve-check PASS(요청 실패 0·콘솔 0) |
-| 소스 | https://github.com/bluetop1102/virgil-1947 | **공개** — public, 198커밋(8/10 기준·계속 증가), 이력 재작성 0 |
-| 영상 | *(미촬영 — [video-plan.md](video-plan.md))* | 대본 확정, 촬영만 남음 |
-
-배포 경로: `gh-pages` 브랜치(빌드 산출물 전용) → Pages. 소스는 `main`.
-갱신은 `npm run build:pages` 후 `dist/` 를 `gh-pages` 로 다시 커밋한다.
-
-> **주**: 마감 세션(S-E)이 자막 줄바꿈·설정 크레딧 대비 수정 후 **최종 재배포**를 한 번 더 할
-> 수 있다. 그 경우 위 해시가 갱신되며, 제출 직전에 실제 `gh-pages` HEAD 를 확인해 적는다
-> (`git log gh-pages -1 --oneline`). 문서 3·4에는 해시가 아니라 URL 만 실리므로 영향 없다.
-
-## 1번 제출물의 기술 요건 (실측 대조)
-
-| 요건 | 현황 | 근거 |
-|---|---|---|
-| 웹 빌드, 링크 클릭만으로 플레이 | **성립 (실배포 검증)** | `node tools/serve-check.mjs --url https://bluetop1102.github.io/virgil-1947/` → 부팅 성립·캔버스 1280×720·요청 실패 0·콘솔 0. 3차 판정이 배포본에 프로브 5회를 돌려 **콘솔 에러·경고 전부 0건** 재확인 |
-| PC 실행파일(.exe) 불가 | 해당 없음 | 웹 전용 |
-| 별도 유료 라이선스·API 키 불요 | **성립** | 런타임 AI 없음. 런타임 의존성 2개 전부 MIT/Apache-2.0 ([credits](../credits.md) §2) |
-| 전체 소스 공개 | **성립** | 다운로드 에셋 3건(CC BY 4.0 음원) + AI 생성 1건, 전부 credits §1 기재 — 저장소가 곧 전체다 |
-| 커밋 기록 유지 | **성립**(공백 1건 명시) — §커밋 이력 | `git log` 198개(8/4~, 8/10 기준), 재작성 0 |
-| public 또는 심사계정 초대 | **성립** | public 저장소 — 초대 불요 |
-
-## 플레이 가능 범위 (숨기지 않는다)
-
-제출본은 **1막 수직 슬라이스**다. 로비·프런트가 정식 레벨로 서 있고, 증거 4종 획득 → 다이치
-심문(진술 5건) → 엘리베이터 2막 전환까지가 완주 경로다. 2·3막은 사건 데이터(증거 14종·진술
-14건·엔딩 3종)가 완성돼 있으나 레벨이 없다. 이 사실은 [game-guide.md](game-guide.md) §3과
-[ai-tech.md](ai-tech.md) §7에 그대로 적혀 있다.
-
-**완주 실측**: `node tools/playthrough.mjs --fast --act 1` → exit 0 · 증거 4종(register·keyrack·
-flask·pressure-log) · 괴담 3건 · `act:enter{act:2}` @ 1:04 · 콘솔 error 0 warning 0.
-
-## 배포 방식 (확정)
-
-**상대 경로 빌드**를 쓴다 — `npm run build:pages`(`vite build --base=./`).
-
-기본 `npm run build`(base=`/`)는 루트 배포에서만 돌고 **서브패스에서 깨진다**. GitHub Pages
-프로젝트 사이트가 서브패스라 기본 빌드로는 심사자가 링크를 눌러도 404 5건에 빈 캔버스를 본다.
-
-| 빌드 | 루트 배포 | 서브패스 배포 |
-|---|---|---|
-| `npm run build` (base=`/`) | PASS | **FAIL** — 에셋 404 5건, 부팅 실패 |
-| `npm run build:pages` (base=`./`) | PASS | **PASS** |
-
-재현: `node tools/serve-check.mjs` · `node tools/serve-check.mjs --prefix /virgil-1947`
-(vite dev 서버는 경로를 보정해 주므로 증거가 되지 않는다. 이 검사기는 보정 없는 순수 정적
-서버라 베이스 경로 결함이 여기서만 드러난다.)
-
-## 커밋 이력 — 요건 대비 실상
-
-요건은 "커밋 기록 유지"다. **이력 재작성(squash·filter-repo)은 이 요건의 정면 위반이므로 금지**다.
-
-- 8/10 기준 **198커밋** / 8-04 3 · 8-05 22 · 8-06 61 · 8-07 34 · 8-08 26 · 8-09 41 · 8-10 11 (마감까지 증가).
-  유형별 `docs` 88 · `fix` 49 · `feat` 48 · `chore` 4 · `refactor` 2 · `test` 1.
-- **공백 1건**: 7/31~8/3 의 초기 구축분은 커밋이 없다. 저장소가 8/4 에 스냅샷 1커밋
-  (`a195a02 chore: CECIL 현재 상태 스냅샷`)으로 시작했기 때문이다. 감추지 않고 기술 문서
-  ([ai-tech.md](ai-tech.md) §5)에 명시했다 — 8/4 이후의 라운드 이력이 오히려 공정의 증거다.
-- **구간 분할 push 완료**: `.git` 이 2.0GB(과거 QA 스크린샷 634장)라 GitHub 의 push 당 팩 2GB
-  한도에 걸렸다. 1구간(첫 커밋 단독, 압축 전 1.78GB) 101초 → 2구간 즉시.
-- **향후 위생**: `scratchpad/`·`shots/`·`dist/` 는 추적하지 않는다(정상 커밋으로 해제, 재작성 아님).
-
-## 차단 항목 — 전건 해소
-
-1. ~~배포본 표출명~~ — **해소.** 인게임 한글 3건·영문 2건 전부 `VIRGIL` 정본으로 교체됐고,
-   계약 린터가 표출명 변형을 상시 검사해 같은 사각이 다시 열리지 않는다.
-2. ~~1막 완주 불가~~ — **해소.** P1 12장 전건 머지, 완주 봇 PASS(위 §플레이 가능 범위).
-3. ~~`low` 품질 프리셋 없음~~ — **해소.** `?q=low` 성립 · 미지 값은 경고 1회 후 high 폴백 ·
-   검증 `tools/calibration/check-low-preset.mjs` 8/8.
-4. ~~원격 저장소 없음~~ — **해소.** public `virgil-1947` 생성 · 전 이력 push · Pages 배포 가동.
-
-## 남은 것 — 사람 몫
-
-문서·코드로는 더 못 미는 항목이다. 순서대로 하면 제출이 닫힌다.
-
-| 순 | 할 일 | 소요 | 문서 |
+| # | 필수 제출물 | 현재 산출물 | 상태 |
 |---|---|---|---|
-| 1 | **영상 촬영·편집·업로드** — 52초 대본대로 1회차 플레이를 녹화하고 잘라 붙인다 | 60~90분 | [video-plan.md](video-plan.md) |
-| 2 | **오디오 청감 12분** — 헤드폰으로 19항목 완주하고 §C 판정 기록을 채운다 | 12분 | [audio-listen-check.md](audio-listen-check.md) |
-| 3 | **PDF 변환 2건** — `game-guide.md` · `ai-tech.md` 를 PDF로 (스크린샷 3장 삽입 포함) | 20분 | 아래 §PDF 변환 |
-| 4 | **시크릿 창 최종 확인** — 사람이 직접 링크를 눌러 완주 | 15분 | [checklist.md](checklist.md) §B |
-| 5 | **영상 URL 3곳 기입** — `game-guide.md` §6 · 이 문서 §링크 · 유튜브 설명란 | 5분 | — |
+| 1 | 플레이 링크 + 전체 소스·커밋 이력 | 공개 Pages·GitHub | **조건부 성립** — 링크는 PASS, 최종 소스/배포 동결 전 |
+| 2 | 실제 플레이 30~60초 YouTube | [video-plan.md](video-plan.md) | **차단** — 사람 촬영·업로드·URL 필요 |
+| 3 | 게임 소개·설명 PDF | [game-guide.md](game-guide.md) | **DRAFT** — 실제 영상 URL을 빌더에 전달한 뒤 final 생성 |
+| 4 | AI 활용 기술 PDF | [ai-tech.md](ai-tech.md) | **DRAFT** — 라이선스·최종 검증 상태 확정 후 생성 |
+| 5 | 팀원 역할 PDF | — | **해당 없음** — 사용자 확인: 1인 참가 |
 
-## PDF 변환
+## 제출 링크
 
-두 문서 모두 **표 중첩 없이 1단 구조**로 써 있어 마크다운 렌더러의 인쇄 출력이 그대로 쓸 만하다.
+| 대상 | URL | 2026-08-10 상태 |
+|---|---|---|
+| 플레이 | <https://bluetop1102.github.io/virgil-1947/> | 부팅·캔버스·요청 실패 0·콘솔 0 확인 |
+| 소스·이력 | <https://github.com/bluetop1102/virgil-1947> | public `main=cace78c`; 진행 중인 로컬 제작본보다 뒤 · 외부 에셋 Description 정정 확인(16:48 KST) |
+| YouTube | `{{YOUTUBE_URL}}` | 미업로드 |
+| 공식 제출 폼 | <https://docs.google.com/forms/d/e/1FAIpQLSdb2ifNzAdJpOYrRUCFA0DDQ7S56zTfcUsm79MI3aNTKOgsGg/viewform?usp=header> | 사용자 로그인·제출 필요 |
 
-- **권장**: VS Code + Markdown PDF, 또는 브라우저에서 렌더한 뒤 `인쇄 → PDF로 저장`(여백 기본,
-  배경 그래픽 켜기).
-- **스크린샷 3장**은 `docs/submission/frames/` 의 확정본을 쓴다 — `sub-30-picker.jpg`(증거 지목·
-  경고 스트립) · `sub-11-s1-choice.jpg`(심문·선택지 쪽지) · `frame-00-title.jpg`(타이틀).
-  `game-guide.md` §1·§2·§4.2 의 캡션 자리에 그대로 대응하고, 선정 근거와 캡션 원문은
-  [frames/frames.md](frames/frames.md) 에 있다. **타이틀은 배경이 AI 생성물이므로 "게임 화면"이
-  아니라 타이틀로 제시**한다(요강 출처 기재와 짝).
-- `ai-tech.md` 는 스크린샷 없이 텍스트만으로 완결된다 — 패킷 발췌 2블록이 그 역할을 한다.
-- 파일명은 `HOTEL-VIRGIL-게임소개.pdf` · `HOTEL-VIRGIL-AI활용기술.pdf` 권장.
+현재 링크가 열린다는 사실은 최종본이라는 뜻이 아니다. 다른 제작 세션의 변경이 끝난 뒤 최종
+커밋을 push하고 그 소스로 Pages를 다시 배포한 다음, 아래 검증을 새로 실행해야 한다.
+
+## 제출 전 P0·최종 게이트
+
+1. **참가 인원 확인 완료** — 2026-08-10 사용자 확인: 1인 참가. 5번 팀원 역할 PDF는 해당 없음.
+2. **음원 귀속·가시성 이행** — 현재 후보의 라디오 3곡·긴장층 2곡은 모두 오디오 전용이고 true
+   peak `-1.4/-3.6/-3.2/-1.2/-1.9 dBTP`다. credits와 설정 소스도 5곡으로 갱신됐다. 17:28 KST
+   축약 설정안은 1280×720 CSS(2× 캡처)에서 전 문구·경계·콘솔 0을 통과했다. `Impending Boom`도
+   실제 지목판 `ui:open`에 배선돼 17:22 KST 일반 Vite 동적 프로브에서 `streamed=true`·요청 실패
+   0이었다. `fe11510`과 소유자 보고서의 결과·곡별 trim은 fresh 측정과 일치하지만, raw
+   `measured_*`가 보존되지 않아 완전한 명령 재현성은 부분이다. 남은 것은 헤드폰 청감·credits의
+   권리/AI 이력 정정·최종 Pages 재확인이다.
+3. **공개 저장소 설명 해소·최종 확인** — 16:48 KST GitHub API에서 Description이 “절차 생성
+   3D 월드 · 외부 에셋은 AI 생성 타이틀 배경과 CC BY 4.0 음원뿐(전수 `docs/credits.md` 기재)”으로
+   바뀐 것을 확인했다. 최종 제출 직전 비로그인 화면에서 한 번 더 확인한다.
+4. **증거 규칙 해소·최종 확인** — `42a3814`에서 “증거 아이템은 남고, 한 번 내민 판정과 닫힌
+   진술은 되돌릴 수 없음”으로 정렬했고 fresh 108/0·burn 9/0·완주 PASS다. 최종 동결 커밋에서 한 번
+   더 확인한다. DRAFT에는 새 고지 후보를 반영했지만 최종 Pages에서 다섯 프레임을 한 실행으로
+   재촬영한다.
+5. **조작 카드 5행 최종 배포 확인** — Shift 추가 뒤 `카드 · Esc`가 잘리는 결함은 `999dafa`에서
+   해소됐다. 로컬 일반 게임 경로 1920×1080에서 다섯 행·화면 경계·콘솔 0을 통과했다. 최종 Pages
+   재배포 뒤 같은 화면을 한 번 더 보고 영상을 촬영한다.
+6. **소스와 배포 동결** — 모든 외부 세션 종료 → 명시적 파일만 커밋/push → Pages 재배포 →
+   최종 URL E2E. 현재 `dist/`는 16:21 KST 감사 중 dirty 로컬 소스로 재생성된 파생물이라 절대
+   배포하지 말고, clean 최종 커밋에서 새로 빌드한다. 마감 뒤 수정할 수 없으므로 이 단계 이후 기능
+   변경은 하지 않는다.
+7. **사람이 영상 촬영** — 실제 조작 화면만 52초로 편집하고 YouTube 공개/일부 공개로 업로드한다.
+
+## 닫는 순서
+
+순서가 중요하다. 게임 소개 PDF에는 플레이 영상 링크가 필수이므로 PDF를 먼저 확정하면 안 된다.
+
+1. 코드·라이선스 P0 해소 및 소스/배포 동결
+2. 시크릿 창에서 최종 배포 1막 완주
+3. 최종 배포로 30~60초 실제 플레이 영상 촬영·업로드
+4. YouTube URL은 원고의 토큰을 직접 지우지 말고 PDF 빌더의 `--video-url`로 전달한다. 이 상태판과
+   영상 설명란에도 같은 URL을 기록한다.
+5. 두 PDF를 **final 모드**로 생성하고 전 페이지·링크·한글 글리프 확인
+6. 공개 링크 3개와 PDF 2개를 다른 기기에서 직접 열기
+7. 공식 Google Form 제출 완료 화면 캡처
+8. 마감 뒤 저장소·Pages·영상·PDF를 변경하지 않고 심사 종료까지 공개 유지
+
+## fresh 검증 명령
+
+```bash
+node tools/manifest-check.mjs
+node tools/factcheck.mjs
+node tools/lint-contract.mjs --self-test
+node tools/lint-contract.mjs
+node tools/test-interrogation.mjs
+node tools/playthrough.mjs --fast --act 1
+npm run build:pages
+node tools/serve-check.mjs --prefix /virgil-1947
+node tools/serve-check.mjs --url https://bluetop1102.github.io/virgil-1947/
+```
+
+`lint-contract`는 현재 훅 도입 이전 잔여 4건 때문에 exit 1이다. 이를 “전건 PASS”로 적지 않는다.
+최종 상태에서 4건이 그대로라면 정확한 위치·영향·수용 결정을 기술 문서와 제출 기록에 남긴다.
+
+## 산출물 위치
+
+- 제출 원고: `docs/submission/game-guide.md`, `docs/submission/ai-tech.md`
+- 영상 대본: `docs/submission/video-plan.md`
+- 최종 관문: `docs/submission/checklist.md`
+- 제출 PDF: `output/pdf/`
+- PDF 렌더 검수: `tmp/pdfs/`
+
+```bash
+# 최초 1회: 재현 가능한 PDF 빌드 환경
+python3 -m venv tmp/pdfs/venv
+tmp/pdfs/venv/bin/pip install -r docs/submission/pdf-requirements.txt
+
+# 현재 상태를 검토하는 워터마크 DRAFT
+tmp/pdfs/venv/bin/python docs/submission/build-pdfs.py --draft
+
+# 최종: 실제 YouTube URL과 fresh P0 판정 문자열 없이는 실행이 거부된다
+tmp/pdfs/venv/bin/python docs/submission/build-pdfs.py --final \
+  --video-url 'https://youtu.be/VIDEO_ID' \
+  --evidence-status '해소 — 42a3814 · 108/0·burn 9/0·playthrough PASS' \
+  --audio-status '해소 — ffprobe audio-only · 설정 화면 육안 PASS · 지목 침대 런타임 청감 PASS · true peak -1.4/-3.6/-3.2/-1.2/-1.9 dBTP · 공개 빌드 재생 PASS'
+```
+
+final 모드는 원고의 토큰 개수를 먼저 검사하고, 두 PDF를 임시 위치에서 모두 빌드·재개방 검증한 뒤
+한 쌍으로 공개한다. `HOTEL-VIRGIL-PDF-MANIFEST.json`이 없으면 제출 세트가 아니다. 기존 final
+세트를 덮어쓰지 않으므로 재생성이 필요하면 기존 PDF 2개와 manifest를 함께 별도 보관한 뒤 실행한다.
+또한 실제 YouTube oEmbed, 깨끗하고 버전 관리된 입력, 증거 회귀 3종, 오디오 전용 스트림·설정 소스의
+필수 귀속 문자열·true peak·지목판 이벤트 연결을 직접 검사한다. 설정 화면의 실제 가시성과 음원의
+실제 청감은 자동화 범위가 아니므로 사람이 최종 배포에서 확인해 `설정 화면 육안 PASS`와
+`지목 침대 런타임 청감 PASS`를 상태 인자로 남긴다. `output/`, `tmp/`, `dist/`, `shots/` 밖의
+미추적 파일이 있으면 final을 거부한다.
