@@ -44,6 +44,17 @@ export async function boot () {
   page.on('pageerror', e => issues.push(`pageerror: ${e.message}`))
   await page.goto(URL_, { waitUntil: 'load', timeout: 120000 })
   await page.waitForFunction(() => window.__CECIL__?.ready, null, { timeout: 240000 })
+  // 입장 게이트(S-K 2026-08-10). 첫 제스처 전에는 어떤 소리도 AudioContext 생성도 없어야 해서
+  // (콘솔 자동재생 경고 = 실격) 로딩이 끝나도 타이틀이 스스로 열리지 않는다 — "아무 키나
+  // 누르십시오"가 그 제스처를 받는 자리다. 프로브는 그 한 번을 대신 눌러 준 뒤 기존 대기로 돌아간다.
+  // 게이트가 없는 판(배포본 등)에서는 조건이 성립하지 않아 그대로 지나간다.
+  await page.waitForFunction(() => {
+    const t = window.__ENGINE__?.get('title')
+    return t && (t.active === 'gate' || t.active === 'title')
+  }, null, { timeout: 120000 }).catch(() => {})
+  if (await page.evaluate(() => window.__ENGINE__?.get('title')?.active === 'gate')) {
+    await page.keyboard.press('Space')
+  }
   await page.waitForFunction(() => {
     const t = window.__ENGINE__?.get('title')
     return t && t.active === 'title'

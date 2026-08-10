@@ -421,7 +421,16 @@ async function runCapture (browser, timeline, out) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 })
   const consoleIssues = watchConsole(page)
   await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'load', timeout: 120000 })
-  await page.waitForFunction(() => window.__CECIL__?.ready && window.__ENGINE__?.get('title')?.active === 'title', null, { timeout: 240000 })
+  // 입장 게이트(S-K 2026-08-10)를 먼저 통과한다 — 로딩이 끝나도 타이틀은 스스로 열리지 않는다.
+  // 첫 클릭이 그 제스처, 두 번째 클릭이 체크인이다. 게이트가 없는 판에서는 첫 조건이 바로 title 이 된다.
+  await page.waitForFunction(() => {
+    const title = window.__ENGINE__?.get('title')
+    return window.__CECIL__?.ready && title && (title.active === 'gate' || title.active === 'title')
+  }, null, { timeout: 240000 })
+  if (await page.evaluate(() => window.__ENGINE__?.get('title')?.active === 'gate')) {
+    await page.mouse.click(640, 360)
+    await page.waitForFunction(() => window.__ENGINE__?.get('title')?.active === 'title', null, { timeout: 60000 })
+  }
   await page.mouse.click(640, 360)
   await page.waitForFunction(() => window.__ENGINE__?.get('cinematics')?.playing, null, { timeout: 30000 })
 
