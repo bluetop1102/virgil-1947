@@ -1,4 +1,5 @@
 import { clamp, damp, rng } from '../core/util.js'
+import { gazeFor } from './gaze.js'
 
 export const PERF_STATES = ['idle', 'anxious', 'lying', 'breaking']
 
@@ -287,6 +288,7 @@ export class Performance {
     this.doyle = { successes: 0, wrongIndex: -1, reaction: null }
     this.ambient = new Map()
     this.glances = new Map()
+    this.looks = new Map()
   }
 
   async init (engine) {
@@ -294,6 +296,15 @@ export class Performance {
     this.off.push(engine.bus.on('perf:state', ({ npc, state } = {}) => this.play(npc, state)))
     this.off.push(engine.bus.on('deduction:link', (payload = {}) => this.reactToLink(payload)))
     this.off.push(engine.bus.on('perf:glance', ({ npc } = {}) => this.glanceAt(npc)))
+    // 증거를 내밀면 상대는 그것을 본다. 이 한 박자가 없으면 인물은 종이를 못 본 채
+    // 대사만 바뀌고, 제시가 대화가 아니라 메뉴 조작으로 읽힌다.
+    this.off.push(engine.bus.on('evidence:presented', ({ npc } = {}) => this.lookDown(npc)))
+  }
+
+  lookDown (npc) {
+    if (typeof npc !== 'string') return false
+    this.looks.set(npc, Number.isFinite(this.engine?.time) ? this.engine.time : 0)
+    return true
   }
 
   // 고개를 돌릴 각은 지금 카메라가 있는 쪽에서 잰다 — 고정 각으로 주면 카메라가 어느 쪽으로
@@ -401,7 +412,8 @@ export class Performance {
 
     for (const [npc, rig] of rigs) {
       if (rig?.root?.visible === false) continue
-      const track = this.tracks.get(npc) ?? this._ambient(npc)
+      const live = this.tracks.get(npc)
+      const track = live ?? this._ambient(npc)
       if (!this.bindRig(track, rig)) continue
       const local = Math.max(0, time - track.startedAt)
       const reaction = npc === 'doyle' ? doylePose(this.doyle.reaction, time) : null
@@ -413,7 +425,7 @@ export class Performance {
         pose = mix(relaxedStance(track.phase, track.base), standIdle(local, track.phase),
           glancePose(this.glances.get(npc), time))
       }
-      applyPose(track, pose, dt)
+      applyPose(track, mix(pose, gazeFor(track, rig, this.engine?.camera, dt, time, this.looks, !live)), dt)
       rig.root.userData.performance = {
         state: reaction ? 'reaction' : track.state,
         clip: reaction ? `doyle.link-${this.doyle.reaction.ok ? this.doyle.successes : 'wrong'}` : track.clip,
@@ -437,6 +449,7 @@ export class Performance {
     this.history.length = 0
     this.ambient.clear()
     this.glances.clear()
+    this.looks.clear()
     this.engine = null
   }
 }
