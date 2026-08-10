@@ -25,7 +25,8 @@ await page.evaluate(() => {
       rec.samples.push([t, s])
       if (s === 'visible' && rec.first == null) rec.first = t
       if (s === 'hidden' && rec.first != null && rec.hid == null) rec.hid = t
-      if (rec.hid == null && rec.samples.length < 600) setTimeout(tick, 60)
+      // 1600: 카드 수명이 무입력 8엔진초로 늘었다(S-J) — 0.2배 시계까지 감안하면 60ms×1600=96s
+      if (rec.hid == null && rec.samples.length < 1600) setTimeout(tick, 60)
     }
     tick()
   })
