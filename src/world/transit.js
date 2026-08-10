@@ -178,6 +178,7 @@ export default {
     // 통째로 히치가 나고, 그동안 engine.time 은 dt 클램프에 걸려 거의 멈춘다 — 시간 기반으로
     // 걸면 화면은 검은 채로 몇 초를 버틴다(S-P 1차 실측: 1.4s 뒤에도 veil=1).
     this.settle = 4
+    this.settleTotal = 0
   },
 
   // delay 0.6 은 두 번째 방문(이미 컴파일된 공간)에서 표제가 스치듯 지나가지 않게 잡는 하한이다.
@@ -232,7 +233,14 @@ export default {
   update (dt, elapsed) {
     const t = Number.isFinite(elapsed) ? elapsed : this.engine.time
     while (this.queue.length && t >= this.queue[0].time) this.queue.shift().run()
-    if (this.settle > 0 && --this.settle === 0) this._settled()
+    if (this.settle > 0) {
+      // dt 가 엔진 클램프 상한(0.05)에 붙은 프레임은 셰이더 컴파일 히치다 — 그 동안 걸으면
+      // 이동이 먹통으로 체감된다(배포 실기기 보고 2026-08-10). 매끈한 4프레임 연속까지 유지,
+      // 240프레임 상한으로 영구 암전은 방지.
+      if (dt >= 0.045) this.settle = 4
+      else if (--this.settle === 0) { this._settled(); return }
+      if (++this.settleTotal > 240) { this.settle = 0; this._settled() }
+    }
   },
 
   dispose () {
