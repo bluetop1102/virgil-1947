@@ -124,31 +124,50 @@
 
 - 공개 범위: **공개 또는 일부공개**. 비공개 금지.
 - 제목: `HOTEL VIRGIL — 1947 · NAN 2026 사전 과제 플레이`
-- 설명란 첫 세 줄: 플레이 URL · 소스 URL · 허구 고지.
+- 설명란 첫 세 줄: 플레이 URL · 소스 URL · 허구 고지. 아래 블록을 그대로 쓰되 최종 커밋과 영상에
+  실제로 포함된 곡을 확인한다.
 - 게임 안에서 들릴 수 있는 다섯 트랙을 아래처럼 설명란에 표기한다. 촬영본에서 실제로 들리는 곡만
   남길 수 있지만, 판단이 애매하면 다섯 블록을 모두 유지한다.
 
 ```text
+플레이: https://bluetop1102.github.io/virgil-1947/
+전체 소스·커밋 이력: https://github.com/bluetop1102/virgil-1947
+본 작품의 인물·사건·호텔은 모두 허구이며 실제 사건 피해자를 재현하지 않습니다.
+
 "Night on the Docks - Sax" Kevin MacLeod (incompetech.com)
+Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100137
 Licensed under Creative Commons: By Attribution 4.0
 https://creativecommons.org/licenses/by/4.0/
 
 "Dark Times" Kevin MacLeod (incompetech.com)
+Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100747
 Licensed under Creative Commons: By Attribution 4.0
 https://creativecommons.org/licenses/by/4.0/
 
 "Vanishing" Kevin MacLeod (incompetech.com)
+Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1600050
 Licensed under Creative Commons: By Attribution 4.0
 https://creativecommons.org/licenses/by/4.0/
 
 "Long note One" Kevin MacLeod (incompetech.com)
+Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100418
 Licensed under Creative Commons: By Attribution 4.0
 https://creativecommons.org/licenses/by/4.0/
 
 "Impending Boom" Kevin MacLeod (incompetech.com)
+Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100198
 Licensed under Creative Commons: By Attribution 4.0
 https://creativecommons.org/licenses/by/4.0/
+
+Changes made: the tracks listed above were loudness-normalized, peak-limited, downmixed to mono, resampled
+and re-encoded as MP3. In game, radio tracks also pass through per-track level compensation, AM-band
+filtering, EQ, saturation, distance attenuation and room reverb; tension tracks pass through high/low-pass
+filtering and gain automation.
 ```
+
+Creative Commons BY 4.0은 적절한 저작자 표시와 라이선스 링크뿐 아니라 변경 여부 고지도 요구한다.
+따라서 위 `Source`와 `Changes made` 줄을 지우지 않는다. Incompetech의 공식 귀속 형식도 곡명,
+Kevin MacLeod, 사이트명, CC BY 4.0 링크를 함께 두도록 안내한다.
 
 업로드 후 로그아웃/시크릿 창에서 재생되는지 확인하고, 원고의 토큰은 유지한 채 확정 URL을 PDF
 빌더의 `--video-url`로 전달한다. 영상과 링크는 심사 종료까지 유지하며 마감 뒤 교체하지 않는다.
@@ -162,6 +181,7 @@ https://creativecommons.org/licenses/by/4.0/
 - [ ] 조작 카드 5행, 선택지 쪽지, 증거 서류철이 각각 판독된다.
 - [ ] 오답 뒤 카메라와 소리의 변화가 끊기지 않는다.
 - [ ] 헤드폰으로 벨·라디오·룸톤·심문 저역을 확인했다.
-- [ ] YouTube 설명란에 플레이/소스 링크와 실제 사용 음원의 CC BY 4.0 표기가 있다.
+- [ ] YouTube 설명란에 플레이/소스 링크와 실제 사용 음원의 곡명·저작자·원곡 `Source`·CC BY 4.0
+  링크·`Changes made` 고지가 있다.
 - [ ] 일부공개 링크를 로그아웃 상태에서 재생했다.
 - [ ] 확정 URL을 final PDF 빌더의 `--video-url`로 전달해 두 PDF와 manifest를 함께 생성했다.
