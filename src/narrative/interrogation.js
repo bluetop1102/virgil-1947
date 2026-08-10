@@ -123,7 +123,7 @@ export class Interrogation {
       if (!engine.qa) console.info('[interrogation]', this.reason)
     }
     const b = engine.bus
-    this._off.push(b.on('interrogation:start', (p) => this.start(p?.npc)))
+    this._off.push(b.on('interrogation:start', (p) => { if (!this.start(p?.npc) && p?.npc && this.engine.state.npc(p.npc).ended) b.emit('subtitle', { speaker: '', text: '더 물을 것은 없다. 격자문이 열려 있다.', dur: 2.6 }) })) // 완주 후 무반응 E 피드백(실플레이 2026-08-10)
     this._off.push(b.on('interrogation:choose', (p) => this._chooseEvent(p)))
     this._off.push(b.on('player:interact', (p) => this._onInteract(p?.targetId)))
     // 지목 모드 해제(on:false)는 계약상 "제시 취소"인데(ARCH §5) 수신부가 없어 cancel()이
