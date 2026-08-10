@@ -8,6 +8,7 @@ import Prepass from './passes/prepass.js'
 import Taa from './passes/taa.js'
 import Composite from './passes/composite.js'
 import ContactAo from './contact.js'
+import { fitRenderScale } from './renderscale.js'
 import AutoExposure from './exposure.js'
 import { installPcss } from './pcss.js'
 
@@ -149,6 +150,7 @@ const pipeline = {
     this.quadScene.add(this.quad)
     this.fsCam = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
 
+    fitRenderScale(engine)
     const size = renderer.getDrawingBufferSize(new THREE.Vector2())
     const w = Math.max(1, size.x | 0)
     const h = Math.max(1, size.y | 0)
@@ -351,6 +353,7 @@ const pipeline = {
 
   resize (w, h) {
     if (!this.ready) return
+    fitRenderScale(this.engine, w, h)
     const size = this.renderer.getDrawingBufferSize(new THREE.Vector2())
     const nw = Math.max(1, size.x | 0)
     const nh = Math.max(1, size.y | 0)
