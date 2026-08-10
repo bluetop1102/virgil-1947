@@ -46,9 +46,9 @@ npm ls --depth=0
 - [x] `node tools/factcheck.mjs` — 14항목 PASS (2026-08-10)
 - [x] `node tools/lint-contract.mjs --self-test` — self-test PASS (2026-08-10)
 - [ ] `node tools/lint-contract.mjs` — 현재 잔여 4건. 최종 결과와 수용 결정을 기록했다.
-- [x] `node tools/test-interrogation.mjs` — 108 passed, 0 failed (2026-08-10)
-- [ ] fresh 상태에서 심문 전 `lobby/elevator` 상호작용이 예외 없이 “프런트 쪽 일이 먼저다”를
-  표시하고, 심문 중단 상태는 “다이치의 진술이 아직 남았다”로 갈리는 회귀 검사가 통과한다.
+- [x] `node tools/test-interrogation.mjs` — 112 passed, 0 failed (2026-08-10)
+- [x] `1fa2d41` fresh 3상태 — 심문 전 “프런트 쪽 일이 먼저다” · 실제 중단 “다이치의 진술이 아직
+  남았다” · 완료 “격자문이 열린다”+`act:enter { act: 2 }` 1회 · 예외 0 (2026-08-10)
 - [x] `node tools/playthrough.mjs --fast --act 1` — act 2 전환, 콘솔 0 (2026-08-10)
 - [ ] 최종 커밋에서 위 검사를 다시 실행했다.
 - [ ] 최종 커밋에서 `npm run build:pages`가 성공했다.

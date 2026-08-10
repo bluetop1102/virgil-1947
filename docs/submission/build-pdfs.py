@@ -685,8 +685,12 @@ if (!completed.state.npc('deitch').ended) {
 const enterBefore = completed.events.filter(event => event.type === 'act:enter').length
 completed.bus.emit('player:interact', { targetId: 'lobby/elevator' })
 const enterAfter = actEnters(completed)
-if (completed.state.act !== 2 || enterAfter !== enterBefore + 1) {
-  throw new Error('completed gate did not enter act 2 exactly once')
+if (
+  !subtitle(completed).includes('격자문이 열린다') ||
+  completed.state.act !== 2 ||
+  enterAfter !== enterBefore + 1
+) {
+  throw new Error('completed gate did not show success and enter act 2 exactly once')
 }
 completed.bus.emit('player:interact', { targetId: 'lobby/elevator' })
 if (completed.state.act !== 2 || actEnters(completed) !== enterAfter) {
@@ -694,6 +698,32 @@ if (completed.state.act !== 2 || actEnters(completed) !== enterAfter) {
 }
 console.log('PASS elevator 3-state regression')
 """.strip()
+
+
+def draft_elevator_status() -> str:
+    result = subprocess.run(
+        ["node", "--input-type=module", "--eval", ELEVATOR_3_STATE_JS],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    head = subprocess.run(
+        ["git", "rev-parse", "--short=7", "HEAD"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    short_head = head.stdout.strip() if head.returncode == 0 else "HEAD 미확인"
+    if result.returncode == 0:
+        return (
+            f"해소 후보 — {short_head} · 심문 전·중단·완료 3상태·가시 성공 자막 PASS · "
+            "final 동결 HEAD에서 재검사"
+        )
+    return "DRAFT 차단 — 격자문 3상태 회귀 FAIL · README·감사 기록에서 원인 확인 · final 생성 금지"
 
 
 ALLOWED_UNTRACKED_PREFIXES = ("output/", "tmp/", "dist/", "shots/")
@@ -774,7 +804,7 @@ def validate_final_repository(evidence_status: str) -> tuple[list[Path], str]:
         ["node", "--input-type=module", "--eval", ELEVATOR_3_STATE_JS],
         "elevator-3-state",
     )
-    run_checked(["node", "tools/test-interrogation.mjs"], "interrogation-108")
+    run_checked(["node", "tools/test-interrogation.mjs"], "interrogation-suite")
     run_checked(["node", "tools/test-interrogation.mjs", "--burn"], "interrogation-burn")
     run_checked(["node", "tools/playthrough.mjs", "--fast", "--act", "1"], "act-1-playthrough")
     return inputs, validated_head
@@ -1121,7 +1151,9 @@ def main() -> None:
         final_inputs, validated_head = validate_final_repository(args.evidence_status)
         audio_metrics = validate_audio_files_and_credit()
         validate_claimed_audio_metrics(args.audio_status, audio_metrics)
-        elevator_status = f"해소 — {validated_head[:7]} · 심문 전·중단·완료 3상태 PASS"
+        elevator_status = (
+            f"해소 — {validated_head[:7]} · 심문 전·중단·완료 3상태·가시 성공 자막 PASS"
+        )
         replacements = {
             "{{YOUTUBE_URL}}": f"<{args.video_url}>",
             "{{EVIDENCE_CONTRACT_STATUS}}": args.evidence_status,
@@ -1131,12 +1163,10 @@ def main() -> None:
         guide_name = "HOTEL-VIRGIL-게임소개.pdf"
         tech_name = "HOTEL-VIRGIL-AI활용기술.pdf"
     else:
-        elevator_status = (
-            "DRAFT 차단 — 심문 전 격자문 E가 presented 미초기화 TypeError · 중단·완료 경로 PASS"
-        )
+        elevator_status = draft_elevator_status()
         replacements = {
             "{{YOUTUBE_URL}}": "**영상 URL 입력 대기**",
-            "{{EVIDENCE_CONTRACT_STATUS}}": "해소 — 42a3814 · 기본 108/0 · 소각 9/0 · 1막 완주 PASS",
+            "{{EVIDENCE_CONTRACT_STATUS}}": "해소 — 42a3814 · 기본 112/0 · 소각 9/0 · 1막 완주 PASS",
             "{{AUDIO_ATTRIBUTION_STATUS}}": (
                 "DRAFT — fe11510 출력·귀속·도달성 검증 PASS · 사람 청감·final Pages 확인 대기"
             ),

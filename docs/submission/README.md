@@ -70,12 +70,13 @@ URL 전용 `pattern`이나 `maxlength`가 없다. 따라서 첫 문항에 플레
    3D 월드 · 외부 에셋은 AI 생성 타이틀 배경과 CC BY 4.0 음원뿐(전수 `docs/credits.md` 기재)”으로
    바뀐 것을 확인했다. 최종 제출 직전 비로그인 화면에서 한 번 더 확인한다.
 4. **증거 규칙 해소·최종 확인** — `42a3814`에서 “증거 아이템은 남고, 한 번 내민 판정과 닫힌
-   진술은 되돌릴 수 없음”으로 정렬했고 fresh 108/0·burn 9/0·완주 PASS다. 최종 동결 커밋에서 한 번
+   진술은 되돌릴 수 없음”으로 정렬했고 fresh 112/0·burn 9/0·완주 PASS다. 최종 동결 커밋에서 한 번
    더 확인한다. DRAFT에는 새 고지 후보를 반영했지만 최종 Pages에서 다섯 프레임을 한 실행으로
    재촬영한다.
-5. **심문 전 격자문 예외 해소** — fresh 상태에서 격자문 E를 누르면 `presented` 미초기화로
-   `TypeError`가 난다. `ae7ba8c`가 심문 시작 뒤에만 생기는 필드를 시작 전 거절 분기에서 읽은 회귀다.
-   소유자가 실패 회귀를 먼저 추가하고 수정한 뒤 기본 108/0·burn 9/0·완주를 다시 통과해야 한다.
+5. **심문 전 격자문 예외 해소·최종 확인** — `1fa2d41`이 지연 초기화된 `presented`를 안전하게
+   읽고 3상태 회귀를 배터리에 고정했다. fresh 심문 전·실제 중단·완료가 각각 올바른 거절·1막 유지·
+   단일 2막 전환을 통과했고 완료 입력은 **「격자문이 열린다.」** 자막도 낸다. 기본 112/0·burn 9/0·
+   unlock 10/0 PASS이며 최종 동결 커밋에서 완주와 함께 다시 확인한다.
 6. **조작 카드 5행 최종 배포 확인** — Shift 추가 뒤 `카드 · Esc`가 잘리는 결함은 `999dafa`에서
    해소됐다. 로컬 일반 게임 경로 1920×1080에서 다섯 행·화면 경계·콘솔 0을 통과했다. 최종 Pages
    재배포 뒤 같은 화면을 한 번 더 보고 영상을 촬영한다.
@@ -135,7 +136,7 @@ tmp/pdfs/venv/bin/python docs/submission/build-pdfs.py --draft
 # 최종: 실제 YouTube URL과 fresh P0 판정 문자열 없이는 실행이 거부된다
 tmp/pdfs/venv/bin/python docs/submission/build-pdfs.py --final \
   --video-url 'https://youtu.be/VIDEO_ID' \
-  --evidence-status '해소 — 42a3814 · 108/0·burn 9/0·playthrough PASS' \
+  --evidence-status '해소 — 42a3814 · 112/0·burn 9/0·playthrough PASS' \
   --audio-status '해소 — ffprobe audio-only · 설정 화면 육안 PASS · 지목 침대 런타임 청감 PASS · true peak -1.4/-3.6/-3.2/-1.2/-1.9 dBTP · 공개 빌드 재생 PASS'
 ```
 

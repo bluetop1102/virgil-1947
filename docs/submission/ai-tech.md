@@ -236,7 +236,7 @@ UI 고지, 런타임 상태, 테스트 기대값을 하나의 추적선으로 �
 |---|---|
 | `node tools/manifest-check.mjs` | 티켓 18장 · 8규칙 · 발견 0 |
 | `node tools/factcheck.mjs` | 사실 그래프 14항목 PASS |
-| `node tools/test-interrogation.mjs` | 108 passed · 0 failed |
+| `node tools/test-interrogation.mjs` | 112 passed · 0 failed |
 | `node tools/test-interrogation.mjs --burn` | 소각 직렬화·재접근·하류 unlock 차단 9 passed · 0 failed |
 | `node tools/playthrough.mjs --fast --act 1` | 1막 전환 1:04 · 증거 4종 · 괴담 3건 · 콘솔 0 |
 | `node tools/serve-check.mjs --url …` | 공개 링크 부팅 · 요청 실패 0 · 콘솔 0 |
@@ -352,8 +352,8 @@ node tools/serve-check.mjs --prefix /virgil-1947
 ### 7.3 만들지 못한 것과 판정 한계
 
 - 제출본은 1막 수직 슬라이스다. 2·3막 레벨과 최종 증거판은 플레이할 수 없다.
-- 1막 끝의 격자문 입력은 내부 상태만 2막으로 바꾸며 문·공간·종료 화면은 전환하지 않는다. 소개서와
-  영상은 이 입력을 가시적인 2막 장면처럼 주장하지 않는다.
+- 1막 끝의 격자문 입력은 **「격자문이 열린다.」** 자막과 함께 내부 상태를 2막으로 바꾸지만 문·공간·
+  종료 화면은 전환하지 않는다. 소개서와 영상은 이 입력을 가시적인 2막 공간처럼 주장하지 않는다.
 - 진행 저장/불러오기는 없다. 새로고침하면 새 회차다.
 - 기계는 오디오 레벨과 시간 곡선을 측정하지만 “무섭게 들리는가”까지 판정하지 못한다. 사람의
   헤드폰 청감표를 별도로 둔 이유다.
