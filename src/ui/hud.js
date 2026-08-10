@@ -1,10 +1,10 @@
 // HUD. 크로스헤어·체력·탄약·미니맵 없음.
 // 상호작용 가능 여부는 오브젝트 쪽 림 강조가 알린다(GAMEPLAY/재질 소관). 여기는 손글씨 한 줄만 남긴다.
-import { surface, sheet, crease } from './paper.js'
+import { surface, sheet } from './paper.js'
 import { typed, measureTyped, pen, penLine, INK, FONT } from './type.js'
 import { paperclip } from './sketch.js'
 import { normalize } from './casefile.js'
-import { docItem } from './casebook.js'
+import { inspectSheet } from './inspect.js'
 import { clamp } from '../core/util.js'
 
 // 프런트에서 건네주는 안내 카드. 조작을 알려주는 유일한 지점이라 문안은 여기가 원본이다.
@@ -31,6 +31,10 @@ const INSPECT_T = 1.05
 // 부족하고 글줄이 종이의 기울기와 어긋나 UI 패널로 보인다"는 지적을 받아 각을 키웠다.
 // 기울기가 캔버스 전체에 걸리므로 글줄도 종이와 같은 각으로 눕는다.
 const INSPECT_POSE = 'perspective(720px) rotateX(13deg) rotateY(-9deg) rotate(-2.6deg)'
+// 든 채로 가만히 있는 손은 없다. 컷의 중간부터 끝까지 아주 느리게 이 자세로 흘러간다 —
+// 프레임 사이에 아무것도 안 변하면 "화면에 고정된 패널"로 읽힌다(블라인드 판독 지적).
+const INSPECT_SWAY = 'perspective(720px) rotateX(10deg) rotateY(-6deg) rotate(-1.3deg)'
+const INSPECT_TR = 'opacity .26s ease,transform .34s cubic-bezier(.16,1,.3,1)'
 
 export default {
   name: 'hud',
@@ -319,24 +323,10 @@ export default {
     if (e.get('interrogation')?.isModal?.() || e.get('notebook')?.isOpen?.() || e.get('evidence')?.isModal?.()) return
     if (this.ic) this.ic.c.remove()
     const w = clamp(Math.round(this.vw * 0.33), 340, 580)
-    const h = Math.round(w * 0.62)
-    this.ic = docItem(w, h, normalize(e.state.evidence.get(id) || { id }), 7)
-    // 손에 든 종이는 평평하지 않다. 접힌 자국 하나가 면을 갈라야 평판으로 안 읽힌다.
-    const ctx = this.ic.ctx
-    crease(ctx, w, h, -2, h * 0.63, w + 2, h * 0.66, 0.9)
-    // 데스크 텅스텐 등을 이 종이도 받는다. 중성 회백으로 남으면 방의 호박색과 어긋나 종이
-    // 하나만 장면 위에 얹힌 레이어로 읽힌다(조작 카드가 같은 지적으로 받은 처리).
-    // 광원은 프레임에서 오른쪽 위의 데스크 램프라 그쪽이 밝고 반대편이 그늘진다.
-    ctx.save()
-    ctx.globalCompositeOperation = 'source-atop'
-    const warm = ctx.createLinearGradient(w, 0, w * 0.12, h)
-    warm.addColorStop(0, 'rgba(255,201,126,0.34)')
-    warm.addColorStop(0.45, 'rgba(232,166,96,0.15)')
-    warm.addColorStop(1, 'rgba(38,25,14,0.38)')
-    ctx.fillStyle = warm
-    ctx.fillRect(0, 0, w, h)
-    ctx.restore()
+    this.ic = inspectSheet(w, Math.round(w * 0.62), normalize(e.state.evidence.get(id) || { id }))
     this.iWrap.appendChild(this.ic.c)
+    if (!e.qa) this.iWrap.style.transition = INSPECT_TR
+    this.inspSway = false
     this.inspecting = true
     this.inspectT0 = e.time
     this.iWrap.style.opacity = '1'
@@ -346,6 +336,7 @@ export default {
   _endInspect () {
     if (!this.inspecting) return
     this.inspecting = false
+    if (!this.engine.qa) this.iWrap.style.transition = INSPECT_TR
     this.iWrap.style.opacity = '0'
     this.iWrap.style.transform = `translate(-50%,38%) ${INSPECT_POSE} scale(.86)`
   },
@@ -488,6 +479,11 @@ export default {
     if (this.slip && this.engine.time - this.slipT0 > 4.6 && !this.engine.qa) this._hideSlip()
     if (this.cardArm && this.engine.time >= this.cardArm) this._showCard()
     if (this.cardVisible && this.engine.time >= this.cardOff) this._hideCard()
+    if (this.inspecting && !this.inspSway && !this.engine.qa && this.engine.time - this.inspectT0 > 0.3) {
+      this.inspSway = true
+      this.iWrap.style.transition = 'opacity .26s ease,transform 1.2s cubic-bezier(.33,0,.25,1)'
+      this.iWrap.style.transform = `translate(-50%,-53%) ${INSPECT_SWAY} scale(1.035)`
+    }
     if (this.inspecting && this.engine.time - this.inspectT0 > INSPECT_T) this._endInspect()
   },
 
