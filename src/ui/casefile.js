@@ -9,7 +9,7 @@ export const EVIDENCE = {
   photos: { title: '엘리베이터 사진', form: 'photo', note: ['4장', '하우스 디텍티브 촬영', '넬 밴스 사망 당일'] },
   journal: { title: '찢긴 일기', form: 'doc', note: ['942호 침대 밑', '프라이스 — 세 번', '마지막 장에 944'] },
   roofkey: { title: '옥상 열쇠', form: 'object', note: ['942호 매트리스 밑', '태그 필적 — 다이치'] },
-  'sink-trap': { title: '세면대 트랩 침전물', form: 'object', note: ['검은 침전물', '탱크에서 내려온 것'] },
+  'sink-trap': { title: '세면대 트랩의 침전물', form: 'object', note: ['검은 침전물', '탱크에서 내려온 것'] },
   autopsy: { title: '넬 밴스 부검 사본', form: 'doc', note: ['유족 비공개 서류', '폐의 물 — 낙하 시 흡인'] },
   'water-log': { title: '급수 일지', form: 'doc', note: ['944호에서 나옴', '탱크 점검란 — 관리인 필적'] },
   footprints: { title: '젖은 발자국', form: 'object', note: ['942호 앞에서 계단 쪽', '작업화 265밀리'] },
