@@ -1,0 +1,1 @@
+import{t as e}from"./gaze-B8cOmbrg.js";export{e as gazeFor};

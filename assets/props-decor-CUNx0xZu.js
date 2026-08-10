@@ -1,1 +1,0 @@
-import{n as e,t}from"./props-decor-C2oJaGcm.js";export{t as potPlant,e as rubbedTop};

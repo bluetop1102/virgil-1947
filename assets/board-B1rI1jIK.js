@@ -1,0 +1,1 @@
+import{t as e}from"./board-B-8Nz_Dn.js";export{e as createBoard};

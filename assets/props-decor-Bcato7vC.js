@@ -1,0 +1,1 @@
+import{n as e,t}from"./props-decor-C61CrzJ5.js";export{t as potPlant,e as rubbedTop};

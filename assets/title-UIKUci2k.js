@@ -1,0 +1,84 @@
+import{t as e}from"./title-rain-D-cWaAeA.js";``+new URL(`title-bg-DJ07kJ7y.jpg`,import.meta.url).href;var t=`본 이야기의 인물·사건·호텔은 모두 허구입니다. 실존하는 인물·사건·업체와는 아무런 관련이 없습니다.`,n=`키를 눌러 입장하십시오`,r=`'Courier New', Courier, 'AppleMyungjo', Georgia, serif`,i=`'Baskerville', 'Iowan Old Style', 'Times New Roman', serif`,a=Object.values(Object.assign({"../../assets/title-bg.jpg":``+new URL(`title-bg-DJ07kJ7y.jpg`,import.meta.url).href}))[0]||null,o={pos:[.85,1.58,7.9],target:[-1.35,1.24,-3],fov:42},s=3;function c(e,t,n=``){let r=document.createElement(e);return r.className=t,r.textContent=n,r}function l(e,t){let n=c(`div`,`virgil-plaque`,e);return n.dataset.mode=t,n.tabIndex=0,n.setAttribute(`role`,`button`),n}function u(e){let t=c(`span`,`virgil-bell`);return t.innerHTML=`<svg viewBox="0 0 120 92" width="100%" height="100%" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="vb-dome-${e}" x1=".18" y1="0" x2=".82" y2="1">
+        <stop offset="0" stop-color="#eed9a2"/><stop offset=".26" stop-color="#bc9852"/>
+        <stop offset=".62" stop-color="#755c2c"/><stop offset="1" stop-color="#493819"/>
+      </linearGradient>
+      <linearGradient id="vb-base-${e}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#c8a862"/><stop offset=".55" stop-color="#6f5729"/>
+        <stop offset="1" stop-color="#3d2f14"/>
+      </linearGradient>
+      <radialGradient id="vb-shadow-${e}" cx=".5" cy=".5" r=".5">
+        <stop offset="0" stop-color="#000" stop-opacity=".62"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="60" cy="84" rx="46" ry="7" fill="url(#vb-shadow-${e})"/>
+    <rect x="16" y="74" width="88" height="6" rx="3" fill="url(#vb-base-${e})"/>
+    <rect x="23" y="66" width="74" height="9" rx="3.5" fill="url(#vb-base-${e})"/>
+    <path d="M18 67a42 38 0 0 1 84 0z" fill="url(#vb-dome-${e})"/>
+    <path d="M18 67a42 38 0 0 1 84 0" fill="none" stroke="#f6e6b4" stroke-opacity=".5" stroke-width="1.2"/>
+    <path d="M32 57a29 26 0 0 1 24-26" fill="none" stroke="#fbeec9" stroke-opacity=".46" stroke-width="2.6" stroke-linecap="round"/>
+    <ellipse cx="60" cy="67" rx="42" ry="4.6" fill="#2a2010" fill-opacity=".55"/>
+    <rect x="56" y="18" width="8" height="14" rx="2.6" fill="url(#vb-base-${e})"/>
+    <ellipse cx="60" cy="17" rx="9" ry="4.4" fill="url(#vb-dome-${e})"/>
+    <ellipse cx="58" cy="15.6" rx="4" ry="1.7" fill="#fbf0cd" fill-opacity=".62"/>
+  </svg>`,t}function d(){return[`virgil.checkpoint`,`virgil.save`,`virgil.state`].some(e=>localStorage.getItem(e))}var f={name:`title`,order:80,async init(e){this.engine=e,this.active=`loading`,this.progress={done:0,total:1},this.qa=e.qa,this.pose={...o},this.fov0=e.camera.fov;let t=new URLSearchParams(location.search);this.bg=a&&t.get(`titlebg`)!==`render`?`image`:`render`,this.freeCamera=t.has(`scene`),this._build();let n=window.__VIRGIL_BOOT__;n&&this._progress(n),e.bus.on(`boot:progress`,e=>this._progress(e)),e.bus.on(`qa:shot`,()=>{e.qa&&this._hideAll()}),e.bus.on(`qa:state`,e=>this._qaState(e)),this._onKey=e=>this._key(e),this._onPointer=e=>this._pointer(e),window.addEventListener(`keydown`,this._onKey),window.addEventListener(`pointerdown`,this._onPointer)},_build(){let e=document.createElement(`style`);e.textContent=`
+      .virgil-entry{position:fixed;inset:0;z-index:120;overflow:hidden;color:#d8c9a8;font-family:${r};pointer-events:auto}
+      .virgil-entry[hidden]{display:none}.virgil-entry *{box-sizing:border-box}
+      /* 유리 너머로 로비 렌더(또는 B안 이미지)가 그대로 보인다. 스크림은 글자가 앉는 띠만
+         눌러 대비를 벌고, 가운데는 열어 둔다 — 배경을 덮으면 배경을 쓰는 의미가 없다. */
+      .virgil-glass{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 62%,rgba(168,112,44,.14),rgba(120,74,26,.05) 42%,transparent 66%),linear-gradient(180deg,rgba(2,3,5,.95) 0%,rgba(2,3,5,.90) 17%,rgba(2,3,5,.52) 33%,rgba(2,3,5,.20) 52%,rgba(2,3,5,.44) 74%,rgba(1,2,3,.92) 100%),radial-gradient(ellipse at 50% 56%,rgba(3,4,6,0) 18%,rgba(2,3,5,.52) 60%,rgba(1,2,3,.94) 100%),repeating-linear-gradient(92deg,rgba(187,170,126,.02) 0 1px,transparent 1px 73px)}
+      .virgil-glass:before,.virgil-glass:after{content:'';position:absolute;top:-12%;bottom:-12%;width:1px;background:rgba(179,151,91,.2);box-shadow:0 0 0 1px rgba(20,17,12,.8)}
+      .virgil-glass:before{left:18%}.virgil-glass:after{right:18%}
+      /* B안: 이미지가 이미 자기 비네트를 갖고 있으므로 스크림을 얕게 깐다. 유리 멀리언은
+         정문 안쪽에서 보는 A안의 논리라 사진 위에서는 지운다 */
+      .virgil-glass[data-bg="image"]{background:linear-gradient(180deg,rgba(2,3,5,.86) 0%,rgba(2,3,5,.54) 20%,rgba(2,3,5,.10) 44%,rgba(2,3,5,.06) 62%,rgba(1,2,3,.60) 100%),radial-gradient(ellipse at 50% 52%,rgba(3,4,6,0) 30%,rgba(2,3,5,.22) 68%,rgba(1,2,3,.64) 100%)}
+      .virgil-glass[data-bg="image"]:before,.virgil-glass[data-bg="image"]:after{display:none}
+      .virgil-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 46%}
+      /* 호텔 간판 조판 — 작은 업종명 위, 큰 고유명 아래. 파사드 배경의 마키와 같은 관습이다.
+         세 줄을 한 덩어리로 쌓는다. 줄마다 top% 를 주면 화면비에 따라 글자 상자가 겹친다 */
+      .virgil-signage{position:absolute;left:50%;top:11%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:clamp(12px,1.5vw,22px);text-align:center;white-space:nowrap}
+      .virgil-title-kind{font-family:${i};font-size:clamp(13px,1.35vw,21px);line-height:1;letter-spacing:.72em;text-indent:.72em;color:#9c8657;text-shadow:0 2px 14px rgba(0,0,0,.92)}
+      .virgil-title-mark{font-family:${i};font-size:clamp(54px,9vw,126px);line-height:1;letter-spacing:.29em;text-indent:.29em;color:#c2a668;text-shadow:0 1px #efe0a9,0 -1px #392f1d,0 0 24px rgba(176,143,75,.2),0 8px 34px rgba(0,0,0,.9)}
+      .virgil-title-sub{font-family:${i};font-size:clamp(12px,1.2vw,18px);line-height:1;letter-spacing:.52em;text-indent:.52em;color:#8d7b56;text-shadow:0 2px 12px rgba(0,0,0,.9)}
+      /* 벨과 명패는 한 덩어리다 — 벨을 눌러 체크인한다는 행위 하나를 두 요소로 보인다 */
+      .virgil-actions{position:absolute;left:50%;bottom:11.5%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:clamp(16px,2vw,26px)}
+      .virgil-choices{display:flex;gap:clamp(24px,5vw,72px)}
+      /* 명패는 이 화면에서 유일하게 "눌러야 하는 것"이다. 구판은 판 가운데가 #453620 까지
+         떨어져 각인 잉크와의 대비가 1.6:1 이었다 — 사진 위에서 글자가 판에 먹혔다. 놋쇠의
+         명암 폭을 좁혀 가장 어두운 띠도 4.6:1 을 넘기고, 판 뒤에 어둠을 깔아 배경에서 떼어낸다. */
+      /* 네 귀의 나사머리는 장식이 아니라 판정 장치다 — 블라인드 판독자가 구판 명패를
+         "선형 그라디언트 + 1px 테두리의 CSS 버튼"으로 지목했다(D7 웹 UI 냄새). 벽에 박아
+         고정한 놋쇠 판이라는 물성은 이 네 점에서 나온다. */
+      .virgil-plaque{position:relative;overflow:hidden;min-width:300px;padding:20px 46px 18px;border:1px solid #d7bd7c;outline:1px solid rgba(26,18,7,.92);outline-offset:-7px;background:radial-gradient(circle 3.6px at 15px 15px,#f4e3ae 0 32%,#5d4a26 56%,transparent 64%),radial-gradient(circle 3.6px at calc(100% - 15px) 15px,#f4e3ae 0 32%,#5d4a26 56%,transparent 64%),radial-gradient(circle 3.6px at 15px calc(100% - 15px),#f4e3ae 0 32%,#5d4a26 56%,transparent 64%),radial-gradient(circle 3.6px at calc(100% - 15px) calc(100% - 15px),#f4e3ae 0 32%,#5d4a26 56%,transparent 64%),repeating-linear-gradient(97deg,rgba(255,246,214,.05) 0 1px,transparent 1px 4px),linear-gradient(163deg,#c9ae70,#967c4b 30%,#8e7645 54%,#b2955a 78%,#d0b578);box-shadow:0 12px 26px rgba(0,0,0,.8),0 0 34px 10px rgba(2,3,5,.55),inset 0 1px rgba(255,243,205,.55),inset 0 -2px rgba(36,25,10,.5);color:#0d0903;text-align:center;font-size:clamp(17px,1.55vw,23px);letter-spacing:.34em;text-indent:.34em;text-shadow:0 1px 0 rgba(250,233,182,.75),0 -1px 0 rgba(24,16,5,.55);cursor:pointer;transform:rotate(-.35deg);transition:filter 180ms ease,transform 180ms ease}
+      /* 판을 비스듬히 지나가는 광택 한 줄. 놋쇠가 젖어 있다는 표시다 */
+      .virgil-plaque:before{content:'';position:absolute;left:14%;top:-60%;width:30%;height:220%;transform:rotate(16deg);background:linear-gradient(90deg,transparent,rgba(255,249,226,.26),transparent);pointer-events:none}
+      .virgil-plaque:nth-child(2){transform:rotate(.45deg)}
+      .virgil-plaque:focus,.virgil-plaque:hover{filter:brightness(1.14);outline-color:#e6cf94;transform:rotate(-.35deg) translateY(-1px)}
+      .virgil-plaque:nth-child(2):focus,.virgil-plaque:nth-child(2):hover{transform:rotate(.45deg) translateY(-1px)}
+      .virgil-bell{display:block;width:clamp(64px,6vw,92px);height:auto;filter:drop-shadow(0 7px 10px rgba(0,0,0,.72))}
+      .virgil-bell svg{display:block}
+      @media (prefers-reduced-motion:reduce){.virgil-plaque{transition:none}}
+      .virgil-loading{position:absolute;inset:0;background:radial-gradient(circle at 50% 43%,#10100f,#050608 65%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10vh 12vw}
+      .virgil-disclosure{max-width:860px;min-height:5em;color:#b6aa91;font-size:clamp(15px,1.55vw,23px);line-height:2.15;letter-spacing:.12em;text-align:center;text-shadow:0 0 14px rgba(197,173,120,.12)}
+      .virgil-disclosure:after{content:'';display:inline-block;width:.56em;height:1.15em;margin-left:.22em;vertical-align:-.18em;background:#8e8065;opacity:.72}
+      /* 입장 게이트. 브라우저 자동재생 정책상 첫 제스처 전에는 어떤 소리도 낼 수 없어서
+         구판 타이틀은 무음으로 열렸다. 이 한 줄이 그 제스처를 화면으로 만든 것이고,
+         그래서 타이틀에 비와 천둥이 있다(audio/title-bed.js). */
+      .virgil-gate{margin-top:clamp(26px,4.5vh,58px);color:#e0d0a6;font-size:clamp(15px,1.45vw,21px);letter-spacing:.44em;text-indent:.44em;text-shadow:0 0 20px rgba(206,178,116,.3);animation:virgil-gate-pulse 2.6s ease-in-out infinite}
+      @keyframes virgil-gate-pulse{0%,100%{opacity:.66}52%{opacity:1}}
+      /* 고지문이 다 찍힌 뒤에도 커서가 남아 있으면 "아직 타이핑 중이니 기다리라"로 읽힌다
+         (블라인드 판독자 지적). 게이트에서는 커서를 거둔다 — 이제 기다릴 것이 없다. */
+      .virgil-loading[data-gate="1"] .virgil-disclosure:after{display:none}
+      @media (prefers-reduced-motion:reduce){.virgil-gate{animation:none;opacity:.92}}
+      .virgil-keyrack{position:absolute;left:8vw;right:8vw;bottom:10vh;height:90px;border-top:3px solid #33291b;display:flex;justify-content:center;gap:clamp(8px,1.3vw,20px)}
+      .virgil-key{position:relative;width:24px;height:58px;margin-top:-2px;border-left:3px solid #5f4d2b;opacity:.24;transform-origin:top center}
+      .virgil-key:before{content:'';position:absolute;left:-8px;top:37px;width:16px;height:24px;border:2px solid #705b32;background:linear-gradient(145deg,#927644,#41331c)}
+      .virgil-key.on{opacity:.92;filter:drop-shadow(0 4px 4px rgba(0,0,0,.7))}.virgil-key.on:nth-child(odd){transform:rotate(-2deg)}.virgil-key.on:nth-child(even){transform:rotate(1.5deg)}
+      /* 재입장 두 줄은 벽지 띠 위에 앉는다 — 배경이 살아 있으므로 글자 뒤에 어둠을 깐다 */
+      .virgil-resume-lines{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:min(760px,80vw);padding:52px 40px 44px;text-align:center;color:#cdbc97;font-size:clamp(15px,1.55vw,22px);line-height:2.25;letter-spacing:.14em;text-shadow:0 2px 16px rgba(0,0,0,.95);background:radial-gradient(ellipse at 50% 50%,rgba(1,2,3,.9),rgba(1,2,3,.62) 52%,transparent 76%)}
+      /* 레인 캔버스는 스크림 위·글자 아래에 앉는다. 활성 화면의 첫 자식으로 들어가므로
+         글자(간판·명패)는 언제나 비보다 앞이다 — 비가 판독을 먹지 않는다. */
+      .virgil-rain{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+      .virgil-patina{position:absolute;inset:-20%;pointer-events:none;background:linear-gradient(105deg,transparent 42%,rgba(197,171,105,.055) 49%,transparent 55%);mix-blend-mode:screen}
+    `,document.head.appendChild(e),this.style=e,this.layer=c(`div`,`virgil-entry`),document.body.appendChild(this.layer),a&&(this.photo=document.createElement(`img`),this.photo.className=`virgil-photo`,this.photo.alt=``,this.photo.src=a,this.photo.style.display=`none`,this.layer.appendChild(this.photo)),this.loading=c(`div`,`virgil-loading`),this.disclosure=c(`div`,`virgil-disclosure`),this.loading.appendChild(this.disclosure),this.gateLine=c(`div`,`virgil-gate`,n),this.gateLine.style.display=`none`,this.loading.appendChild(this.gateLine),this.keys=c(`div`,`virgil-keyrack`),this.loading.appendChild(this.keys),this.layer.appendChild(this.loading),this.titleScreen=c(`div`,`virgil-glass`);let t=c(`div`,`virgil-signage`);t.append(c(`div`,`virgil-title-kind`,`HOTEL`),c(`div`,`virgil-title-mark`,`VIRGIL`),c(`div`,`virgil-title-sub`,`1947`)),this.titleScreen.appendChild(t),this.actions=c(`div`,`virgil-actions`),this.actions.appendChild(u(`title`)),this.choices=c(`div`,`virgil-choices`),this.actions.appendChild(this.choices),this.titleScreen.appendChild(this.actions),this.layer.appendChild(this.titleScreen),this.resumeScreen=c(`div`,`virgil-glass`);let o=c(`div`,`virgil-resume-lines`);o.append(`돌아오셨습니까`,document.createElement(`br`),`수첩은 두고 가신 그대로입니다.`),this.resumeScreen.appendChild(o);let s=c(`div`,`virgil-actions`);s.appendChild(u(`resume`));let d=c(`div`,`virgil-choices`);d.appendChild(l(`이어서`,`wake`)),s.appendChild(d),this.resumeScreen.appendChild(s),this.layer.appendChild(this.resumeScreen),this.patina=c(`div`,`virgil-patina`),this.layer.appendChild(this.patina),this._show(`loading`)},_progress(e){let t=Math.max(1,Number(e?.total)||1),n=Math.min(t,Math.max(this.progress.done,Number(e?.done)||0));this.progress={done:n,total:t},this._paintLoading(),n>=t&&!this.qa&&this.active===`loading`&&this._show(`gate`)},_openTitle(){this.engine.bus.emit(`title:gate`),this._show(location.search.includes(`resume=1`)?`resume`:`title`)},_paintLoading(e=!1){let n=this.progress.done/this.progress.total,r=e?32:Math.max(1,Math.floor(56*Math.max(.12,n)));this.disclosure.textContent=t.slice(0,Math.min(56,r)),this.keys.textContent=``;let i=Math.min(18,Math.max(6,this.progress.total)),a=e?Math.ceil(i*.58):Math.round(i*n);for(let e=0;e<i;e++)this.keys.appendChild(c(`span`,`virgil-key${e<a?` on`:``}`))},_show(e,t=!1){let n=e===`title`||e===`resume`;this.layer.hidden=!1,this.loading.style.display=e===`loading`||e===`gate`?`flex`:`none`,this.loading.dataset.gate=e===`gate`?`1`:``,this.gateLine.style.display=e===`gate`?`block`:`none`,this.titleScreen.style.display=e===`title`?`block`:`none`,this.resumeScreen.style.display=e===`resume`?`block`:`none`,this.active=e,this.photo&&(this.photo.style.display=this.bg===`image`&&n?`block`:`none`),this.titleScreen.dataset.bg=this.bg,this.resumeScreen.dataset.bg=this.bg,e===`title`&&this._paintTitle(t),n?this._mountRain(e===`title`?this.titleScreen:this.resumeScreen):this._dropRain(),n&&this._frameCamera(this.qa?s:this.engine.time)},setBg(e){return this.bg=e===`image`&&a?`image`:`render`,this.active&&this._show(this.active,this.saved),{bg:this.bg,src:a}},_frameCamera(e){if(this.freeCamera)return;let t=this.engine.camera,[n,r,i]=this.pose.pos,[a,o,s]=this.pose.target;t.position.set(n+Math.sin(e*.13)*.14,r+Math.sin(e*.087+1.2)*.03,i+Math.cos(e*.11)*.09);let c=this.pose.fov+Math.sin(e*.067)*.6;Math.abs(t.fov-c)>1e-4&&(t.fov=c,t.updateProjectionMatrix()),t.lookAt(a,o,s),t.updateMatrixWorld(!0)},_paintTitle(e){let t=e||d();this.saved=t,this.choices.textContent=``,t?this.choices.append(l(`이어서`,`resume`),l(`처음부터`,`new`)):this.choices.appendChild(l(`체크인`,`new`))},_mountRain(t){this.rain||=e(),this.rain.mount(t)},_dropRain(){this.rain?.dispose(),this.rain=null},_hideAll(){this.layer.hidden=!0,this.active=null,this._dropRain(),this.photo&&(this.photo.style.display=`none`)},_qaState(e){this.engine.qa&&(e?.ui===`loading`?(this.progress={done:7,total:12},this._show(`loading`),this._paintLoading(!0)):e?.ui===`title`?this._show(`title`,!0):e?.ui===`resume`?this._show(`resume`):e?.ui===`settings`&&this._hideAll())},_pointer(e){if(this.engine.qa||!this.active||this.active===`loading`||this.engine.get(`settings`)?.isOpen?.())return;if(this.active===`gate`){this._openTitle();return}let t=e.target.closest?.(`[data-mode]`)?.dataset.mode;t?this._proceed(t):this.active===`resume`?this._proceed(`wake`):this.active===`title`&&!this.saved&&this._proceed(`new`)},_key(e){if(!(this.engine.qa||!this.active||this.active===`loading`||e.key===`Escape`)&&!this.engine.get(`settings`)?.isOpen?.()){if(this.active===`gate`){this._openTitle();return}e.key===`Enter`&&e.target?.dataset?.mode?this._proceed(e.target.dataset.mode):this.active===`resume`?this._proceed(`wake`):this.active===`title`&&!this.saved&&this._proceed(`new`)}},_proceed(e){let t=this.engine.camera;Math.abs(t.fov-this.fov0)>1e-4&&(t.fov=this.fov0,t.updateProjectionMatrix());try{(this.engine.canvas.requestPointerLock?.())?.catch?.(()=>{})}catch{}if(this.engine.bus.emit(`title:proceed`,{mode:e}),e===`resume`){let e=new URL(location.href);e.searchParams.set(`resume`,`1`),location.assign(e);return}this._hideAll()},update(e,t){if(!this.layer||this.layer.hidden)return;let n=Math.sin(t*.21)*3.5;this.patina.style.transform=`translateX(${n.toFixed(2)}%)`,(this.active===`title`||this.active===`resume`)&&(this._frameCamera(this.qa?s:t),this.rain?.draw(e,t))},resize(){this.rain?.size()},dispose(){window.removeEventListener(`keydown`,this._onKey),window.removeEventListener(`pointerdown`,this._onPointer),this._dropRain(),this.layer?.remove(),this.style?.remove()}};export{f as default};
