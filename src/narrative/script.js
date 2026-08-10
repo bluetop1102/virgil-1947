@@ -69,33 +69,33 @@ export const CHARACTERS = {
 
 export const EVIDENCE = {
   register: { id: 'register', title: '숙박부', kind: 'document', act: 1, foundIn: 'lobby/front-desk',
-    body: '10월 2일 입실, 밴다이버 명의. 2주치 현금 선납. 10일과 11일에도 942호에 객실 청구가 붙어 있다.' },
+    body: '투숙객은 밴다이버 명의로 10월 2일에 입실했다. 2주치 숙박비를 현금으로 선납했다. 10일과 11일에도 942호에 객실 청구가 붙었다.' },
   keyrack: { id: 'keyrack', title: '열쇠 걸이', kind: 'observation', act: 1, foundIn: 'lobby/behind-desk',
     body: '942 고리가 비었다. 옆의 ROOF 고리도 비었다. 먼지 자국은 942 쪽만 남았다.' },
   flask: { id: 'flask', title: '위스키 플라스크', kind: 'observation', act: 1, foundIn: 'lobby/under-desk',
     body: '데스크 아래 선반. 은도금이 손 닿는 자리만 벗겨졌다.' },
   'pressure-log': { id: 'pressure-log', title: '수압 민원 장부', kind: 'document', act: 1, foundIn: 'lobby/front-desk',
-    body: '10월 9일부터 3층 위로 물이 오르지 않는다는 민원. 9일 밤 11시 902호 접수. 서명은 C. 루이즈.' },
+    body: '10월 9일부터 3층 위로 물이 오르지 않는다는 민원이 있었다. 9일 밤 11시, 902호 민원을 C. 루이즈가 접수하고 서명했다.' },
   photos: { id: 'photos', title: '옥상 계단참 사진 4장', kind: 'photo', act: 2, foundIn: 'room944/pryce',
-    body: '14개월 전 인화. 옥상 계단참. 넉 장째 유리 반사에 형체가 하나 더 있다.' },
+    body: '14개월 전에 인화한 옥상 계단참 사진 네 장이다. 넉 장째 유리 반사에는 형체가 하나 더 있다.' },
   journal: { id: 'journal', title: '찢긴 일기', kind: 'document', act: 2, foundIn: 'room942/under-bed',
     body: '침대 밑. 프라이스라는 이름이 세 번. 마지막 장에 944라는 숫자.' },
   roofkey: { id: 'roofkey', title: '옥상 열쇠', kind: 'object', act: 2, foundIn: 'room942/mattress',
-    body: '매트리스 밑. 태그의 필적이 프런트 장부와 같다.' },
+    body: '열쇠는 매트리스 밑에 있었다. 태그 필적은 프런트 장부와 같다.' },
   'sink-trap': { id: 'sink-trap', title: '세면대 트랩 침전물', kind: 'sample', act: 2, foundIn: 'room942/bathroom',
     body: '검은 침전물. 냄새는 물이 아니라 고인 것에서 난다.' },
   autopsy: { id: 'autopsy', title: '넬 밴스 부검 사본', kind: 'document', act: 2, foundIn: 'room942/suitcase',
     body: '여행가방 안감 밑. 폐의 물은 낙하 시 흡인으로 적혀 있다. 유족에게는 나가지 않는 서류다.' },
   'water-log': { id: 'water-log', title: '급수 일지', kind: 'document', act: 2, foundIn: 'room944',
-    body: '탱크 점검 기록. 10월 9일 밤 점검자 서명이 하나. 필적은 E. 도일.' },
+    body: '탱크 점검 기록이다. 10월 9일 밤의 점검자 서명은 하나이며, 필적은 E. 도일의 것이다.' },
   footprints: { id: 'footprints', title: '젖은 발자국', kind: 'observation', act: 2, foundIn: 'corridor9/942-to-stairs',
-    body: '942호 앞에서 계단 쪽으로. 작업화. 265mm.' },
+    body: '942호 앞에서 계단 쪽으로 이어진 265mm 작업화 자국이다.' },
   'hatch-lock': { id: 'hatch-lock', title: '탱크 해치 자물쇠', kind: 'observation', act: 3, foundIn: 'rooftop/tank-4',
     body: '걸쇠가 바깥에 있다. 안에서는 잠글 수 없다.' },
   wrench: { id: 'wrench', title: '도일의 렌치', kind: 'object', act: 3, foundIn: 'rooftop/toolbox',
     body: '자루에 감은 테이프가 두 겹. 손 크기에 맞춰 감았다.' },
   shoes: { id: 'shoes', title: '놓인 구두', kind: 'observation', act: 3, foundIn: 'rooftop/catwalk',
-    body: '캣워크에 나란히. 젖지 않은 자리에 놓였다. 비는 밤새 왔다.' }
+    body: '구두 한 켤레가 캣워크의 젖지 않은 자리에 나란히 놓여 있다. 비는 밤새 왔다.' }
 }
 
 // 괴담 원문 (docs/STORY.md §7). 매체가 화자를 정한다 — 라디오는 심야 방송이고,
@@ -167,7 +167,7 @@ const INTERROGATION_SCRIPT = {
           keyrack: { detective: '고리가 비었더군요.', text: '…분실입니다. 그런 건 늘 있습니다.', flags: ['deitch-partial'], note: '부분 성공 — 2막 재심문 개방' },
           roofkey: { detective: '그 여자 매트리스 밑에서 나왔습니다. 당신 필적으로 태그가 붙어 있고.', action: '안경을 벗는다', text: '…20달러였습니다. 딸 학비가 밀렸습니다. 그 여자가 옥상에서 뭘 하려는지 내가 어떻게 압니까. 사진을 찍는다고 했습니다. 야경을.', act: 2, note: '3막 도일 지목 시 정황 보강' }
         },
-        onLieWrong: { detective: '관리인만 쥐면 책임도 하나죠.', text: '…열쇠 얘기는 여기까지 하겠습니다.', burn: true, flags: ['deitch-sealed'], note: '2막 재심문 불가' }
+        onLieWrong: { detective: '관리인만 열쇠를 쥐면 책임도 하나죠.', text: '…열쇠 얘기는 여기까지 하겠습니다.', burn: true, flags: ['deitch-sealed'], note: '2막 재심문 불가' }
       },
       {
         id: 'deitch.S5', camera: 'slide',
@@ -179,7 +179,7 @@ const INTERROGATION_SCRIPT = {
       }
     ],
     outcomes: {
-      full: { note: '프런트는 다 내놨다. 장부도, 열쇠 이야기도.' },
+      full: { note: '다이치는 장부와 열쇠 이야기를 모두 털어놨다.' },
       partial: { note: '프런트는 반쯤 열렸다. 나머지는 데스크 아래에 있다.' },
       fail: { note: '프런트는 닫혔다. 내가 닫았다.' }
     }
@@ -228,7 +228,7 @@ const INTERROGATION_SCRIPT = {
     ],
     outcomes: {
       full: { note: '그녀는 전부 들었다. 이제 나도 들었다.' },
-      partial: { note: '그녀는 반만 말했다. 나머지는 짜다 만 천 안에 있다.' },
+      partial: { note: '루이즈는 반만 말했다. 나머지는 아직 숨기고 있다.' },
       fail: { note: '그녀는 일로 돌아갔다. 손은 다시 멈추지 않을 것이다.' }
     }
   },
@@ -246,7 +246,7 @@ const INTERROGATION_SCRIPT = {
         text: '그 아가씨하고는 인사만 했습니다. 복도에서 두어 번. 그게 답니다.',
         onTruth: { detective: '알겠습니다.', text: '…그게 답니다.' },
         onDoubt: { detective: '두어 번.', text: '복도에서 마주친 사람 얼굴을 다 기억할 나이는 지났습니다.' },
-        onLieCorrect: { detective: '당신 이름이 세 번 나옵니다. 마지막 장에는 이 방 호수가 적혀 있고.', action: '반박자 늦게', text: '…들어온 적 있습니다. 두 번. 세 번인가.', flags: ['pryce-admits'] },
+        onLieCorrect: { detective: '당신 이름이 세 번 나옵니다. 마지막 장에는 944호가 적혀 있습니다.', action: '반박자 늦게', text: '…들어온 적 있습니다. 두 번. 세 번인가.', flags: ['pryce-admits'] },
         onLieWrong: { detective: '두어 번이면 얼굴은 남겠죠.', text: '…그 아가씨 얼굴도 잘 기억 안 납니다. 이제 그만하시죠.', burn: true, flags: ['photos-lost'], note: '사진을 얻지 못한다. 게임 최대의 손실' }
       },
       {
@@ -259,7 +259,7 @@ const INTERROGATION_SCRIPT = {
       },
       {
         id: 'pryce.S3', camera: 'low',
-        text: '넬 밴스 사건은 제 소관이 아니었습니다. 그때 저는 이미 나온 뒤였고요.',
+        text: '넬 밴스 사건은 제 소관이 아니었습니다. 그때 이미 하우스 디텍티브 일을 떠난 뒤였습니다.',
         note: 'photos는 S1을 통과해야 얻는다. S1 실패 시 DOUBT이 최선이며 자백에 도달하지 못한다',
         onTruth: { detective: '알겠습니다.', text: '…네. 나온 뒤였습니다.' },
         onDoubt: { detective: '나온 뒤였다.', text: '…제 소관이 아니었다는 말은 취소하겠습니다. 그 이상은 말 안 합니다.', flags: ['pryce-retracts'] },
@@ -335,7 +335,7 @@ export const LINKS = hydrateLinks(LINK_SCRIPT)
 export const ENDINGS = {
   full: {
     id: 'full', title: '완전', links: 3,
-    text: '도일 체포. 넬 밴스 사건 재수사 개시.',
+    text: '도일을 체포했다. 넬 밴스 사건도 다시 수사한다.',
     finalShot: '물탱크의 물이 빠지는 소리',
     subtitle: null,
     flagLines: {
