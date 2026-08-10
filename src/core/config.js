@@ -65,10 +65,12 @@ export const QUALITY = {
   },
   medium: {
     name: 'medium',
-    // 2.1Mpx ≈ 28ms — 33.3ms 예산 안. 상한이 high 와 같은 1.5 인 것은 의도다:
-    // 같은 픽셀에서 셰이더가 더 싸므로 작은 창에서는 굳이 더 흐릴 이유가 없다.
+    // 실측 재조정: 2.1Mpx 는 33.4ms 로 33.3ms 예산선에 정확히 걸쳤다(p95 35.4). MEDIUM 은
+    // 쾌적함을 담당하는 층이라 선 위에 앉으면 안 되므로 1.7Mpx(≈29ms)로 여유를 준다.
+    // 상한이 high 와 같은 1.5 인 것은 의도다: 같은 픽셀에서 셰이더가 더 싸므로 작은 창에서는
+    // 굳이 더 흐릴 이유가 없다.
     maxPixelRatio: 1.5,
-    pixelBudget: 2100000,
+    pixelBudget: 1700000,
     texRes: 512,
     shadowMap: 1024,
     cascades: 2,

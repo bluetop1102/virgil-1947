@@ -257,7 +257,7 @@ for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { releaseLock(); 
 const report = {
   runner: OWNER_TAG(), preset: PRESET, deviceScaleFactor: DPR, viewport: [VW, VH],
   windowMs: WIN_MS, at: new Date().toISOString(),
-  census: null, views: [], ablation: [], dprSweep: [], resize: [], console: []
+  census: null, views: [], ablation: [], dprSweep: [], scaleSweep: [], resize: [], console: []
 }
 
 try {
@@ -314,6 +314,51 @@ try {
     console.log(`  ${v.id.padEnd(20)} p50 ${String(m.p50).padStart(7)} ms · p95 ${String(m.p95).padStart(7)} ms · cpu50 ${String(m.cpu50).padStart(6)} ms · ${m.calls} calls · ${m.fps} fps`)
   }
 
+  // ②-b 렌더 스케일의 화질 대가 A/B — 같은 카메라에서 예산 적용본과 강제 네이티브본을 나란히
+  //     남긴다. "얼마나 빨라졌나"만 보고 "얼마나 흐려졌나"를 안 보면 판정이 반쪽이다.
+  //     **심문보다 먼저 찍는다** — 심문에 들어가면 CINEMATICS 의 심문 카메라가 시점을 소유해
+  //     place() 가 무시되고, 두 컷 사이에 진술이 넘어가 내용까지 달라진다(1차 실측에서 실제로
+  //     그렇게 나와 판정 근거로 못 썼다).
+  //     배율마다 프레임 + 프레임타임을 같이 남긴다. 이 렌더러의 룩은 픽셀에 결박돼 있어
+  //     (composite 그레인·DOF 의 픽셀 단위 uMaxCoc·TAA) 해상도를 내리면 "같은 그림, 픽셀만 적게"가
+  //     아니라 디테일 자체가 준다. 무릎점은 추정이 아니라 pix stats 의 detail 로 정한다.
+  if (has('--frames')) {
+    const v = VIEWS[2]
+    await place(page, v.pos, v.look)
+    await sleep(2400)
+    await page.evaluate(() => {
+      const E = window.__ENGINE__
+      window.__QBAK__ = { m: E.quality.maxPixelRatio, p: E.quality.pixelBudget }
+    })
+    for (const r of [0, 1.5, 1.75, 2]) {
+      await page.evaluate(x => {
+        const E = window.__ENGINE__
+        if (x === 0) {
+          E.quality.maxPixelRatio = window.__QBAK__.m
+          E.quality.pixelBudget = window.__QBAK__.p
+        } else {
+          E.quality.maxPixelRatio = 0
+          E.quality.pixelBudget = 0
+          E.renderer.setPixelRatio(Math.min(x, window.devicePixelRatio || 1, 2))
+        }
+        E._onResize()
+      }, r)
+      await sleep(3200)
+      const m = await measure(page, 2000)
+      const tag = r === 0 ? 'budget' : String(r).replace('.', 'p')
+      await page.screenshot({ path: `${OUT}/scale-${tag}-${PRESET}.png` })
+      report.scaleSweep.push({ tag, ratio: m.dpr, buf: m.buf, p50: m.p50, p95: m.p95 })
+      console.log(`  scale ${tag.padEnd(8)} ${String(m.buf.join('×')).padEnd(11)} p50 ${String(m.p50).padStart(7)} ms → ${OUT}/scale-${tag}-${PRESET}.png`)
+    }
+    await page.evaluate(() => {
+      const E = window.__ENGINE__
+      E.quality.maxPixelRatio = window.__QBAK__.m
+      E.quality.pixelBudget = window.__QBAK__.p
+      E._onResize()
+    })
+    await sleep(2400)
+  }
+
   // ② 심문 — 데스크 정면 진입(probe-tell 동선). 앵커 `npc/deitch` 를 씬에서 찾아 그 좌표를
   //    직접 겨눈다. 텔레포트 직후에는 상호작용 레이캐스트가 한 프레임 늦게 서므로 재시도한다.
   if (!has('--no-ig')) {
@@ -351,33 +396,6 @@ try {
     } catch (e) {
       report.views.push({ id: 'interrogation', err: e.message })
     }
-  }
-
-  // ②-b 렌더 스케일의 화질 대가 A/B — 같은 세션·같은 카메라에서 예산 적용본과 강제 네이티브본을
-  //     나란히 남긴다. "얼마나 빨라졌나"만 보고 "얼마나 흐려졌나"를 안 보면 판정이 반쪽이다.
-  if (has('--frames')) {
-    const v = VIEWS[2]
-    await place(page, v.pos, v.look)
-    await sleep(2400)
-    await page.screenshot({ path: `${OUT}/scale-budget-${PRESET}.png` })
-    await page.evaluate(() => {
-      const E = window.__ENGINE__
-      window.__QBAK__ = { m: E.quality.maxPixelRatio, p: E.quality.pixelBudget }
-      E.quality.maxPixelRatio = 0
-      E.quality.pixelBudget = 0
-      E.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
-      E._onResize()
-    })
-    await sleep(3000)
-    await page.screenshot({ path: `${OUT}/scale-native-${PRESET}.png` })
-    await page.evaluate(() => {
-      const E = window.__ENGINE__
-      E.quality.maxPixelRatio = window.__QBAK__.m
-      E.quality.pixelBudget = window.__QBAK__.p
-      E._onResize()
-    })
-    await sleep(2400)
-    console.log(`  프레임 A/B → ${OUT}/scale-{budget,native}-${PRESET}.png`)
   }
 
   // ③ 패스별 기여 — 하나씩 빼고 델타. RESUME §3.2(나): enabled=false 로는 부족하고 엔트리를
