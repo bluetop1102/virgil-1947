@@ -273,24 +273,10 @@ const cinematics = {
   },
 
   _frameProps (t) {
-    if (t < 21.35 || t >= 25.15) {
-      this.hand.visible = false
-      return
-    }
-    const camera = this.engine.camera
-    const arrive = smooth((t - 21.35) / 1.1)
-    const leave = smooth((t - 23.2) / 1.95)
-    const local = new THREE.Vector3(
-      THREE.MathUtils.lerp(0.48, 0.12, arrive) + leave * 0.5,
-      THREE.MathUtils.lerp(-0.43, -0.23, arrive) - leave * 0.2,
-      THREE.MathUtils.lerp(-0.78, -1.38, arrive) + leave * 0.45
-    )
-    this.hand.position.copy(local.applyMatrix4(camera.matrixWorld))
-    this.hand.quaternion.copy(camera.quaternion)
-    this.hand.rotateX(-0.32)
-    this.hand.rotateY(0.16)
-    this.hand.visible = true
-    if (t >= 22) this.badge.visible = true
+    // 손+배지 연출 소거 — 카메라 부착 소품이 인사 컷에서 "공중에 뜬 팔 조각·그릇"으로
+    // 읽혀 사용자 지시(2026-08-10)로 뺐다. 소품·비트 시각은 남겨 두므로 복원은 이 가드 제거.
+    this.hand.visible = false
+    this.badge.visible = false
   },
 
   _storyBeats (t) {

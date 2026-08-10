@@ -53,9 +53,12 @@ function makeDesk () {
     mesh(bb(5.15, 0.95, 0.72, 0.035, 3, 1.45), 'wood.varnished.dark', { pos: [-2.35, 0.52, -3.55], wear: 0.62, seed: 201 }),
     mesh(bb(5.38, 0.10, 0.92, 0.025, 3, 1.45), 'wood.varnished.dark', { pos: [-2.35, 1.04, -3.50], wear: 0.55, seed: 202 })
   )
-  // 데스크 램프 실물. 조명은 practical('desk')이 계속 지고(fixture:false 로 발광 갓만 끔) 이건
-  // 몸체다 — 갓 메시 단독이 S1 카메라에서 "떠 있는 그릇"으로 읽히던 실플레이 지적(2026-08-10).
-  root.add(place(deskLamp(208), [-2.75, 1.09, -3.24], 2.55))
+  // 데스크 램프 실물. 조명은 practical('desk')이 정본(fixture:false 로 발광 갓만 끔) — 소품
+  // 내장 스팟(5.0)을 살리면 이중 조명으로 숙박부가 타고, 전구 발광 2.2는 헐레이션을 타고
+  // 화염 기둥이 된다(이양 프레임 실측 2026-08-10). 이 인스턴스만 내장광 소등·발광 1/3.
+  const dlamp = place(deskLamp(208), [-2.75, 1.09, -3.24], 2.55)
+  dlamp.traverse(o => { if (o.isSpotLight) o.intensity = 0; if (o.material?.emissiveIntensity) o.material.emissiveIntensity *= 0.32 })
+  root.add(dlamp)
   // 서랍 전면 5짝. 옛 판은 0.82×0.68 면에 텍스처 한 장이라 도관이 스펙클 노이즈로 뭉갰다
   // (체험 리뷰 D4 "데스크 서랍 전면도 같은 스펙클"). 박스 투영 패널 밭 + 볼렉션 비드 +
   // 놋쇠 손잡이·열쇠구멍으로 값 층을 셋 세운다.
@@ -339,7 +342,9 @@ function makeLights () {
     // 스윕(shots/sh-ab5·sh-ab7, interrogation-deitch 고정 크롭): hot 2.4→1.622 · 1.32→1.433 ·
     // 0.96→1.333 · 0.72→1.242 · 0.60→1.186 · 0.45→**1.094** · 0.35→1.013.
     // 0.45 를 고른 이유는 비 1.1 이하를 만족하는 최댓값이라 전구 코어(p95 196.6)가 남기 때문이다.
-    practical('desk', { pos: [-2.75, 1.54, -3.18], target: [-2.65, 1.04, -3.30], kelvin: 2700, lumens: 560, radius: 4.2, hot: 0.45, fixture: false, name: 'lobby.desk' }),
+    // shaft 0: 광축 셸이 이양·심문 컷에서 "공중에 뜬 원기둥"으로 읽힘(실플레이 2026-08-10).
+    // 갓(fixture)과 셸을 함께 끄고 몸체는 deskLamp 소품, 조명은 이 practical 투사광이 진다.
+    practical('desk', { pos: [-2.75, 1.54, -3.18], target: [-2.65, 1.04, -3.30], kelvin: 2700, lumens: 560, radius: 4.2, hot: 0.45, fixture: false, shaft: 0, name: 'lobby.desk' }),
     practical('chandelier', { pos: [0, 3.45, -2.2], kelvin: 3400, lumens: 2100, radius: 10, name: 'lobby.pendant.back' }),
     practical('chandelier', { pos: [0, 3.45, 4.5], kelvin: 3400, lumens: 1750, radius: 9, name: 'lobby.pendant.front' }),
     // 라디오 눈금판이 뿜는 빛. 발광면은 glowMesh(radio.dial)이 그리고, 주변에 실제로
