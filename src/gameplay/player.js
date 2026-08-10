@@ -7,6 +7,7 @@ import { playerQa } from './player-qa.js'
 
 const EYE = 1.68
 const WALK = 1.2            // m/s. 슈터가 아니다
+const RUN = 1.9             // m/s. Shift 질주 — 복도 공간감을 죽이지 않는 상한. 발소리는 속도 비례 게인·보폭 주기라 별도 배선 없이 빨라진다
 const ACCEL = 9             // 속도 damp lambda
 const GRAVITY = 9.81
 const RADIUS = 0.32
@@ -207,8 +208,9 @@ export default {
 
   _move (dt, wishX, wishZ) {
     const phys = this.engine.get('physics')
-    this.vel.x = damp(this.vel.x, wishX * WALK, ACCEL, dt)
-    this.vel.z = damp(this.vel.z, wishZ * WALK, ACCEL, dt)
+    const top = this.keys.has('ShiftLeft') || this.keys.has('ShiftRight') ? RUN : WALK
+    this.vel.x = damp(this.vel.x, wishX * top, ACCEL, dt)
+    this.vel.z = damp(this.vel.z, wishZ * top, ACCEL, dt)
 
     // 물리 모듈이 살아 있으면 캡슐 컨트롤러가 권위를 갖는다(중력·계단·경사는 래퍼가 처리한다)
     if (phys?.character && !this.body && !this.physFail) {
