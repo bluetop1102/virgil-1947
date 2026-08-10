@@ -72,11 +72,13 @@ PLACEHOLDER_COUNTS = {
         "{{YOUTUBE_URL}}": 2,
         "{{EVIDENCE_CONTRACT_STATUS}}": 0,
         "{{AUDIO_ATTRIBUTION_STATUS}}": 0,
+        "{{ELEVATOR_GATE_STATUS}}": 0,
     },
     "ai-tech.md": {
         "{{YOUTUBE_URL}}": 0,
         "{{EVIDENCE_CONTRACT_STATUS}}": 1,
         "{{AUDIO_ATTRIBUTION_STATUS}}": 1,
+        "{{ELEVATOR_GATE_STATUS}}": 1,
     },
 }
 FINAL_MANIFEST = OUT_DIR / "HOTEL-VIRGIL-PDF-MANIFEST.json"
@@ -987,6 +989,7 @@ def inspect_pdf(
     video_url: str | None = None,
     evidence_status: str | None = None,
     audio_status: str | None = None,
+    elevator_status: str | None = None,
     required_uris: dict[str, int] | None = None,
 ) -> dict[str, object]:
     if not path.exists() or path.stat().st_size < 10_000:
@@ -1025,6 +1028,10 @@ def inspect_pdf(
 
     subject = str(metadata.get("Subject", ""))
     normalized = normalized_text(text)
+    if elevator_status is not None and whitespace_insensitive_text(
+        elevator_status
+    ) not in whitespace_insensitive_text(text):
+        raise SystemExit(f"Elevator 3-state status was not rendered into {path.name}")
     if draft:
         if subject != "NAN 2026 사전 과제 제출 문서 (DRAFT)":
             raise SystemExit(f"Unexpected draft subject metadata in {path.name}: {subject!r}")
@@ -1039,7 +1046,10 @@ def inspect_pdf(
             raise SystemExit(
                 f"Final guide must contain exactly two clickable video links; found {links.count(video_url)}"
             )
-        for label, status in (("evidence", evidence_status), ("audio", audio_status)):
+        for label, status in (
+            ("evidence", evidence_status),
+            ("audio", audio_status),
+        ):
             if status is not None and whitespace_insensitive_text(status) not in whitespace_insensitive_text(text):
                 raise SystemExit(f"Final {label} status was not rendered into {path.name}")
 
@@ -1111,20 +1121,26 @@ def main() -> None:
         final_inputs, validated_head = validate_final_repository(args.evidence_status)
         audio_metrics = validate_audio_files_and_credit()
         validate_claimed_audio_metrics(args.audio_status, audio_metrics)
+        elevator_status = f"해소 — {validated_head[:7]} · 심문 전·중단·완료 3상태 PASS"
         replacements = {
             "{{YOUTUBE_URL}}": f"<{args.video_url}>",
             "{{EVIDENCE_CONTRACT_STATUS}}": args.evidence_status,
             "{{AUDIO_ATTRIBUTION_STATUS}}": args.audio_status,
+            "{{ELEVATOR_GATE_STATUS}}": elevator_status,
         }
         guide_name = "HOTEL-VIRGIL-게임소개.pdf"
         tech_name = "HOTEL-VIRGIL-AI활용기술.pdf"
     else:
+        elevator_status = (
+            "DRAFT 차단 — 심문 전 격자문 E가 presented 미초기화 TypeError · 중단·완료 경로 PASS"
+        )
         replacements = {
             "{{YOUTUBE_URL}}": "**영상 URL 입력 대기**",
             "{{EVIDENCE_CONTRACT_STATUS}}": "해소 — 42a3814 · 기본 108/0 · 소각 9/0 · 1막 완주 PASS",
             "{{AUDIO_ATTRIBUTION_STATUS}}": (
                 "DRAFT — fe11510 출력·귀속·도달성 검증 PASS · 사람 청감·final Pages 확인 대기"
             ),
+            "{{ELEVATOR_GATE_STATUS}}": elevator_status,
         }
         guide_name = "HOTEL-VIRGIL-게임소개-DRAFT.pdf"
         tech_name = "HOTEL-VIRGIL-AI활용기술-DRAFT.pdf"
@@ -1171,6 +1187,7 @@ def main() -> None:
             draft=args.draft,
             evidence_status=args.evidence_status if args.final else None,
             audio_status=args.audio_status if args.final else None,
+            elevator_status=elevator_status,
             required_uris={
                 PLAY_URL: 1,
                 SOURCE_URL: 1,
@@ -1196,6 +1213,7 @@ def main() -> None:
                 "video_url": args.video_url,
                 "evidence_status": args.evidence_status,
                 "audio_status": args.audio_status,
+                "elevator_status": elevator_status,
                 "git_head": validated_head,
                 "inputs": {
                     str(source.relative_to(ROOT)): hashlib.sha256(source.read_bytes()).hexdigest()
