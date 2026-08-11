@@ -20,7 +20,7 @@
   #boot .sub { margin-top:1.1rem; font-size:.72rem; letter-spacing:.34em; color:#5b5548; text-indent:.34em; }
   #boot-msg { margin-top:3.2rem; font-size:.6rem; letter-spacing:.22em; color:#33302a; text-indent:.22em; }
 </style>
-  <script type="module" crossorigin src="./assets/index-B0e3BJqg.js"></script>
+  <script type="module" crossorigin src="./assets/index-DiWFoF_t.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/three.core-BesWO3HN.js">
   <link rel="modulepreload" crossorigin href="./assets/three.module-BfmM4iuI.js">
   <link rel="modulepreload" crossorigin href="./assets/config-DDD-9NTJ.js">
@@ -34,5 +34,32 @@
     <div class="sub">1947 &nbsp;·&nbsp; ROOM 942</div>
     <div id="boot-msg">booting</div>
   </div></div>
+  <script>
+  // 부팅 감시 — 모듈이 죽거나(구형 브라우저 문법 오류) 렌더러가 못 서면(WebGL2 없음)
+  // 검은 화면에 갇힌다. 어떤 실패든 사람이 읽을 안내로 바꾼다. 모듈 문법을 이해 못 하는
+  // 브라우저에서도 돌아야 하므로 고전 스크립트로 둔다.
+  (function () {
+    var shown = false
+    window.__VIRGIL_BOOT_FAIL__ = function (msg) {
+      if (shown) return
+      shown = true
+      var el = document.getElementById('boot-msg')
+      if (!el) return
+      el.textContent = msg
+      el.style.cssText = 'margin-top:3.2rem;font-size:.78rem;letter-spacing:.06em;text-indent:0;color:#a06a52;line-height:2;white-space:pre-line'
+    }
+    function fail (detail) {
+      if (window.__ENGINE__) return
+      window.__VIRGIL_BOOT_FAIL__('부팅에 실패했습니다.\n크롬 · 엣지 · 사파리 최신 버전으로 열어 주세요.' + (detail ? '\n(' + detail + ')' : ''))
+    }
+    window.addEventListener('error', function (e) { fail(e.message || '스크립트 로드 실패') })
+    window.addEventListener('unhandledrejection', function (e) { fail(String((e && e.reason) || '')) })
+    setTimeout(function () {
+      if (!window.__ENGINE__) {
+        window.__VIRGIL_BOOT_FAIL__('로딩이 예상보다 오래 걸립니다.\n네트워크가 느리면 잠시 더 기다려 주세요.\n계속 멈춰 있으면 크롬 최신 버전으로 다시 열어 주세요.')
+      }
+    }, 20000)
+  })()
+  </script>
 </body>
 </html>
